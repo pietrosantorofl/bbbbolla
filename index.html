@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>bolla® — Pass gratuiti</title>
+  <meta name="description" content="bolla®, rassegna di musica live. Prenota il tuo pass gratuito per la prossima serata.">
+  <meta name="theme-color" content="#e9e7e3">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="bolla® — Pass gratuiti">
+  <meta property="og:description" content="Rassegna di musica live. Prenota il tuo pass gratuito.">
+  <meta property="og:image" content="https://bbbbolla.it/assets/poster.jpg">
+  <meta property="og:url" content="https://bbbbolla.it/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <svg class="sr-only" aria-hidden="true">
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+  </svg>
+
+  <header class="topbar">
+    <a href="./" class="topbar__logo" aria-label="bolla® home"><img src="assets/bolla-logo.png" alt="bolla®" width="859" height="306"></a>
+    <a href="#prenota" class="btn btn--small">Prenota pass</a>
+  </header>
+
+  <!-- HERO: ricostruzione del poster -->
+  <section class="hero" aria-label="Serata">
+    <div class="hero__stage">
+      <span class="hero__date hero__date--left" data-bind="dataBreve"></span>
+      <div class="hero__mark">
+        <img class="hero__logo" src="assets/bolla-logo.png" alt="bolla®" width="859" height="306">
+        <div class="sphere" aria-hidden="true">
+          <div class="sphere__paint"></div>
+          <div class="sphere__grain"></div>
+        </div>
+      </div>
+      <span class="hero__date hero__date--right" aria-hidden="true" data-bind="dataBreve"></span>
+    </div>
+    <ul class="hero__lineup" data-bind="lineupHero"></ul>
+  </section>
+
+  <main class="layout" id="contenuto">
+    <article class="details">
+      <p class="eyebrow" data-bind="sottotitolo"></p>
+      <h1 class="details__title"><span data-bind="nome"></span> <span class="details__date" data-bind="dataLunga"></span></h1>
+
+      <dl class="facts">
+        <div><dt>Quando</dt><dd data-bind="quando"></dd></div>
+        <div><dt>Dove</dt><dd data-bind="dove"></dd></div>
+        <div><dt>Ingresso</dt><dd>Gratuito con pass</dd></div>
+      </dl>
+
+      <div class="prose" data-bind="intro"></div>
+
+      <h2 class="section-title">Line-up</h2>
+      <ol class="lineup" data-bind="lineup"></ol>
+
+      <h2 class="section-title">Info utili</h2>
+      <dl class="info" data-bind="info"></dl>
+
+      <section class="altre" data-bind="altreSerate" hidden>
+        <h2 class="section-title">Prossime serate</h2>
+        <ul class="altre__list"></ul>
+      </section>
+    </article>
+
+    <aside class="booking" id="prenota" aria-labelledby="booking-title">
+      <div class="card">
+        <div class="card__head">
+          <h2 id="booking-title" class="card__title">Pass gratuito</h2>
+          <span class="badge" data-bind="demo" hidden>Demo</span>
+        </div>
+        <p class="card__date" data-bind="dataLunga"></p>
+
+        <div class="meter" data-bind="meter" aria-live="polite">
+          <div class="meter__bar"><span class="meter__fill"></span></div>
+          <p class="meter__label">Controllo disponibilità…</p>
+        </div>
+
+        <form class="form" id="form" novalidate>
+          <div class="field-row">
+            <label class="field">
+              <span>Nome</span>
+              <input name="nome" autocomplete="given-name" required maxlength="60">
+            </label>
+            <label class="field">
+              <span>Cognome</span>
+              <input name="cognome" autocomplete="family-name" required maxlength="60">
+            </label>
+          </div>
+          <label class="field">
+            <span>Email</span>
+            <input name="email" type="email" autocomplete="email" inputmode="email" required maxlength="120">
+          </label>
+
+          <fieldset class="field qty">
+            <legend>Numero di pass</legend>
+            <div class="qty__ctrl">
+              <button type="button" class="qty__btn" data-step="-1" aria-label="Meno">−</button>
+              <output name="postiOut" class="qty__val">1</output>
+              <button type="button" class="qty__btn" data-step="1" aria-label="Più">+</button>
+            </div>
+            <input type="hidden" name="posti" value="1">
+          </fieldset>
+
+          <label class="hp" aria-hidden="true">Sito web <input name="website" tabindex="-1" autocomplete="off"></label>
+
+          <label class="check" data-bind="maggiorenne" hidden>
+            <input type="checkbox" name="maggiorenne">
+            <span>Dichiaro di essere maggiorenne.</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" name="privacy" required>
+            <span>Ho letto l'<a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a> e acconsento al trattamento dei dati per la gestione del pass.</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" name="newsletter">
+            <span>Mi iscrivo alla newsletter di bolla® e accetto di ricevere informazioni sulle prossime serate<span data-bind="newsletterObbligo"></span>. La mia email non sarà ceduta a terzi e posso disiscrivermi quando voglio.</span>
+          </label>
+
+          <p class="form__error" role="alert" hidden></p>
+          <button class="btn btn--block" type="submit">Prenota il pass</button>
+          <p class="form__note">Gratis. Ricevi il codice via email.</p>
+        </form>
+
+        <div class="done" hidden tabindex="-1">
+          <p class="done__kicker">Ci vediamo dentro la bolla</p>
+          <p class="done__name"></p>
+          <div class="ticket">
+            <span class="ticket__label">Codice pass</span>
+            <span class="ticket__code"></span>
+            <span class="ticket__meta"></span>
+          </div>
+          <p class="done__text">Ti abbiamo inviato una email con il codice. Mostralo all'ingresso.</p>
+          <button type="button" class="btn btn--ghost btn--block" data-action="ics">Aggiungi al calendario</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <img src="assets/bolla-logo.png" alt="bolla®" class="footer__logo" width="859" height="306">
+    <nav class="footer__links" data-bind="contatti"></nav>
+    <p class="footer__small"><a href="privacy.html">Privacy</a> · © <span data-bind="anno"></span> bolla®</p>
+  </footer>
+
+  <a href="#prenota" class="mobile-cta btn">Prenota pass gratuito</a>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
