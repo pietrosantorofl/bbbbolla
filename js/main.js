@@ -120,89 +120,245 @@
     if (C.rassegna.newsletterObbligatoria) { n.textContent = " (necessario per ricevere il pass gratuito)"; $("#form").newsletter.required = true; }
   });
 
-  /* ---------- API (Apps Script) o demo locale ---------- */
-  var DEMO_CAPIENZA = 120;
-  function demoStore() { try { return JSON.parse(localStorage.getItem("bolla-demo") || "{}"); } catch (e) { return {}; } }
-  function demoSave(s) { try { localStorage.setItem("bolla-demo", JSON.stringify(s)); } catch (e) { /* storage non disponibile */ } }
-  function demoCodice() {
-    var a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", c = "";
-    for (var i = 0; i < 5; i++) c += a[Math.floor(Math.random() * a.length)];
-    return "BOL-" + c;
-  }
-
-  function apiDisponibilita() {
-    if (DEMO) {
-      var st = demoStore()[serata.id] || [];
-      var usati = st.reduce(function (t, p) { return t + p.posti; }, 0) + 37;
-      return Promise.resolve({ ok: true, aperta: !passata, capienza: DEMO_CAPIENZA, disponibili: Math.max(0, DEMO_CAPIENZA - usati) });
-    }
-    return fetch(C.apiUrl + "?action=disponibilita&serata=" + encodeURIComponent(serata.id))
-      .then(function (r) { return r.json(); });
-  }
-
-  function apiPrenota(dati) {
-    if (DEMO) {
-      return new Promise(function (res) {
-        setTimeout(function () {
-          var s = demoStore(); var lista = s[serata.id] || [];
-          if (lista.some(function (p) { return p.email === dati.email; })) {
-            return res({ ok: false, errore: "duplicato", messaggio: "Questa email ha già un pass per la serata. Controlla la tua casella di posta." });
-          }
-          var p = { email: dati.email, posti: dati.posti, codice: demoCodice() };
-          lista.push(p); s[serata.id] = lista; demoSave(s);
-          apiDisponibilita().then(function (disp) { res({ ok: true, codice: p.codice, posti: p.posti, disponibili: disp.disponibili }); });
-        }, 900);
-      });
-    }
+  /* ---------- API (Apps Script, o demo nel browser) ---------- */
+  function api(action, dati) {
+    var body = Object.assign({ action: action, serata: serata.id }, dati || {});
+    if (DEMO) return window.BOLLA_DEMO.call(body);
     // text/plain evita il preflight CORS, che Apps Script non gestisce
     return fetch(C.apiUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(Object.assign({ action: "prenota", serata: serata.id }, dati))
+      body: JSON.stringify(body)
     }).then(function (r) { return r.json(); });
   }
 
-  /* ---------- disponibilità ---------- */
-  var form = $("#form");
-  var maxPosti = C.rassegna.maxPassPerPrenotazione;
-  var disponibili = null;
+  /* ---------- modalità della pagina ---------- */
+  var params = new URLSearchParams(location.search);
+  var chiavePass = params.get("pass");
+  var idInvito = params.get("invito");
+  var idGruppo = params.get("gruppo");
+  var modo = chiavePass ? "pass" : idInvito ? "invito" : idGruppo ? "unisciti" : "crea";
+  var DIM = C.rassegna.dimensioneGruppo;
+  var base = location.origin + location.pathname;
 
-  function renderMeter(r) {
+  var form = $("#form");
+  var card = $(".card");
+  var lead = $(".card__lead");
+  var groupBox = $(".group");
+  var result = $(".result");
+  var cta = $(".mobile-cta");
+  var titolo = $("#booking-title");
+
+  var TESTI = {
+    crea: {
+      titolo: "Pass di gruppo",
+      lead: "Il pass gratuito è per gruppi da " + DIM + ". Registrati, poi manda il link del gruppo ai tuoi " + (DIM - 1) + " amici. Quando tutti hanno confermato la propria email, ognuno riceve il suo pass con QR.",
+      bottone: "Crea il gruppo",
+      cta: "Crea il tuo gruppo"
+    },
+    unisciti: { titolo: "Entra nel gruppo", lead: "", bottone: "Entra nel gruppo", cta: "Entra nel gruppo" },
+    invito: { titolo: "Pass su invito", lead: "", bottone: "Richiedi il pass", cta: "Richiedi il pass" },
+    pass: { titolo: "Il tuo pass", lead: "", bottone: "", cta: "Il tuo pass" }
+  };
+  titolo.textContent = TESTI[modo].titolo;
+  lead.textContent = TESTI[modo].lead;
+  $("[type=submit]", form).textContent = TESTI[modo].bottone;
+  cta.textContent = TESTI[modo].cta;
+
+  function linkGruppo(id) { return base + "?gruppo=" + encodeURIComponent(id); }
+
+  /* ---------- disponibilità ---------- */
+  function renderMeter(s) {
     var label = $(".meter__label");
     var fill = $(".meter__fill");
     label.textContent = "";
-    if (!r || !r.ok) { label.textContent = "Disponibilità non verificabile ora. Puoi comunque provare a prenotare."; return; }
-    disponibili = r.disponibili;
-    var pct = r.capienza ? Math.round((1 - r.disponibili / r.capienza) * 100) : 0;
+    if (!s) { label.textContent = "Disponibilità non verificabile ora."; return; }
+    var pct = s.capienza ? Math.round((1 - s.disponibili / s.capienza) * 100) : 0;
     requestAnimationFrame(function () { fill.style.width = Math.min(100, Math.max(3, pct)) + "%"; });
-
-    if (passata || !r.aperta) { label.textContent = passata ? "Questa serata è passata." : "Prenotazioni chiuse."; chiudi(); return; }
-    if (r.disponibili <= 0) { label.innerHTML = "<strong>Pass esauriti.</strong> Seguici per le prossime serate."; chiudi(); return; }
-    var s = el("strong", null, r.disponibili + (r.disponibili === 1 ? " pass disponibile" : " pass disponibili"));
-    label.appendChild(s);
-    if (r.disponibili <= Math.max(10, r.capienza * 0.1)) label.appendChild(document.createTextNode(" · ultimi posti"));
-    setQty(+form.posti.value);
+    if (!s.aperta) { label.textContent = passata ? "Questa serata è passata." : "Prenotazioni chiuse."; return; }
+    if (s.disponibili <= 0) { label.appendChild(el("strong", null, "Pass esauriti.")); label.appendChild(document.createTextNode(" Seguici per le prossime serate.")); return; }
+    label.appendChild(el("strong", null, s.disponibili + (s.disponibili === 1 ? " pass disponibile" : " pass disponibili")));
+    if (s.disponibili <= Math.max(10, s.capienza * 0.1)) label.appendChild(document.createTextNode(" · ultimi posti"));
   }
 
-  function chiudi() {
-    $$("#form input, #form button").forEach(function (i) { i.disabled = true; });
-    $("#form [type=submit]").textContent = passata ? "Serata passata" : "Pass esauriti";
-    $(".mobile-cta").textContent = "Pass esauriti";
+  function blocca(messaggio, conLinkNuovoGruppo) {
+    form.hidden = true;
+    var p = el("p", "notice", messaggio);
+    lead.textContent = "";
+    lead.appendChild(p);
+    if (conLinkNuovoGruppo) {
+      var a = el("a", "btn btn--ghost btn--block", "Crea un nuovo gruppo");
+      a.href = base;
+      lead.appendChild(a);
+    }
+    cta.classList.add("is-hidden");
   }
 
-  /* ---------- quantità ---------- */
-  function limite() { return disponibili == null ? maxPosti : Math.max(1, Math.min(maxPosti, disponibili)); }
-  function setQty(v) {
-    v = Math.max(1, Math.min(limite(), v));
-    form.posti.value = v;
-    form.postiOut.value = v;
-    $('[data-step="-1"]').disabled = v <= 1;
-    $('[data-step="1"]').disabled = v >= limite();
+  /* ---------- gruppo: avanzamento ---------- */
+  function renderGruppo(g, target) {
+    target.textContent = "";
+    target.hidden = false;
+    var head = el("div", "group__head");
+    head.appendChild(el("span", null, g.capogruppo ? "Gruppo di " + g.capogruppo : "Il gruppo"));
+    head.appendChild(el("strong", null, g.confermati + "/" + g.dimensione + " confermati"));
+    target.appendChild(head);
+    var ol = el("ol", "group__slots");
+    for (var i = 0; i < g.dimensione; i++) {
+      var m = g.membri[i];
+      var li = el("li", m ? (m.confermato ? "is-ok" : "is-wait") : "is-free");
+      li.appendChild(el("span", "group__dot"));
+      li.appendChild(el("span", "group__name", m ? m.nome + (m.tu ? " (tu)" : "") : "Posto libero"));
+      li.appendChild(el("span", "group__state", m ? (m.confermato ? "confermato" : "deve confermare l'email") : ""));
+      ol.appendChild(li);
+    }
+    target.appendChild(ol);
+    if (g.stato === "aperto") {
+      var sc = new Date(g.scadenza);
+      target.appendChild(el("p", "group__note", "Il gruppo va completato entro " + GIORNI[sc.getDay()] + " " + sc.getDate() + " " + MESI[sc.getMonth()] + " alle " + ("0" + sc.getHours()).slice(-2) + ":" + ("0" + sc.getMinutes()).slice(-2) + "."));
+    }
   }
-  $$(".qty__btn").forEach(function (b) {
-    b.addEventListener("click", function () { setQty(+form.posti.value + +b.dataset.step); });
-  });
-  setQty(1);
+
+  function shareBox(link) {
+    var w = el("div", "share");
+    var input = el("input", "share__link");
+    input.readOnly = true; input.value = link; input.setAttribute("aria-label", "Link del gruppo");
+    input.addEventListener("focus", function () { input.select(); });
+    w.appendChild(input);
+    var row = el("div", "share__row");
+    var testo = "Ti aspetto a " + C.rassegna.nome + " il " + dataBreve + ": entra nel mio gruppo per il pass gratuito ";
+    if (navigator.share) {
+      var sh = el("button", "btn btn--small", "Condividi");
+      sh.type = "button";
+      sh.addEventListener("click", function () { navigator.share({ title: C.rassegna.nome, text: testo, url: link }).catch(function () {}); });
+      row.appendChild(sh);
+    }
+    var wa = el("a", "btn btn--small", "WhatsApp");
+    wa.href = "https://wa.me/?text=" + encodeURIComponent(testo + link);
+    wa.target = "_blank"; wa.rel = "noopener";
+    row.appendChild(wa);
+    var cp = el("button", "btn btn--small btn--ghost", "Copia link");
+    cp.type = "button";
+    cp.addEventListener("click", function () {
+      (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject())
+        .then(function () { cp.textContent = "Copiato"; }, function () { input.focus(); document.execCommand("copy"); cp.textContent = "Copiato"; });
+      setTimeout(function () { cp.textContent = "Copia link"; }, 2000);
+    });
+    row.appendChild(cp);
+    w.appendChild(row);
+    return w;
+  }
+
+  function mostraRisultato(nodi) {
+    form.hidden = true;
+    groupBox.hidden = true;
+    lead.textContent = "";
+    result.textContent = "";
+    nodi.forEach(function (n) { result.appendChild(n); });
+    result.hidden = false;
+    result.focus({ preventScroll: true });
+    cta.classList.add("is-hidden");
+  }
+
+  /* ---------- caricamento iniziale ---------- */
+  var statoGruppo = null;
+  // modulo firmato dal server: serve per inviare e ha un tempo minimo (anti-bot)
+  var modulo = null;
+  var moduloDa = 0;
+  var SECONDI_MINIMI = 4.5;
+  function nuovoModulo(r) { modulo = r.modulo; moduloDa = Date.now(); }
+
+  function avvia() {
+    if (modo === "pass") return caricaPass();
+    api("stato", { invito: idInvito, gruppo: idGruppo }).then(function (r) {
+      if (!r || !r.ok) { renderMeter(null); blocca((r && r.messaggio) || "Serata non disponibile."); return; }
+      if (r.dimensioneGruppo) DIM = r.dimensioneGruppo;
+      nuovoModulo(r);
+      renderMeter(r.serata);
+      if (!r.serata.aperta) return blocca(passata ? "Questa serata è passata." : "Le prenotazioni per questa serata sono chiuse.");
+
+      if (modo === "invito") {
+        if (!r.invito.valido) return blocca(r.invito.messaggio + " Senza invito puoi creare un gruppo da " + DIM + ".", true);
+        if (r.serata.disponibili < 1) return blocca("Pass esauriti.");
+        lead.textContent = "Invito «" + r.invito.etichetta + "». Il pass è personale e arriva via email con il QR.";
+      } else if (modo === "unisciti") {
+        var g = r.gruppo;
+        if (!g.valido) return blocca(g.messaggio, true);
+        statoGruppo = g;
+        renderGruppo(g, groupBox);
+        if (g.stato !== "aperto") return blocca(g.stato === "completo" ? "Questo gruppo è già completo." : "Questo gruppo è scaduto prima di essere completato.", true);
+        if (g.membri.length >= g.dimensione) return blocca("Il gruppo è al completo. Se qualcuno non conferma entro poche ore il posto si libera.", true);
+        lead.textContent = (g.capogruppo || "Un amico") + " ti ha invitato nel suo gruppo. Registrati con la tua email e conferma dal link che ti arriva: quando tutti e " + g.dimensione + " hanno confermato, ognuno riceve il suo pass con QR.";
+      } else if (r.serata.disponibili < DIM) {
+        return blocca("Non ci sono più posti per un nuovo gruppo da " + DIM + ".");
+      }
+      form.hidden = false;
+    }).catch(function () {
+      renderMeter(null);
+      blocca("Connessione non riuscita. Ricarica la pagina tra poco.");
+    });
+  }
+
+  function caricaPass() {
+    $(".meter").hidden = true;
+    lead.textContent = "Carico il tuo pass…";
+    api("pass", { chiave: chiavePass }).then(function (r) {
+      if (!r || !r.ok) return blocca((r && r.messaggio) || "Link non valido.", true);
+      if (r.pass.serata !== serata.id) {
+        location.replace(base + "?pass=" + encodeURIComponent(chiavePass) + "&serata=" + encodeURIComponent(r.pass.serata));
+        return;
+      }
+      lead.textContent = "";
+      var nodi = [];
+      if (r.avviso) nodi.push(el("p", "notice", r.avviso));
+      if (r.pass.attivo) {
+        nodi = nodi.concat(ticket(r));
+      } else {
+        nodi.push(el("p", "done__kicker", "Ciao " + r.pass.nome));
+        if (r.pass.stato === "confermato") nodi.push(el("p", "done__name", "Email confermata"));
+        if (r.gruppo) {
+          var gbox = el("div", "group");
+          renderGruppo(r.gruppo, gbox);
+          nodi.push(gbox);
+          if (r.gruppo.stato === "aperto") {
+            nodi.push(el("p", "done__text", "Il pass con QR si attiva quando tutti hanno confermato: ti arriva via email e lo trovi anche qui. Manca qualcuno? Rimanda il link del gruppo:"));
+            nodi.push(shareBox(linkGruppo(r.gruppo.id)));
+          } else if (r.gruppo.stato !== "completo") {
+            var a = el("a", "btn btn--ghost btn--block", "Crea un nuovo gruppo");
+            a.href = base;
+            nodi.push(a);
+          }
+        }
+      }
+      mostraRisultato(nodi);
+    }).catch(function () { blocca("Connessione non riuscita. Ricarica la pagina tra poco."); });
+  }
+
+  function ticket(r) {
+    var nodi = [];
+    nodi.push(el("p", "done__kicker", r.pass.checkin ? "Sei già entrato" : "Ci vediamo dentro la bolla"));
+    nodi.push(el("p", "done__name", r.pass.nome + " " + r.pass.cognome));
+    var t = el("div", "ticket");
+    t.appendChild(el("span", "ticket__label", "Codice pass"));
+    t.appendChild(el("span", "ticket__code", r.pass.codice));
+    t.appendChild(el("span", "ticket__meta", (r.pass.tipo === "invito" ? "Su invito" : "Pass di gruppo") + " · " + dataBreve));
+    if (window.qrcode && r.qr) {
+      var qr = qrcode(0, "M");
+      qr.addData(r.qr);
+      qr.make();
+      var box = el("div", "ticket__qr");
+      box.setAttribute("role", "img");
+      box.setAttribute("aria-label", "QR code del pass");
+      box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+      t.appendChild(box);
+    }
+    nodi.push(t);
+    nodi.push(el("p", "done__text", "Mostra questo QR all'ingresso. Vale una sola volta: non condividerlo."));
+    var ics = el("button", "btn btn--ghost btn--block", "Aggiungi al calendario");
+    ics.type = "button";
+    ics.addEventListener("click", function () { scaricaIcs(r.pass.codice); });
+    nodi.push(ics);
+    return nodi;
+  }
 
   /* ---------- invio ---------- */
   var errBox = $(".form__error");
@@ -211,9 +367,8 @@
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     errore("");
-    var campi = ["nome", "cognome", "email"];
     var primoErrato = null;
-    campi.forEach(function (c) {
+    ["nome", "cognome", "email"].forEach(function (c) {
       var i = form[c];
       i.value = i.value.trim();
       var ok = i.checkValidity() && i.value.length > 0;
@@ -230,28 +385,37 @@
     var testo = btn.textContent;
     btn.textContent = "";
     btn.appendChild(el("span", "spinner"));
-    btn.appendChild(el("span", null, "Prenoto…"));
+    btn.appendChild(el("span", null, "Un attimo…"));
     form.classList.add("is-loading");
 
     var dati = {
       nome: form.nome.value,
       cognome: form.cognome.value,
       email: form.email.value.toLowerCase(),
-      posti: +form.posti.value,
       privacy: true,
       newsletter: form.newsletter.checked,
       maggiorenne: C.rassegna.richiediMaggiorenne ? form.maggiorenne.checked : null,
       website: form.website.value
     };
+    var azione = modo === "invito" ? "invito" : modo === "unisciti" ? "unisciti" : "crea_gruppo";
+    if (modo === "invito") dati.invito = idInvito;
+    if (modo === "unisciti") dati.gruppo = idGruppo;
 
-    apiPrenota(dati)
+    // chi compila più in fretta del minimo aspetta in silenzio il tempo che manca
+    var attesa = Math.max(0, SECONDI_MINIMI * 1000 - (Date.now() - moduloDa));
+    new Promise(function (ok) { setTimeout(ok, attesa); })
+      .then(function () { dati.modulo = modulo; return api(azione, dati); })
       .then(function (r) {
         if (!r || !r.ok) {
           errore((r && r.messaggio) || "Qualcosa è andato storto. Riprova tra poco.");
-          if (r && r.errore === "esaurito") apiDisponibilita().then(renderMeter);
+          if (r && r.errore === "modulo") {
+            return api("stato", {}).then(function (s) {
+              if (s && s.ok) { nuovoModulo(s); errore("La sessione era scaduta: abbiamo ricaricato il modulo, premi di nuovo il bottone."); }
+            });
+          }
           return;
         }
-        conferma(dati, r);
+        fatto(azione, dati, r);
       })
       .catch(function () { errore("Connessione non riuscita. Controlla la rete e riprova."); })
       .then(function () {
@@ -260,26 +424,26 @@
       });
   });
 
-  function conferma(dati, r) {
-    form.hidden = true;
-    var done = $(".done");
-    $(".done__name", done).textContent = dati.nome + " " + dati.cognome;
-    $(".ticket__code", done).textContent = r.codice;
-    $(".ticket__meta", done).textContent = r.posti + (r.posti === 1 ? " pass" : " pass") + " · " + dataBreve;
-    if (DEMO) $(".done__text", done).textContent = "Modalità demo: nessuna email inviata. Collega Apps Script in config.js.";
-    done.hidden = false;
-    done.focus();
-    $(".mobile-cta").classList.add("is-hidden");
-    if (r.disponibili != null) renderMeter({ ok: true, aperta: true, capienza: lastCapienza, disponibili: r.disponibili });
+  function fatto(azione, dati, r) {
+    var nodi = [el("p", "done__kicker", "Ci siamo quasi"), el("p", "done__name", dati.nome + " " + dati.cognome)];
+    if (azione === "crea_gruppo") {
+      var ol = el("ol", "steps");
+      ol.appendChild(el("li", null, "Apri l'email che ti abbiamo mandato a " + dati.email + " e conferma (controlla anche lo spam)."));
+      ol.appendChild(el("li", null, "Manda questo link ai tuoi " + (DIM - 1) + " amici: ognuno si registra con la propria email."));
+      ol.appendChild(el("li", null, "Quando tutti hanno confermato, ognuno riceve il suo pass con QR."));
+      nodi.push(ol);
+      nodi.push(shareBox(linkGruppo(r.gruppo.id)));
+    } else if (azione === "unisciti") {
+      nodi.push(el("p", "done__text", "Ti abbiamo mandato una email a " + dati.email + ". Apri il link per confermare il tuo posto nel gruppo (controlla anche lo spam)."));
+    } else {
+      nodi[0].textContent = "Pass inviato";
+      nodi.push(el("p", "done__text", "Il tuo pass con QR è in arrivo a " + dati.email + ". Controlla anche lo spam."));
+    }
+    mostraRisultato(nodi);
   }
 
-  var lastCapienza = 0;
-  apiDisponibilita()
-    .then(function (r) { lastCapienza = r && r.capienza; renderMeter(r); })
-    .catch(function () { renderMeter(null); });
-
   /* ---------- calendario (.ics) ---------- */
-  $('[data-action="ics"]').addEventListener("click", function () {
+  function scaricaIcs(codice) {
     var ymd = serata.data.replace(/-/g, "");
     var dt;
     if (serata.orario) {
@@ -299,7 +463,7 @@
       "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""),
       dt,
       "SUMMARY:" + C.rassegna.nome + " — " + serata.lineup.map(function (a) { return a.nome; }).join(", "),
-      "DESCRIPTION:Pass " + $(".ticket__code").textContent,
+      "DESCRIPTION:Pass " + codice + " — " + location.href,
       luogo ? "LOCATION:" + luogo.replace(/,/g, "\\,") : null,
       "END:VEVENT", "END:VCALENDAR"
     ].filter(Boolean).join("\r\n");
@@ -307,16 +471,17 @@
     a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
     a.download = "bolla-" + serata.id + ".ics";
     document.body.appendChild(a); a.click(); a.remove();
-  });
+  }
+
+  avvia();
 
   /* ---------- UI: barra in alto e CTA mobile ---------- */
   var topbar = $(".topbar");
   addEventListener("scroll", function () { topbar.classList.toggle("is-scrolled", scrollY > 8); }, { passive: true });
 
-  var cta = $(".mobile-cta");
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) { cta.classList.toggle("is-hidden", en.isIntersecting || !$(".done").hidden); });
+      entries.forEach(function (en) { cta.classList.toggle("is-hidden", en.isIntersecting || !result.hidden || form.hidden); });
     }, { threshold: 0.15 }).observe($("#prenota"));
   }
 })();

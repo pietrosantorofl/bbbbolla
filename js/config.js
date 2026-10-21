@@ -20,9 +20,10 @@ window.BOLLA = {
     intro: [
       "bolla® è una rassegna di musica live: una serata alla volta, un piccolo mondo che si gonfia, galleggia e poi scoppia.",
       "Ritmi che arrivano da lontano, selezioni lente e calde, un bicchiere di vino buono. Entri, ti lasci portare, esci un po' diverso.",
-      "L'ingresso è gratuito con pass nominativo: prenotalo qui sotto in pochi secondi."
+      "L'ingresso è gratuito: forma un gruppo da 5 con i tuoi amici, oppure usa il link di invito che ti hanno mandato."
     ],
-    maxPassPerPrenotazione: 2,
+    /* Senza invito il pass è per gruppi: deve coincidere con CONFIG.dimensioneGruppo in apps-script/Code.gs */
+    dimensioneGruppo: 5,
     richiediMaggiorenne: false,
     /* true = iscrizione alla newsletter necessaria per avere il pass.
        Deve coincidere con CONFIG.newsletterObbligatoria in apps-script/Code.gs */
@@ -53,7 +54,7 @@ window.BOLLA = {
   ],
 
   infoUtili: [
-    { titolo: "Ingresso", testo: "Gratuito con pass. Il pass è nominativo: mostra il codice che ricevi via email all'ingresso." },
+    { titolo: "Ingresso", testo: "Gratuito con pass personale, per gruppi da 5 persone oppure su invito. Ognuno si registra con la propria email e riceve il suo QR da mostrare all'ingresso." },
     { titolo: "Capienza", testo: "I posti sono limitati. Il pass non garantisce l'ingresso dopo il raggiungimento della capienza massima del locale: arriva presto." },
     { titolo: "Bar", testo: "Consumazioni a pagamento. Il vino del giorno è a cura di Cantina controcorrente." },
     { titolo: "Foto e video", testo: "La serata sarà documentata con foto e video che potranno comparire sui canali social della rassegna." }

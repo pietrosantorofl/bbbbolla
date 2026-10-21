@@ -73,12 +73,15 @@
         </div>
         <p class="card__date" data-bind="dataLunga"></p>
 
-        <div class="meter" data-bind="meter" aria-live="polite">
+        <div class="meter" aria-live="polite">
           <div class="meter__bar"><span class="meter__fill"></span></div>
           <p class="meter__label">Controllo disponibilità…</p>
         </div>
 
-        <form class="form" id="form" novalidate>
+        <p class="card__lead"></p>
+        <div class="group" hidden></div>
+
+        <form class="form" id="form" novalidate hidden>
           <div class="field-row">
             <label class="field">
               <span>Nome</span>
@@ -93,16 +96,6 @@
             <span>Email</span>
             <input name="email" type="email" autocomplete="email" inputmode="email" required maxlength="120">
           </label>
-
-          <fieldset class="field qty">
-            <legend>Numero di pass</legend>
-            <div class="qty__ctrl">
-              <button type="button" class="qty__btn" data-step="-1" aria-label="Meno">−</button>
-              <output name="postiOut" class="qty__val">1</output>
-              <button type="button" class="qty__btn" data-step="1" aria-label="Più">+</button>
-            </div>
-            <input type="hidden" name="posti" value="1">
-          </fieldset>
 
           <label class="hp" aria-hidden="true">Sito web <input name="website" tabindex="-1" autocomplete="off"></label>
 
@@ -120,21 +113,11 @@
           </label>
 
           <p class="form__error" role="alert" hidden></p>
-          <button class="btn btn--block" type="submit">Prenota il pass</button>
-          <p class="form__note">Gratis. Ricevi il codice via email.</p>
+          <button class="btn btn--block" type="submit">Continua</button>
+          <p class="form__note">Gratis. Un pass a persona, con la tua email.</p>
         </form>
 
-        <div class="done" hidden tabindex="-1">
-          <p class="done__kicker">Ci vediamo dentro la bolla</p>
-          <p class="done__name"></p>
-          <div class="ticket">
-            <span class="ticket__label">Codice pass</span>
-            <span class="ticket__code"></span>
-            <span class="ticket__meta"></span>
-          </div>
-          <p class="done__text">Ti abbiamo inviato una email con il codice. Mostralo all'ingresso.</p>
-          <button type="button" class="btn btn--ghost btn--block" data-action="ics">Aggiungi al calendario</button>
-        </div>
+        <div class="result" hidden tabindex="-1"></div>
       </div>
     </aside>
   </main>
@@ -147,7 +130,9 @@
 
   <a href="#prenota" class="mobile-cta btn">Prenota pass gratuito</a>
 
+  <script src="js/vendor/qrcode.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/demo.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
