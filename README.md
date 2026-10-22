@@ -18,6 +18,9 @@ Una persona = un pass = un QR. Due strade:
 - Chi non conferma entro 12 ore può perdere il posto nel gruppo a favore di un altro amico.
 - Il link personale `?pass=<chiave>` mostra lo stato del gruppo e, quando attivo, il QR. Il QR contiene la stessa chiave.
 
+**Pass esauriti**: il sito mostra "Esaurito" e il modulo diventa iscrizione alla **lista d'attesa** (nome ed email).
+Le iscrizioni finiscono nel foglio **Attesa**: nessun pass automatico, decidi tu chi richiamare (per esempio con un link invito).
+
 ## Protezioni
 
 - **Tutti i controlli sono sul server** (Apps Script): il sito si può aggirare, il backend no.

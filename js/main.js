@@ -115,9 +115,6 @@
     if (C.rassegna.richiediMaggiorenne) { n.hidden = false; $("input", n).required = true; }
   });
   bind("demo", function (n) { n.hidden = !DEMO; });
-  bind("newsletterObbligo", function (n) {
-    if (C.rassegna.newsletterObbligatoria) { n.textContent = " (necessario per ricevere il pass gratuito)"; $("#form").newsletter.required = true; }
-  });
 
   /* ---------- API (Apps Script, o demo nel browser) ---------- */
   function api(action, dati) {
@@ -166,18 +163,25 @@
 
   function linkGruppo(id) { return base + "?gruppo=" + encodeURIComponent(id); }
 
-  /* ---------- disponibilità ---------- */
-  function renderMeter(s) {
-    var label = $(".meter__label");
-    var fill = $(".meter__fill");
-    label.textContent = "";
-    if (!s) { label.textContent = "Disponibilità non verificabile ora."; return; }
-    var pct = s.capienza ? Math.round((1 - s.disponibili / s.capienza) * 100) : 0;
-    requestAnimationFrame(function () { fill.style.width = Math.min(100, Math.max(3, pct)) + "%"; });
-    if (!s.aperta) { label.textContent = passata ? "Questa serata è passata." : "Prenotazioni chiuse."; return; }
-    if (s.disponibili <= 0) { label.appendChild(el("strong", null, "Pass esauriti.")); label.appendChild(document.createTextNode(" Seguici per le prossime serate.")); return; }
-    label.appendChild(el("strong", null, s.disponibili + (s.disponibili === 1 ? " pass disponibile" : " pass disponibili")));
-    if (s.disponibili <= Math.max(10, s.capienza * 0.1)) label.appendChild(document.createTextNode(" · ultimi posti"));
+  /* ---------- disponibilità: solo "Disponibile" / "Esaurito" ---------- */
+  function renderStato(testo, classe) {
+    var box = $(".status");
+    box.className = "status" + (classe ? " status--" + classe : "");
+    $(".status__label", box).textContent = testo;
+  }
+
+  // Posti finiti: il modulo resta, ma diventa iscrizione alla lista d'attesa (nome ed email).
+  var inAttesa = false;
+  function attivaAttesa() {
+    inAttesa = true;
+    titolo.textContent = "Lista d'attesa";
+    lead.textContent = "I pass gratuiti sono esauriti. Lascia nome ed email: se si libera un posto ti scriviamo noi.";
+    var cognome = form.cognome;
+    cognome.required = false;
+    cognome.closest(".field").hidden = true;
+    cognome.closest(".field-row").classList.add("field-row--uno");
+    $("[type=submit]", form).textContent = "Mettimi in lista d'attesa";
+    cta.textContent = "Lista d'attesa";
   }
 
   function blocca(messaggio, conLinkNuovoGruppo) {
@@ -276,15 +280,19 @@
     if (modo === "unisciti") lead.textContent = "Carico il gruppo…";
     form.hidden = false;
     statoPronto = api("stato", { invito: idInvito, gruppo: idGruppo }).then(function (r) {
-      if (!r || !r.ok) { renderMeter(null); blocca((r && r.messaggio) || "Serata non disponibile."); return; }
+      if (!r || !r.ok) { renderStato("Non disponibile", "esaurito"); blocca((r && r.messaggio) || "Serata non disponibile."); return; }
       if (r.dimensioneGruppo) DIM = r.dimensioneGruppo;
       nuovoModulo(r);
-      renderMeter(r.serata);
-      if (!r.serata.aperta) return blocca(passata ? "Questa serata è passata." : "Le prenotazioni per questa serata sono chiuse.");
+      if (!r.serata.aperta) {
+        renderStato(passata ? "Serata passata" : "Prenotazioni chiuse", "esaurito");
+        return blocca(passata ? "Questa serata è passata." : "Le prenotazioni per questa serata sono chiuse.");
+      }
+      var esaurito = modo === "invito" ? r.serata.disponibili < 1 : modo === "crea" && r.serata.disponibili < DIM;
+      renderStato(esaurito ? "Esaurito" : "Disponibile", esaurito ? "esaurito" : "ok");
 
       if (modo === "invito") {
         if (!r.invito.valido) return blocca(r.invito.messaggio + " Senza invito puoi creare un gruppo da " + DIM + ".", true);
-        if (r.serata.disponibili < 1) return blocca("Pass esauriti.");
+        if (esaurito) return attivaAttesa();
         lead.textContent = "Invito «" + r.invito.etichetta + "». Il pass è personale e arriva via email con il QR.";
       } else if (modo === "unisciti") {
         var g = r.gruppo;
@@ -294,17 +302,17 @@
         if (g.stato !== "aperto") return blocca(g.stato === "completo" ? "Questo gruppo è già completo." : "Questo gruppo è scaduto prima di essere completato.", true);
         if (g.membri.length >= g.dimensione) return blocca("Il gruppo è al completo. Se qualcuno non conferma entro poche ore il posto si libera.", true);
         lead.textContent = (g.capogruppo || "Un amico") + " ti ha invitato nel suo gruppo. Registrati con la tua email e conferma dal link che ti arriva: quando tutti e " + g.dimensione + " hanno confermato, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno lo riceve.";
-      } else if (r.serata.disponibili < DIM) {
-        return blocca("Non ci sono più posti per un nuovo gruppo da " + DIM + ".");
+      } else if (esaurito) {
+        attivaAttesa();
       }
     }).catch(function () {
-      renderMeter(null);
+      renderStato("Non verificabile");
       blocca("Connessione non riuscita. Ricarica la pagina tra poco.");
     });
   }
 
   function caricaPass() {
-    $(".meter").hidden = true;
+    $(".status").hidden = true;
     lead.textContent = "Carico il tuo pass…";
     api("pass", { chiave: chiavePass }).then(function (r) {
       if (!r || !r.ok) return blocca((r && r.messaggio) || "Link non valido.", true);
@@ -376,17 +384,15 @@
     e.preventDefault();
     errore("");
     var primoErrato = null;
-    ["nome", "cognome", "email"].forEach(function (c) {
+    (inAttesa ? ["nome", "email"] : ["nome", "cognome", "email"]).forEach(function (c) {
       var i = form[c];
       i.value = i.value.trim();
       var ok = i.checkValidity() && i.value.length > 0;
       i.setAttribute("aria-invalid", ok ? "false" : "true");
       if (!ok && !primoErrato) primoErrato = i;
     });
-    if (primoErrato) { errore(primoErrato.name === "email" ? "Controlla l'indirizzo email." : "Inserisci nome e cognome."); primoErrato.focus(); return; }
+    if (primoErrato) { errore(primoErrato.name === "email" ? "Controlla l'indirizzo email." : inAttesa ? "Inserisci il tuo nome." : "Inserisci nome e cognome."); primoErrato.focus(); return; }
     if (C.rassegna.richiediMaggiorenne && !form.maggiorenne.checked) { errore("L'evento è riservato ai maggiorenni."); return; }
-    if (!form.privacy.checked) { errore("Serve il consenso privacy per inviarti il pass."); return; }
-    if (C.rassegna.newsletterObbligatoria && !form.newsletter.checked) { errore("Il pass gratuito è riservato agli iscritti alla newsletter di bolla®."); return; }
     if (form.website.value) return; // bot
 
     var btn = $("[type=submit]", form);
@@ -400,12 +406,13 @@
       nome: form.nome.value,
       cognome: form.cognome.value,
       email: form.email.value.toLowerCase(),
+      // niente caselle: cliccando il bottone si accettano informativa e newsletter (testo sotto il bottone)
       privacy: true,
-      newsletter: form.newsletter.checked,
+      newsletter: true,
       maggiorenne: C.rassegna.richiediMaggiorenne ? form.maggiorenne.checked : null,
       website: form.website.value
     };
-    var azione = modo === "invito" ? "invito" : modo === "unisciti" ? "unisciti" : "crea_gruppo";
+    var azione = inAttesa ? "lista_attesa" : modo === "invito" ? "invito" : modo === "unisciti" ? "unisciti" : "crea_gruppo";
     if (modo === "invito") dati.invito = idInvito;
     if (modo === "unisciti") dati.gruppo = idGruppo;
 
@@ -437,8 +444,11 @@
   });
 
   function fatto(azione, dati, r) {
-    var nodi = [el("p", "done__kicker", "Ci siamo quasi"), el("p", "done__name", dati.nome + " " + dati.cognome)];
-    if (azione === "crea_gruppo") {
+    var nodi = [el("p", "done__kicker", "Ci siamo quasi"), el("p", "done__name", (dati.nome + " " + dati.cognome).trim())];
+    if (azione === "lista_attesa") {
+      nodi[0].textContent = "Sei in lista d'attesa";
+      nodi.push(el("p", "done__text", "Se si libera un posto ti scriviamo a " + dati.email + ". Non serve fare altro."));
+    } else if (azione === "crea_gruppo") {
       var ol = el("ol", "steps");
       ol.appendChild(el("li", null, "Apri l'email che ti abbiamo mandato a " + dati.email + " e conferma (controlla anche lo spam)."));
       ol.appendChild(el("li", null, "Manda questo link ai tuoi " + (DIM - 1) + " amici: ognuno si registra con la propria email."));

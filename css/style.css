@@ -189,6 +189,8 @@ a { color: inherit; }
   border-top: 1.5px solid var(--ink);
 }
 
+.layout__cta { grid-column: 1 / -1; margin-bottom: clamp(-8px, -2vw, -24px); }
+
 .eyebrow {
   margin: 0 0 8px;
   font-size: 14px;
@@ -282,19 +284,14 @@ a { color: inherit; }
   padding: 4px 10px; border-radius: 999px; background: var(--navy); color: #fff;
 }
 
-.meter { margin-bottom: 20px; }
-.meter__bar { height: 8px; border-radius: 99px; background: rgba(18,18,18,.1); overflow: hidden; }
-.meter__fill {
-  display: block; height: 100%; width: 0;
-  background: linear-gradient(90deg, var(--orange), var(--pink) 50%, var(--red));
-  border-radius: inherit;
-  transition: width .8s cubic-bezier(.2, .8, .2, 1);
-}
-.meter__label { margin: 8px 0 0; font-size: 15px; }
-.meter__label strong { font-weight: 600; }
+.status { display: flex; align-items: center; gap: 8px; margin: 0 0 18px; font-size: 15px; font-weight: 600; }
+.status__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.status--ok .status__dot { background: #1f9d55; box-shadow: 0 0 0 4px rgba(31, 157, 85, .15); }
+.status--esaurito .status__dot { background: var(--red); box-shadow: 0 0 0 4px rgba(255, 59, 28, .15); }
 
 .form { display: grid; gap: 14px; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-row--uno { grid-template-columns: 1fr; }
 .field { display: grid; gap: 6px; margin: 0; border: 0; padding: 0; min-width: 0; }
 .field > span, .field > legend { font-size: 14px; font-weight: 500; padding: 0; }
 .field input {
@@ -321,7 +318,8 @@ a { color: inherit; }
   margin: 0; padding: 10px 14px; border-radius: 12px;
   background: rgba(196, 35, 27, .08); color: var(--err); font-size: 15px;
 }
-.form__note { margin: 0; text-align: center; font-size: 13px; color: var(--muted); }
+.form__legal { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.form__legal a { color: inherit; text-underline-offset: 2px; }
 .form.is-loading .btn { pointer-events: none; }
 .form.is-loading .btn span { opacity: .6; }
 .spinner {
@@ -401,7 +399,7 @@ a { color: inherit; }
   gap: 16px;
   text-align: center;
 }
-.footer__banner { width: min(560px, 100%); height: auto; border-radius: 18px; }
+.footer__logo { width: 160px; height: auto; }
 .footer__links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
 .footer__links a { text-underline-offset: 3px; }
 .footer__small { margin: 0; font-size: 13px; color: var(--muted); }

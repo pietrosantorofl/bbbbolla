@@ -14,6 +14,7 @@
  *   Inviti  token | etichetta | serata | max | scadenza | attivo | creato
  *   Gruppi  id | serata | creato | scadenza | capogruppo | stato | completato
  *   Pass    creato | serata | tipo | rif | nome | cognome | email | email_norm | chiave | codice | stato | confermato | checkin | newsletter
+ *   Attesa  creato | serata | nome | cognome | email | email_norm | arrivato_da | newsletter | note
  *
  * Web App: POST body JSON { action, ... } con action = stato | crea_gruppo | unisciti | invito | pass
  */
@@ -22,7 +23,7 @@ var CONFIG = {
   nomeMittente: 'bolla®',
   replyTo: '',                    // es. 'ciao@bbbbolla.it' (vuoto = account Google che pubblica lo script)
   sito: 'https://bbbbolla.it',
-  luogo: '',                      // compare nelle email, es. 'Nome locale, Via ..., Catania'
+  luogo: 'MONO, Via Gornalunga 12, 95129 Catania CT',   // compare nelle email
   orario: '',                     // compare nelle email, es. 'dalle 19:30'
   newsletterObbligatoria: true,   // deve coincidere con newsletterObbligatoria in js/config.js
   dimensioneGruppo: 3,
@@ -45,7 +46,8 @@ var COLONNE = {
   Serate: ['id', 'titolo', 'data', 'capienza', 'aperta'],
   Inviti: ['token', 'etichetta', 'serata', 'max', 'scadenza', 'attivo', 'creato'],
   Gruppi: ['id', 'serata', 'creato', 'scadenza', 'capogruppo', 'stato', 'completato'],
-  Pass: ['creato', 'serata', 'tipo', 'rif', 'nome', 'cognome', 'email', 'email_norm', 'chiave', 'codice', 'stato', 'confermato', 'checkin', 'newsletter']
+  Pass: ['creato', 'serata', 'tipo', 'rif', 'nome', 'cognome', 'email', 'email_norm', 'chiave', 'codice', 'stato', 'confermato', 'checkin', 'newsletter'],
+  Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note']
 };
 var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome'];
 // riserva se la lista online non è raggiungibile
@@ -144,6 +146,7 @@ function doPost(e) {
       case 'unisciti': return json_(azioneUnisciti_(d));
       case 'invito': return json_(azioneInvito_(d));
       case 'pass': return json_(azionePass_(d));
+      case 'lista_attesa': return json_(azioneListaAttesa_(d));
     }
     return json_(errore_('dati', 'Azione sconosciuta.'));
   } catch (err) {
@@ -255,11 +258,11 @@ function azioneInvito_(d) {
 }
 
 // Controlli comuni a ogni registrazione: modulo (timer + firma), dati, tetto al minuto, lock.
-function registrazione_(d, fn) {
+function registrazione_(d, fn, cognomeFacoltativo) {
   var bot = controllaModulo_(d.modulo);
   if (bot) return bot;
   if (d.website) return errore_('modulo', 'Richiesta non valida.'); // honeypot compilato
-  var p = persona_(d);
+  var p = persona_(d, cognomeFacoltativo);
   if (p.errore) return p;
   return conLock_(function () {
     if (tettoRaggiunto_()) return errore_('occupato', 'In questo momento stanno arrivando troppe registrazioni. Riprova tra un minuto.');
@@ -270,6 +273,28 @@ function registrazione_(d, fn) {
     }
     return out;
   });
+}
+
+// Lista d'attesa: a posti esauriti si lasciano nome ed email. Nessun pass: decidi tu chi richiamare
+// (per esempio mandando un link invito). Chi ha già un pass vivo per la serata viene rimandato al suo link.
+function azioneListaAttesa_(d) {
+  return registrazione_(d, function (p) {
+    var db = carica_();
+    var s = serata_(db, d.serata);
+    if (!s) return errore_('serata', 'Serata non trovata.');
+    if (new Date() > fineSerata_(s)) return errore_('chiusa', 'Questa serata è passata.');
+    var dup = duplicato_(db, s, p);
+    if (dup) return dup;
+    var gia = db.Attesa.some(function (r) { return r.serata === s.id && r.email_norm === p.emailNorm; });
+    if (gia) return errore_('attesa', 'Sei già in lista d\'attesa per questa serata: ti scriviamo noi se si libera un posto.');
+    var posizione = db.Attesa.filter(function (r) { return r.serata === s.id; }).length + 1;
+    var riga = {
+      creato: new Date(), serata: s.id, nome: p.nome, cognome: p.cognome, email: p.email, email_norm: p.emailNorm,
+      arrivato_da: d.invito ? 'invito ' + pulisci_(d.invito, 20) : 'sito', newsletter: p.newsletter ? 'TRUE' : 'FALSE', note: ''
+    };
+    appendi_('Attesa', riga);
+    return { ok: true, posizione: posizione, _email: quotaOk_() ? function () { emailAttesa_(riga, s); } : null };
+  }, true);
 }
 
 // Pagina personale: aprirla dal link dell'email conferma l'indirizzo.
@@ -334,11 +359,12 @@ function azionePass_(d) {
    Regole
    ============================================================ */
 
-function persona_(d) {
+function persona_(d, cognomeFacoltativo) {
   var nome = pulisci_(d.nome, 60);
   var cognome = pulisci_(d.cognome, 60);
   var email = String(d.email || '').trim().toLowerCase().slice(0, 120);
-  if (!nome || !cognome) return errore_('dati', 'Inserisci nome e cognome.');
+  if (!nome) return errore_('dati', 'Inserisci il tuo nome.');
+  if (!cognome && !cognomeFacoltativo) return errore_('dati', 'Inserisci nome e cognome.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return errore_('dati', "Controlla l'indirizzo email.");
   var erroreEmail = controllaDominio_(email.split('@')[1]);
   if (erroreEmail) return erroreEmail;
@@ -618,6 +644,20 @@ function emailConferma_(pass, s, g, capogruppo) {
     layout_({ banner: 'banner-logo.jpg', anteprima: 'Conferma la tua email per il pass di gruppo', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }), null);
 }
 
+function emailAttesa_(r, s) {
+  var data = dataBreve_(s);
+  var corpo =
+    kicker_('Lista d\'attesa') +
+    titolo_('Ciao ' + esc_(r.nome) + ', sei in lista') +
+    paragrafo_('I pass gratuiti per la serata del ' + data + ' sono esauriti, ma ti abbiamo messo in lista d\'attesa. ' +
+      'Se si libera un posto ti scriviamo noi a questo indirizzo.') +
+    dettagli_(s, data) +
+    nota_('Non serve fare altro. Questa email non è un pass e non dà diritto all\'ingresso.');
+  invia_(r.email, 'Sei in lista d\'attesa — bolla® ' + data,
+    'Ciao ' + r.nome + ', sei in lista d\'attesa per bolla® del ' + data + '. Se si libera un posto ti scriviamo noi.',
+    layout_({ banner: 'banner-logo.jpg', anteprima: 'Sei in lista d\'attesa: ti scriviamo se si libera un posto', corpo: corpo, s: s, newsletter: vero_(r.newsletter) }), null);
+}
+
 function emailPass_(pass, s) {
   var data = dataBreve_(s);
   var corpo =
@@ -689,7 +729,7 @@ function nota_(t) {
 function dettagli_(s, data) {
   var righe = [['Quando', data + (CONFIG.orario ? ', ' + CONFIG.orario : '')]];
   if (CONFIG.luogo) righe.push(['Dove', CONFIG.luogo]);
-  righe.push(['Ingresso', 'Gratuito con questo pass']);
+  righe.push(['Ingresso', 'Gratuito con pass']);
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;font-size:15px">' +
     righe.map(function (r) {
       return '<tr><td style="padding:8px 0;border-top:1px solid #d6d3ce;width:90px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#5f5b56">' + r[0] + '</td>' +

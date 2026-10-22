@@ -11,7 +11,7 @@ window.BOLLA = {
     "https://script.google.com/macros/s/AKfycbzEckzChK4ZcFHJ7wOjREzUTepDHg8QxMismXJwFMElQ1BRL8c74Ltsrsx2YinHvO5v4w/exec",
 
   contatti: {
-    email: null,              // es. "ciao@bbbbolla.it"
+    email: "bollacatania@gmail.com",
     instagram: null           // es. "https://instagram.com/bbbbolla"
   },
 
@@ -40,9 +40,9 @@ window.BOLLA = {
       data: "2026-10-30",          // AAAA-MM-GG
       orario: null,                // es. { inizio: "19:30", fine: "01:00" }
       luogo: {
-        nome: null,                // es. "Nome del locale"
-        indirizzo: null,           // es. "Via Etnea 1, Catania"
-        mappa: null                // link Google Maps
+        nome: "MONO",
+        indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
+        mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
       },
       lineup: [
         { nome: "Ritmi in Colombia", tag: "Lab" },

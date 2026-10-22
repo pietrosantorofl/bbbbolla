@@ -38,6 +38,9 @@
   </section>
 
   <main class="layout" id="contenuto">
+    <div class="layout__cta">
+      <a href="#prenota" class="btn">Prenota pass</a>
+    </div>
     <article class="details">
       <p class="eyebrow" data-bind="sottotitolo"></p>
       <h1 class="details__title"><img class="details__logo" src="assets/bolla-logo.png" alt="bolla®" width="808" height="312"> <span class="details__date" data-bind="dataLunga"></span></h1>
@@ -70,10 +73,7 @@
         </div>
         <p class="card__date" data-bind="dataLunga"></p>
 
-        <div class="meter" aria-live="polite">
-          <div class="meter__bar"><span class="meter__fill"></span></div>
-          <p class="meter__label">Controllo disponibilità…</p>
-        </div>
+        <p class="status" aria-live="polite"><span class="status__dot"></span><span class="status__label">Controllo disponibilità…</span></p>
 
         <p class="card__lead"></p>
         <div class="group" hidden></div>
@@ -100,18 +100,9 @@
             <input type="checkbox" name="maggiorenne">
             <span>Dichiaro di essere maggiorenne.</span>
           </label>
-          <label class="check">
-            <input type="checkbox" name="privacy" required>
-            <span>Ho letto l'<a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a> e acconsento al trattamento dei dati per la gestione del pass.</span>
-          </label>
-          <label class="check">
-            <input type="checkbox" name="newsletter">
-            <span>Mi iscrivo alla newsletter di bolla® e accetto di ricevere informazioni sulle prossime serate<span data-bind="newsletterObbligo"></span>. La mia email non sarà ceduta a terzi e posso disiscrivermi quando voglio.</span>
-          </label>
-
           <p class="form__error" role="alert" hidden></p>
           <button class="btn btn--block" type="submit">Continua</button>
-          <p class="form__note">Gratis. Un pass a persona, con la tua email.</p>
+          <p class="form__legal">Cliccando sul bottone accetti l'<a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a> e ti iscrivi alla newsletter di bolla®, necessaria per il pass gratuito. La tua email non sarà ceduta a terzi e puoi disiscriverti quando vuoi.</p>
         </form>
 
         <div class="result" hidden tabindex="-1"></div>
@@ -120,7 +111,7 @@
   </main>
 
   <footer class="footer">
-    <img src="assets/banner-logo.jpg" alt="bolla®" class="footer__banner" width="851" height="315" loading="lazy">
+    <img src="assets/bolla-logo.png" alt="bolla®" class="footer__logo" width="808" height="312" loading="lazy">
     <nav class="footer__links" data-bind="contatti"></nav>
     <p class="footer__small"><a href="privacy.html">Privacy</a> · © <span data-bind="anno"></span> bolla®</p>
   </footer>
