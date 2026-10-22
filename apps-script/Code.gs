@@ -135,6 +135,7 @@ function doGet() {
     '<p>Fogli: ' + Object.keys(COLONNE).map(function (n) { return ss.getSheetByName(n) ? n + ' ✓' : n + ' ✗'; }).join(' · ') + '</p>' +
     '<p>Email Gmail ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p>' +
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
+    '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p></div>';
   return HtmlService.createHtmlOutput(html).setTitle('bolla® backend');
 }
@@ -190,6 +191,15 @@ function aggiornamentiUnaTantum_() {
       ['Pietro', 'Dario', 'Fabrizio', 'Tommaso'].forEach(function (nome) {
         appendi_('Inviti', { token: token_(12), etichetta: nome, serata: '2026-10-30', max: '', scadenza: '', attivo: 'TRUE', creato: new Date() });
       });
+    } },
+    // chiave Brevo incollata per errore nella colonna "chiave" del foglio Pass: va nelle proprietà, la riga si cancella
+    { id: 'chiave-brevo-dal-foglio-pass', fai: function () {
+      var props = PropertiesService.getScriptProperties();
+      db.Pass.filter(function (r) { return /^xkeysib-/.test(r.chiave); }).reverse().forEach(function (r) {
+        props.setProperty('BREVO_API_KEY', r.chiave.trim());
+        r._foglio.deleteRow(r._riga);
+      });
+      provaBrevo_();
     } },
     { id: 'inviti-organizzatori-senza-limite', fai: function () {
       db.Inviti.forEach(function (inv) {
@@ -955,6 +965,21 @@ function impostaChiaveBrevoDaMenu() {
   var props = PropertiesService.getScriptProperties();
   if (chiave) props.setProperty('BREVO_API_KEY', chiave); else props.deleteProperty('BREVO_API_KEY');
   ui.alert(chiave ? 'Chiave salvata. Ora usa "Invia email di prova" per controllare.' : 'Brevo scollegato: le email partono solo da Gmail.');
+}
+
+// Email di prova automatica: l'esito (mai la chiave) resta nelle proprietà e compare nella pagina di stato del backend
+function provaBrevo_() {
+  var props = PropertiesService.getScriptProperties();
+  var chiave = chiaveBrevo_();
+  if (!chiave) return;
+  try {
+    inviaBrevo_(chiave, CONFIG.replyTo, '[Prova] bolla® via Brevo', 'Email di prova inviata con Brevo.',
+      layout_({ banner: 'banner-sfera.jpg', anteprima: 'Email di prova', corpo: kicker_('Prova') + titolo_('Brevo funziona') +
+        paragrafo_('Questa email è partita da Brevo con mittente ' + CONFIG.mittenteBrevo + '.'), s: { titolo: 'bolla®' }, newsletter: false }), null);
+    props.setProperty('BREVO_ESITO', 'ok ' + new Date().toISOString());
+  } catch (err) {
+    props.setProperty('BREVO_ESITO', 'errore ' + new Date().toISOString() + ': ' + String(err.message).slice(0, 300));
+  }
 }
 
 // Manda a te (replyTo) un'email di prova con QR passando da Brevo, per verificare chiave, mittente e dominio
