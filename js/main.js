@@ -46,7 +46,7 @@
     n.textContent = dataLunga.charAt(0).toUpperCase() + dataLunga.slice(1);
     n.appendChild(document.createElement("br"));
     n.appendChild(serata.orario
-      ? document.createTextNode("Ore " + serata.orario.inizio + (serata.orario.fine ? " – " + serata.orario.fine : ""))
+      ? document.createTextNode(serata.orario.fine ? "Ore " + serata.orario.inizio + " – " + serata.orario.fine : "Dalle " + serata.orario.inizio)
       : pending("Orario in arrivo"));
   });
 
@@ -287,7 +287,7 @@
         renderStato(passata ? "Serata passata" : "Prenotazioni chiuse", "esaurito");
         return blocca(passata ? "Questa serata è passata." : "Le prenotazioni per questa serata sono chiuse.");
       }
-      var esaurito = modo === "invito" ? r.serata.disponibili < 1 : modo === "crea" && r.serata.disponibili < DIM;
+      var esaurito = modo === "invito" ? !r.serata.postiSingolo : modo === "crea" && !r.serata.postiGruppo;
       renderStato(esaurito ? "Esaurito" : "Disponibile", esaurito ? "esaurito" : "ok");
 
       if (modo === "invito") {
@@ -468,8 +468,11 @@
   function scaricaIcs(codice) {
     var ymd = serata.data.replace(/-/g, "");
     var dt;
-    if (serata.orario) {
-      var fine = serata.orario.fine || serata.orario.inizio;
+    if (serata.orario && !serata.orario.fine) {
+      // orario di fine non dichiarato: evento di 5 ore nel calendario
+      dt = "DTSTART;TZID=Europe/Rome:" + ymd + "T" + serata.orario.inizio.replace(":", "") + "00\r\nDURATION:PT5H";
+    } else if (serata.orario) {
+      var fine = serata.orario.fine;
       var giornoFine = fine < serata.orario.inizio ? new Date(d.getTime() + 864e5) : d;
       var ymdFine = giornoFine.getFullYear() + ("0" + (giornoFine.getMonth() + 1)).slice(-2) + ("0" + giornoFine.getDate()).slice(-2);
       dt = "DTSTART;TZID=Europe/Rome:" + ymd + "T" + serata.orario.inizio.replace(":", "") + "00\r\n" +

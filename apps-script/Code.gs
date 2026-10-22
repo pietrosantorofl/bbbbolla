@@ -24,7 +24,7 @@ var CONFIG = {
   replyTo: '',                    // es. 'ciao@bbbbolla.it' (vuoto = account Google che pubblica lo script)
   sito: 'https://bbbbolla.it',
   luogo: 'MONO, Via Gornalunga 12, 95129 Catania CT',   // compare nelle email
-  orario: '',                     // compare nelle email, es. 'dalle 19:30'
+  orario: 'dalle 20:00',          // compare nelle email
   newsletterObbligatoria: true,   // deve coincidere con newsletterObbligatoria in js/config.js
   dimensioneGruppo: 3,
   oreValiditaGruppo: 48,          // dopo, un gruppo incompleto scade e libera i posti
@@ -161,8 +161,26 @@ function doPost(e) {
  * Lo installa doGet: basta aprire l'URL della Web App da proprietario. */
 function sveglia() {
   CacheService.getScriptCache().get('sveglia');
+  aggiornamentiUnaTantum_();
   carica_();
   dominiUsaEGetta_();
+}
+
+// Modifiche ai dati da fare una volta sola: partono con la sveglia (ogni 5 minuti), ognuna segnata
+// nelle proprietà dello script così non si ripete. Poi la riga puoi cambiarla a mano nel foglio.
+function aggiornamentiUnaTantum_() {
+  var props = PropertiesService.getScriptProperties();
+  var db = carica_();
+  [
+    { id: 'capienza-2026-10-30-300', fai: function () {
+      var s = trova_(db.Serate, 'id', '2026-10-30');
+      if (s) aggiorna_(db.Serate, s, { capienza: 300 });
+    } }
+  ].forEach(function (a) {
+    if (props.getProperty('fatto:' + a.id)) return;
+    a.fai();
+    props.setProperty('fatto:' + a.id, new Date().toISOString());
+  });
 }
 
 function installaSveglia_() {
@@ -180,7 +198,10 @@ function azioneStato_(d) {
   var db = carica_();
   var s = serata_(db, d.serata);
   if (!s) return errore_('serata', 'Serata non trovata.');
-  var out = { ok: true, modulo: tokenModulo_(), dimensioneGruppo: CONFIG.dimensioneGruppo, serata: { aperta: serataAperta_(s), capienza: s.capienza, disponibili: disponibili_(db, s) } };
+  // capienza e posti rimasti non escono mai dal backend: solo se c'è posto per un gruppo o per una persona
+  var liberi = disponibili_(db, s);
+  var out = { ok: true, modulo: tokenModulo_(), dimensioneGruppo: CONFIG.dimensioneGruppo,
+    serata: { aperta: serataAperta_(s), postiGruppo: liberi >= CONFIG.dimensioneGruppo, postiSingolo: liberi >= 1 } };
   if (d.invito) {
     var inv = invito_(db, d.invito, s);
     out.invito = inv.errore ? { valido: false, messaggio: inv.messaggio } : { valido: true, etichetta: inv.etichetta };

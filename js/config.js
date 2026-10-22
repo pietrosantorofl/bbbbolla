@@ -38,7 +38,7 @@ window.BOLLA = {
     {
       id: "2026-10-30",
       data: "2026-10-30",          // AAAA-MM-GG
-      orario: null,                // es. { inizio: "19:30", fine: "01:00" }
+      orario: { inizio: "20:00", fine: null },   // fine: null = "dalle 20:00"
       luogo: {
         nome: "MONO",
         indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
