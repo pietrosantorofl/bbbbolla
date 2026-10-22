@@ -46,7 +46,7 @@ window.BOLLA = {
         mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
       },
       lineup: [
-        { nome: "Ritmi in Colombia", tag: "Workshop" },
+        { nome: "Ritmi in Colombia", tag: "Workshop", link: "https://www.instagram.com/karvpercu/" },
         { nome: "Selva Cosmica", tag: "Live", link: "https://www.instagram.com/selvacosmica_music/" },
         { nome: "Franzuà", tag: "Sel Musicali", note: "downtempo · cumbia · afrobeat", link: "https://www.instagram.com/franzua_imagerie/" },
         { nome: "Dario Aiello", tag: "Sel Musicali", link: "https://www.instagram.com/darioaiello77/" },
