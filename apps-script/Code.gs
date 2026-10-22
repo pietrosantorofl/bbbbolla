@@ -172,6 +172,9 @@ function doPost(e) {
 function sveglia() {
   CacheService.getScriptCache().get('sveglia');
   aggiornamentiUnaTantum_();
+  // finché l'ultima prova Brevo è fallita, riprova a ogni giro: quando funziona arriva l'email e si ferma
+  var esitoBrevo = PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || '';
+  if (chiaveBrevo_() && esitoBrevo.indexOf('errore') === 0) provaBrevo_();
   carica_();
   dominiUsaEGetta_();
 }
