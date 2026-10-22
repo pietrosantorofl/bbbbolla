@@ -61,7 +61,8 @@ Valori regolabili in `CONFIG` in cima a `apps-script/Code.gs`.
 ```
 .
 ├── index.html             Pagina principale (poster + dettagli + scheda pass)
-├── privacy.html           Informativa privacy (compila i campi evidenziati in giallo)
+├── privacy.html           Informativa privacy
+├── manifesto.html         Manifesto di bolla® (testi del carosello)
 ├── CNAME                  Dominio per GitHub Pages (bbbbolla.it)
 ├── css/style.css          Stili (palette in cima al file)
 ├── js/config.js           ← CONTENUTI: serate, line-up, luogo, orari, testi, URL backend

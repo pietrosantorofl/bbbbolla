@@ -17,13 +17,22 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/style.css?v=202610222154">
+  <link rel="stylesheet" href="css/style.css?v=202610222205">
 </head>
 <body>
   <header class="topbar">
     <a href="./" class="topbar__logo" aria-label="bolla® home"><img src="assets/bolla-logo.png" alt="bolla®" width="808" height="312"></a>
-    <a href="#prenota" class="btn btn--small">Prenota pass</a>
+    <nav class="topbar__nav">
+      <a href="manifesto.html" class="topbar__link">Manifesto</a>
+      <a href="#prenota" class="btn btn--small">Prenota pass</a>
+    </nav>
   </header>
+
+  <!-- presentazione breve della rassegna, con link al manifesto -->
+  <section class="presentazione">
+    <p class="presentazione__testo" data-bind="presentazione">bolla® è una rassegna di musica dal vivo a Catania.</p>
+    <a class="presentazione__link" href="manifesto.html">Leggi il manifesto <span aria-hidden="true">→</span></a>
+  </section>
 
   <!-- HERO: sfera con logo, date in verticale, line-up -->
   <section class="hero" aria-label="Serata">
@@ -117,9 +126,9 @@
 
   <a href="#prenota" class="mobile-cta btn">Prenota pass gratuito</a>
 
-  <script src="js/vendor/qrcode.js?v=202610222154"></script>
-  <script src="js/config.js?v=202610222154"></script>
-  <script src="js/demo.js?v=202610222154"></script>
-  <script src="js/main.js?v=202610222154"></script>
+  <script src="js/vendor/qrcode.js?v=202610222205"></script>
+  <script src="js/config.js?v=202610222205"></script>
+  <script src="js/demo.js?v=202610222205"></script>
+  <script src="js/main.js?v=202610222205"></script>
 </body>
 </html>
