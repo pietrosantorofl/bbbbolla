@@ -59,6 +59,12 @@
     if (l.indirizzo) { n.appendChild(document.createElement("br")); n.appendChild(document.createTextNode(l.indirizzo)); }
   });
 
+  bind("ingresso", function (n) {
+    if (!serata.senzaPass) return;
+    n.appendChild(document.createElement("br"));
+    n.appendChild(el("span", "pending", "Senza pass: " + serata.senzaPass));
+  });
+
   bind("intro", function (n) { C.rassegna.intro.forEach(function (p) { n.appendChild(el("p", null, p)); }); });
 
   bind("lineupHero", function (n) {
@@ -175,7 +181,8 @@
   function attivaAttesa() {
     inAttesa = true;
     titolo.textContent = "Lista d'attesa";
-    lead.textContent = "I pass gratuiti sono esauriti. Lascia nome ed email: se si libera un posto ti scriviamo noi.";
+    lead.textContent = "I pass gratuiti sono esauriti. Lascia nome ed email: se si libera un posto ti scriviamo noi." +
+      (serata.senzaPass ? " Senza pass: " + serata.senzaPass + "." : "");
     var cognome = form.cognome;
     cognome.required = false;
     cognome.closest(".field").hidden = true;
