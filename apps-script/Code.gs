@@ -945,7 +945,9 @@ function inviaBrevo_(chiave, a, oggetto, testo, html, immagini) {
     subject: oggetto,
     htmlContent: html,
     textContent: testo,
-    tags: ['bolla-pass']
+    tags: ['bolla-pass'],
+    // aiuta Gmail e Outlook a considerare le email legittime (e a non metterle in spam)
+    headers: { 'List-Unsubscribe': '<mailto:' + CONFIG.replyTo + '?subject=cancellami>' }
   };
   if (CONFIG.replyTo) corpo.replyTo = { email: CONFIG.replyTo };
   if (immagini && immagini.qr) {
