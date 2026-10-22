@@ -14,7 +14,7 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/style.css?v=202610222211">
+  <link rel="stylesheet" href="css/style.css?v=202610222213">
   <style>
     .manifesto { max-width: 980px; margin: 0 auto; padding: 0 var(--gutter) 40px; }
     .m-cover { display: grid; justify-items: center; gap: 18px; padding: clamp(28px, 6vw, 64px) 0 clamp(40px, 8vw, 96px); text-align: center; }
@@ -33,7 +33,8 @@
     .m-finale p:not(.m-claim) { justify-self: end; text-align: right; }
     .m-finale p { margin: 0; font-size: clamp(22px, 3vw, 34px); line-height: 1.18; letter-spacing: -.02em; font-weight: 500; max-width: 26ch; }
     .m-finale .m-claim { font-size: clamp(40px, 7vw, 84px); line-height: .98; letter-spacing: -.045em; font-weight: 700; max-width: none; }
-    .m-finale img { width: min(560px, 100%); height: auto; margin-top: 24px; }
+    /* qui niente linea sopra il footer: la pagina finisce con il bottone */
+    .footer { border-top: 0; padding-top: 16px; }
     .m-cta { display: flex; justify-content: center; margin-top: 16px; }
 
   </style>
@@ -68,7 +69,6 @@
       <div class="m-cta">
         <a href="./#prenota" class="btn">Prenota il pass</a>
       </div>
-      <img src="assets/logo-alone.webp" alt="bolla®" width="498" height="200" loading="lazy">
     </section>
   </main>
 
