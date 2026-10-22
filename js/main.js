@@ -293,7 +293,7 @@
       if (modo === "invito") {
         if (!r.invito.valido) return blocca(r.invito.messaggio + " Senza invito puoi creare un gruppo da " + DIM + ".", true);
         if (esaurito) return attivaAttesa();
-        lead.textContent = "Invito «" + r.invito.etichetta + "». Il pass è personale e arriva via email con il QR.";
+        lead.textContent = "Hai un invito: il pass è personale e arriva via email con il QR.";
       } else if (modo === "unisciti") {
         var g = r.gruppo;
         if (!g.valido) return blocca(g.messaggio, true);

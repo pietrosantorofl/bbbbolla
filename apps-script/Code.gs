@@ -178,6 +178,12 @@ function aggiornamentiUnaTantum_() {
     { id: 'capienza-2026-10-30-300', fai: function () {
       var s = trova_(db.Serate, 'id', '2026-10-30');
       if (s) aggiorna_(db.Serate, s, { capienza: 300 });
+    } },
+    // i token nascono qui sul server: nel codice pubblico non c'è nessun link valido
+    { id: 'inviti-2026-10-30-organizzatori', fai: function () {
+      ['Pietro', 'Dario', 'Fabrizio', 'Tommaso'].forEach(function (nome) {
+        appendi_('Inviti', { token: token_(12), etichetta: nome, serata: '2026-10-30', max: 10, scadenza: '', attivo: 'TRUE', creato: new Date() });
+      });
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -207,7 +213,8 @@ function azioneStato_(d) {
     serata: { aperta: serataAperta_(s), postiGruppo: liberi >= CONFIG.dimensioneGruppo, postiSingolo: liberi >= 1 } };
   if (d.invito) {
     var inv = invito_(db, d.invito, s);
-    out.invito = inv.errore ? { valido: false, messaggio: inv.messaggio } : { valido: true, etichetta: inv.etichetta };
+    // il nome dell'invito resta nel foglio: al pubblico basta sapere che è valido
+    out.invito = inv.errore ? { valido: false, messaggio: inv.messaggio } : { valido: true };
   }
   if (d.gruppo) {
     var g = gruppo_(db, d.gruppo);
