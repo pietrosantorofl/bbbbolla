@@ -34,6 +34,43 @@
   function locale(s) { return String(s).split("https://bbbbolla.it/").join(base); }
   function hex() { return crypto.randomUUID(); }
 
+  // SHA-256 sincrono (Apps Script lo è; WebCrypto no), solo per la demo
+  function sha256Bytes(msg) {
+    var K = [], H = [], i, j;
+    var primi = 0, n = 2;
+    function frac(x) { return ((x - Math.floor(x)) * 4294967296) | 0; }
+    while (primi < 64) {
+      var primo = true;
+      for (j = 2; j * j <= n; j++) if (n % j === 0) { primo = false; break; }
+      if (primo) { if (primi < 8) H[primi] = frac(Math.pow(n, 1 / 2)); K[primi] = frac(Math.pow(n, 1 / 3)); primi++; }
+      n++;
+    }
+    var bytes = Array.from(new TextEncoder().encode(msg));
+    var l = bytes.length * 8;
+    bytes.push(0x80);
+    while (bytes.length % 64 !== 56) bytes.push(0);
+    for (i = 7; i >= 0; i--) bytes.push(i > 3 ? 0 : (l >>> (i * 8)) & 255);
+    function r(x, y) { return (x >>> y) | (x << (32 - y)); }
+    for (i = 0; i < bytes.length; i += 64) {
+      var w = [], a = H.slice();
+      for (j = 0; j < 64; j++) {
+        if (j < 16) w[j] = (bytes[i + j * 4] << 24) | (bytes[i + j * 4 + 1] << 16) | (bytes[i + j * 4 + 2] << 8) | bytes[i + j * 4 + 3];
+        else {
+          var s0 = r(w[j - 15], 7) ^ r(w[j - 15], 18) ^ (w[j - 15] >>> 3);
+          var s1 = r(w[j - 2], 17) ^ r(w[j - 2], 19) ^ (w[j - 2] >>> 10);
+          w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0;
+        }
+        var t1 = (a[7] + (r(a[4], 6) ^ r(a[4], 11) ^ r(a[4], 25)) + ((a[4] & a[5]) ^ (~a[4] & a[6])) + K[j] + w[j]) | 0;
+        var t2 = ((r(a[0], 2) ^ r(a[0], 13) ^ r(a[0], 22)) + ((a[0] & a[1]) ^ (a[0] & a[2]) ^ (a[1] & a[2]))) | 0;
+        a = [(t1 + t2) | 0, a[0], a[1], a[2], (a[3] + t1) | 0, a[4], a[5], a[6]];
+      }
+      for (j = 0; j < 8; j++) H[j] = (H[j] + a[j]) | 0;
+    }
+    var out = [];
+    H.forEach(function (x) { out.push((x >>> 24) & 255, (x >>> 16) & 255, (x >>> 8) & 255, x & 255); });
+    return out;
+  }
+
   var env = {
     SpreadsheetApp: {
       getActive: function () {
@@ -77,6 +114,9 @@
         return f === "dd.MM.yyyy" ? p(d.getDate()) + "." + p(d.getMonth() + 1) + "." + d.getFullYear() : d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
       },
       base64Decode: function (s) { return s; },
+      DigestAlgorithm: { SHA_256: "SHA_256" },
+      computeDigest: function (alg, testo) { return sha256Bytes(testo); },
+      sleep: function () {},
       // firma finta, solo per la demo: in Apps Script è un vero HMAC-SHA256
       computeHmacSha256Signature: function (v, k) {
         var h = 2166136261, out = [], s = k + "|" + v;
@@ -99,6 +139,8 @@
       db.sheets.Serate.length = 1;
       window.BOLLA.serate.forEach(function (s) { db.sheets.Serate.push([s.id, "bolla® — " + s.lineup.map(function (a) { return a.nome; }).join(", "), s.data, "150", "TRUE"]); });
       api.appendi_("Inviti", { token: "demoinvito01", etichetta: "Invito di prova", serata: "", max: 3, scadenza: "", attivo: "TRUE", creato: new Date() });
+      db.props = db.props || {};
+      db.props.PIN_STAFF = "12345678"; // PIN staff della demo
       save();
     }
     return api;

@@ -13,7 +13,7 @@
  *   Serate  id | titolo | data | capienza | aperta
  *   Inviti  token | etichetta | serata | max | scadenza | attivo | creato
  *   Gruppi  id | serata | creato | scadenza | capogruppo | stato | completato
- *   Pass    creato | serata | tipo | rif | nome | cognome | email | email_norm | chiave | codice | stato | confermato | checkin | newsletter
+ *   Pass    creato | serata | tipo | rif | nome | cognome | email | email_norm | chiave | codice | stato | confermato | checkin | newsletter | checkin_da
  *   Attesa  creato | serata | nome | cognome | email | email_norm | arrivato_da | newsletter | note
  *
  * Web App: POST body JSON { action, ... } con action = stato | crea_gruppo | unisciti | invito | pass
@@ -46,7 +46,7 @@ var COLONNE = {
   Serate: ['id', 'titolo', 'data', 'capienza', 'aperta'],
   Inviti: ['token', 'etichetta', 'serata', 'max', 'scadenza', 'attivo', 'creato'],
   Gruppi: ['id', 'serata', 'creato', 'scadenza', 'capogruppo', 'stato', 'completato'],
-  Pass: ['creato', 'serata', 'tipo', 'rif', 'nome', 'cognome', 'email', 'email_norm', 'chiave', 'codice', 'stato', 'confermato', 'checkin', 'newsletter'],
+  Pass: ['creato', 'serata', 'tipo', 'rif', 'nome', 'cognome', 'email', 'email_norm', 'chiave', 'codice', 'stato', 'confermato', 'checkin', 'newsletter', 'checkin_da'],
   Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note']
 };
 var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome'];
@@ -88,6 +88,7 @@ function onOpen() {
     .addItem('Crea link invito…', 'creaInvitoDaMenu')
     .addItem('Esporta newsletter', 'esportaNewsletter')
     .addSeparator()
+    .addItem('Crea PIN staff (app ingresso)', 'creaPinStaffDaMenu')
     .addItem('Attiva sveglia automatica', 'attivaSvegliaDaMenu')
     .addToUi();
 }
@@ -147,6 +148,8 @@ function doPost(e) {
       case 'invito': return json_(azioneInvito_(d));
       case 'pass': return json_(azionePass_(d));
       case 'lista_attesa': return json_(azioneListaAttesa_(d));
+      case 'staff_lista': return json_(azioneStaffLista_(d));
+      case 'staff_checkin': return json_(azioneStaffCheckin_(d));
     }
     return json_(errore_('dati', 'Azione sconosciuta.'));
   } catch (err) {
@@ -515,6 +518,93 @@ function reinvia_(db, pass, s) {
 }
 
 /* ============================================================
+   Staff: verifica dei QR all'ingresso (pagina bbbbolla.it/staff.html)
+   Accesso con un PIN di 8 cifre creato dal menu del foglio. Rigenerarlo disattiva il precedente.
+   ============================================================ */
+
+function creaPinStaffDaMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var vecchio = PropertiesService.getScriptProperties().getProperty('PIN_STAFF');
+  if (vecchio) {
+    var r = ui.alert('PIN staff', 'Esiste già un PIN. Crearne uno nuovo disattiva quello vecchio su tutti i telefoni. Continuo?', ui.ButtonSet.YES_NO);
+    if (r !== ui.Button.YES) return;
+  }
+  var pin = '';
+  var hex = token_(32);
+  for (var i = 0; i < 8; i++) pin += String(parseInt(hex.substr(i * 4, 4), 16) % 10);
+  PropertiesService.getScriptProperties().setProperty('PIN_STAFF', pin);
+  ui.alert('PIN staff', 'Nuovo PIN: ' + pin + '\n\nApri ' + CONFIG.sito + '/staff.html sul telefono di chi sta alla porta e inseriscilo.', ui.ButtonSet.OK);
+}
+
+// PIN sbagliato: risposta rallentata, così provarli tutti richiederebbe mesi
+function controllaPin_(pin) {
+  var giusto = PropertiesService.getScriptProperties().getProperty('PIN_STAFF');
+  if (!giusto) return errore_('pin', 'PIN staff non ancora creato: nel foglio usa il menu bolla® → Crea PIN staff.');
+  if (String(pin || '') !== giusto) {
+    Utilities.sleep(1500);
+    return errore_('pin', 'PIN sbagliato.');
+  }
+  return null;
+}
+
+// Un pass fa entrare se: confermato, non annullato e (su invito, oppure gruppo completo)
+function passAttivo_(db, r) {
+  if (r.stato !== 'confermato') return false;
+  if (r.tipo === 'invito') return true;
+  var g = gruppo_(db, r.rif);
+  return !!g && g.stato === 'completo';
+}
+
+function hashChiave_(chiave) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, chiave).map(function (b) {
+    return ('0' + ((b + 256) % 256).toString(16)).slice(-2);
+  }).join('');
+}
+
+function quandoEntrato_(r) {
+  if (!r.checkin) return null;
+  return r.checkin instanceof Date ? r.checkin.toISOString() : String(r.checkin);
+}
+
+// Lista dei pass attivi della serata. Al posto della chiave c'è il suo hash: il telefono riconosce
+// subito il QR scansionato, ma se lo perdi nessuno può ricavarne i QR.
+function azioneStaffLista_(d) {
+  var no = controllaPin_(d.pin);
+  if (no) return no;
+  var db = carica_();
+  var s = serata_(db, d.serata);
+  if (!s) return errore_('serata', 'Serata non trovata.');
+  var pass = db.Pass.filter(function (r) { return r.serata === s.id && passAttivo_(db, r); }).map(function (r) {
+    return { h: hashChiave_(r.chiave), nome: r.nome, cognome: r.cognome, codice: r.codice, tipo: r.tipo, gruppo: r.tipo === 'gruppo' ? r.rif : '', dentro: quandoEntrato_(r) };
+  });
+  return { ok: true, serata: { id: s.id, titolo: s.titolo, capienza: s.capienza }, pass: pass, aggiornato: new Date().toISOString() };
+}
+
+function azioneStaffCheckin_(d) {
+  var no = controllaPin_(d.pin);
+  if (no) return no;
+  return conLock_(function () {
+    var db = carica_();
+    var chiave = String(d.chiave || '').trim().toLowerCase();
+    var codice = String(d.codice || '').trim().toUpperCase();
+    var r = /^[a-f0-9]{24}$/.test(chiave) ? trova_(db.Pass, 'chiave', chiave)
+      : /^BOL-[A-Z0-9]{5}$/.test(codice) ? trova_(db.Pass, 'codice', codice) : null;
+    if (!r) return { ok: true, esito: 'sconosciuto' };
+    var info = { nome: r.nome, cognome: r.cognome, codice: r.codice, tipo: r.tipo, serata: r.serata };
+    if (r.serata !== String(d.serata)) return { ok: true, esito: 'altra_serata', pass: info };
+    if (r.stato === 'annullato') return { ok: true, esito: 'annullato', pass: info };
+    if (!passAttivo_(db, r)) return { ok: true, esito: 'non_attivo', pass: info };
+    var gia = quandoEntrato_(r);
+    var da = gia ? r.checkin_da : pulisci_(d.dispositivo, 24);
+    if (!gia) aggiorna_(db.Pass, r, { checkin: new Date(), checkin_da: da });
+    var gruppo = r.tipo === 'gruppo' ? db.Pass.filter(function (m) { return m.rif === r.rif && m.tipo === 'gruppo' && passAttivo_(db, m); }).map(function (m) {
+      return { nome: m.nome + ' ' + m.cognome, dentro: !!quandoEntrato_(m), tu: m === r };
+    }) : null;
+    return { ok: true, esito: gia ? 'gia_entrato' : 'entrato', quando: gia, da: da || '', pass: info, gruppo: gruppo };
+  });
+}
+
+/* ============================================================
    Anti-bot
    ============================================================ */
 
@@ -831,6 +921,10 @@ function carica_() {
     var sh = ss.getSheetByName(nome);
     var values = sh.getDataRange().getValues();
     var head = values[0];
+    // colonne aggiunte in versioni successive: le intestazioni mancanti vanno in fondo
+    COLONNE[nome].forEach(function (c) {
+      if (head.indexOf(c) < 0) { head.push(c); sh.getRange(1, head.length).setValue(c); }
+    });
     db[nome] = [];
     for (var i = 1; i < values.length; i++) {
       var r = { _riga: i + 1, _foglio: sh, _head: head };

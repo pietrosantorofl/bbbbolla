@@ -21,6 +21,24 @@ Una persona = un pass = un QR. Due strade:
 **Pass esauriti**: il sito mostra "Esaurito" e il modulo diventa iscrizione alla **lista d'attesa** (nome ed email).
 Le iscrizioni finiscono nel foglio **Attesa**: nessun pass automatico, decidi tu chi richiamare (per esempio con un link invito).
 
+## App ingresso (staff)
+
+Pagina **bbbbolla.it/staff.html**, da aprire sul telefono di chi sta alla porta (meglio: "Aggiungi a schermata Home").
+
+1. Nel foglio: menu **bolla® → Crea PIN staff**. Compare un PIN di 8 cifre: dallo solo a chi lavora alla porta.
+   Crearne uno nuovo disattiva il vecchio su tutti i telefoni.
+2. Sul telefono: apri la pagina, inserisci il PIN, premi **Avvia fotocamera** e inquadra i QR.
+
+- **Verde "Entra"**: pass valido, ingresso registrato. Per i gruppi mostra chi del gruppo è già dentro (ognuno entra col suo QR).
+- **Rosso**: già entrato (con l'ora), pass inesistente, annullato, di un'altra serata, o gruppo mai completato.
+- **Arancione "Attenzione"**: la persona risultava già entrata da un altro telefono.
+- **Ricerca** per cognome, nome o codice `BOL-…` se il QR non si legge (controlla un documento).
+- Il telefono scarica la lista dei pass attivi (solo l'hash delle chiavi, non i QR) e la aggiorna ogni minuto:
+  la risposta è immediata e, se la rete cade, gli ingressi restano in coda e partono appena torna.
+- Nel foglio Pass: `checkin` = ora di ingresso, `checkin_da` = telefono che l'ha registrato.
+
+Prova senza toccare i dati veri: `staff.html?demo`, PIN `12345678`.
+
 ## Protezioni
 
 - **Tutti i controlli sono sul server** (Apps Script): il sito si può aggirare, il backend no.
@@ -48,6 +66,9 @@ Valori regolabili in `CONFIG` in cima a `apps-script/Code.gs`.
 ├── css/style.css          Stili (palette in cima al file)
 ├── js/config.js           ← CONTENUTI: serate, line-up, luogo, orari, testi, URL backend
 ├── js/main.js             Logica della pagina
+├── staff.html             App ingresso per lo staff (lettura QR)
+├── js/staff.js            Logica dell'app ingresso
+├── js/vendor/jsQR.js      Lettore QR (jsQR 1.4.0, Apache-2.0)
 ├── js/demo.js             Modalità demo: esegue Code.gs nel browser con dati finti
 ├── js/vendor/qrcode.js    Libreria QR (qrcode-generator 1.4.4, MIT)
 ├── assets/                Logo, poster, favicon
