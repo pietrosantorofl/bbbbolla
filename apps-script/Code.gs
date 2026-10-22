@@ -218,6 +218,11 @@ function aggiornamentiUnaTantum_() {
         if (sh) { ss.setActiveSheet(sh); ss.moveActiveSheet(i + 1); }
       });
     } },
+    // email di un pass finto, identica a quelle vere, mandata a te per controllare grafica e spam con Brevo
+    { id: 'prova-pass-brevo-1', fai: function () {
+      var s = serata_(db, '2026-10-30');
+      emailPass_({ nome: 'Prova', cognome: 'Pass', email: CONFIG.replyTo, codice: 'BOL-PROVA', chiave: token_(24), tipo: 'invito', newsletter: 'FALSE' }, s);
+    } },
     { id: 'inviti-organizzatori-senza-limite', fai: function () {
       db.Inviti.forEach(function (inv) {
         if (['Pietro', 'Dario', 'Fabrizio', 'Tommaso'].indexOf(inv.etichetta) >= 0) aggiorna_(db.Inviti, inv, { max: '' });
@@ -916,15 +921,14 @@ function bottone_(href, testo, secondario) {
 }
 
 /* Due canali di invio:
- *  - Brevo (chiave API nelle proprietà dello script, menu bolla® → Imposta chiave Brevo): nessun limite giornaliero
- *    con il piano Starter, mittente sul dominio bbbbolla.it.
- *  - Gmail (MailApp): 100 email al giorno, ma l'unico che mostra il QR dentro il testo (Brevo non supporta immagini inline).
- * Le email col QR partono da Gmail finché c'è quota, poi da Brevo con il QR in allegato.
- * Tutte le altre partono da Brevo, così la quota Gmail resta per i pass. Se un canale fallisce si prova l'altro. */
+ *  - Brevo (chiave API nelle proprietà dello script, menu bolla® → Imposta chiave Brevo): canale principale per tutte
+ *    le email. Mittente sul dominio autenticato bbbbolla.it, molto meno spam. Il QR va in allegato
+ *    (Brevo non supporta immagini dentro il testo); il bottone "Apri il pass sul sito" lo mostra comunque.
+ *  - Gmail (MailApp, 100 al giorno): solo di riserva, se Brevo non è collegato o rifiuta l'invio. */
 function invia_(a, oggetto, testo, html, immagini) {
   var brevo = chiaveBrevo_();
   var gmailLibero = MailApp.getRemainingDailyQuota() > 0;
-  var ordine = immagini && gmailLibero ? ['gmail', 'brevo'] : brevo ? ['brevo', 'gmail'] : ['gmail'];
+  var ordine = brevo ? ['brevo', 'gmail'] : ['gmail'];
   var ultimoErrore = null;
   for (var i = 0; i < ordine.length; i++) {
     try {
@@ -966,7 +970,8 @@ function inviaBrevo_(chiave, a, oggetto, testo, html, immagini) {
   if (immagini && immagini.qr) {
     // niente immagini inline su Brevo: il QR va in allegato e nel testo c'è il bottone per aprire il pass
     corpo.htmlContent = html.replace(/<img src="cid:qr"[^>]*>/,
-      '<div style="width:200px;padding:28px 12px;font-size:14px;line-height:1.4;color:#5f5b56">Il QR è <strong>allegato</strong> a questa email e lo trovi aprendo il pass sul sito.</div>');
+      '<div style="width:200px;padding:24px 12px;border:1.5px dashed #121212;border-radius:14px;font-size:14px;line-height:1.45;color:#121212">' +
+      'Il tuo QR è <strong>allegato</strong> a questa email.<br>Lo trovi anche toccando <strong>Apri il pass sul sito</strong> qui sotto.</div>');
     corpo.attachment = [{ name: 'pass-bolla-qr.gif', content: Utilities.base64Encode(immagini.qr.getBytes()) }];
   }
   var r = UrlFetchApp.fetch('https://api.brevo.com/v3/smtp/email', {

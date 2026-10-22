@@ -130,13 +130,12 @@ Ricarica il foglio dopo il setup: compare il menu **bolla®**.
 
 ### Email: Brevo + Gmail
 
-- **Brevo** (piano Starter, nessun limite giornaliero): manda conferme, liste d'attesa e i pass quando Gmail ha finito la quota.
+- **Brevo** (piano Starter, nessun limite giornaliero): manda tutte le email (conferme, pass, lista d'attesa).
   Mittente `pass@bbbbolla.it` (dominio autenticato su Brevo), risposte a `bollacatania@gmail.com`.
+  Il QR del pass arriva in allegato (Brevo non mette immagini dentro il testo); il bottone "Apri il pass sul sito" lo mostra comunque.
   Chiave API: menu **bolla® → Imposta chiave Brevo…** (resta nelle proprietà dello script, mai nel codice).
   Prova: menu **bolla® → Invia email di prova (Brevo)**.
-- **Gmail** (100 al giorno): manda i pass finché c'è quota, perché è l'unico che mostra il QR dentro l'email.
-  Con Brevo il QR arriva in allegato, e il bottone "Apri il pass sul sito" lo mostra comunque.
-- Se un canale non funziona il backend prova l'altro.
+- **Gmail** (100 al giorno): solo di riserva, se Brevo non è collegato o rifiuta un invio.
 
 ### Limiti di Google
 
