@@ -173,8 +173,10 @@ a { color: inherit; }
 /* vino e cibo: più piccoli delle proposte musicali */
 .hero__lineup .is-minore { font-size: .55em; align-self: end; }
 .hero__lineup .is-minore .tag { font-size: .5em; }
-/* vino e cibo vanno a capo insieme, in una riga a parte sotto la musica */
-.hero__lineup li:not(.is-minore) + .is-minore { grid-column-start: 1; margin-top: .5em; }
+/* vino e cibo: impilati in basso a destra, sotto la musica (su telefono restano in fila sotto) */
+@media (min-width: 601px) {
+  .hero__lineup .is-minore { grid-column: 2; align-self: end; }
+}
 .tag {
   font-size: .32em;
   letter-spacing: 0;
