@@ -71,7 +71,7 @@
 
   bind("lineupHero", function (n) {
     serata.lineup.forEach(function (a) {
-      var li = el("li");
+      var li = el("li", a.minore ? "is-minore" : null);
       li.appendChild(document.createTextNode(a.nome));
       if (a.tag) li.appendChild(el("sup", "tag", a.tag));
       if (a.note) li.appendChild(el("span", "note", "[" + a.note + "]"));
@@ -81,7 +81,7 @@
 
   bind("lineup", function (n) {
     serata.lineup.forEach(function (a) {
-      var li = el("li");
+      var li = el("li", a.minore ? "is-minore" : null);
       var name = el("span", "lineup__name", a.nome);
       if (a.note) name.appendChild(el("span", "lineup__note", a.note));
       li.appendChild(name);

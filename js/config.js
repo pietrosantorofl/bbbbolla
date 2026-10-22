@@ -49,7 +49,9 @@ window.BOLLA = {
         { nome: "Ritmi in Colombia", tag: "Workshop" },
         { nome: "Selva Cosmica", tag: "Live" },
         { nome: "Franzuà", tag: "Sel Musicali", note: "downtempo · cumbia · afrobeat" },
-        { nome: "Cantina controcorrente", tag: "Vino del giorno" }
+        // minore: true = più piccolo delle proposte musicali (vino, cibo)
+        { nome: "Cantina controcorrente", tag: "Vino del giorno", minore: true },
+        { nome: "SPIZZICO", tag: "Food dalle 20:00", minore: true }
       ]
     }
   ],
