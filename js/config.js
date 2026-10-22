@@ -7,7 +7,7 @@
 window.BOLLA = {
   /* URL della Web App di Google Apps Script (vedi apps-script/README).
      Lascia stringa vuota per la modalità DEMO (prenotazioni finte, solo nel browser). */
-  apiUrl: "",
+  apiUrl: "https://script.google.com/macros/s/AKfycbzEckzChK4ZcFHJ7wOjREzUTepDHg8QxMismXJwFMElQ1BRL8c74Ltsrsx2YinHvO5v4w/exec",
 
   contatti: {
     email: null,              // es. "ciao@bbbbolla.it"

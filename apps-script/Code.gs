@@ -107,8 +107,18 @@ function creaInvitoDaMenu() {
    HTTP
    ============================================================ */
 
+// Aprire l'URL della Web App da browser: crea i fogli se mancano e mostra lo stato.
+// La prima volta, da proprietario, Google chiede anche le autorizzazioni.
 function doGet() {
-  return json_({ ok: true, servizio: 'bolla pass' });
+  setup();
+  var ss = SpreadsheetApp.getActive();
+  var html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px;margin:40px auto;padding:0 16px">' +
+    '<h1 style="font-size:40px;margin:0">bolla&reg;</h1>' +
+    '<p style="font-size:18px">Backend dei pass attivo.</p>' +
+    '<p>Fogli: ' + Object.keys(COLONNE).map(function (n) { return ss.getSheetByName(n) ? n + ' ✓' : n + ' ✗'; }).join(' · ') + '</p>' +
+    '<p>Email ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p></div>';
+  return HtmlService.createHtmlOutput(html).setTitle('bolla® backend');
 }
 
 function doPost(e) {
@@ -669,6 +679,7 @@ function esportaNewsletter() {
 
 function carica_() {
   var ss = SpreadsheetApp.getActive();
+  if (Object.keys(COLONNE).some(function (n) { return !ss.getSheetByName(n); })) setup();
   var db = {};
   Object.keys(COLONNE).forEach(function (nome) {
     var sh = ss.getSheetByName(nome);
@@ -679,7 +690,9 @@ function carica_() {
       var r = { _riga: i + 1, _foglio: sh, _head: head };
       head.forEach(function (h, j) {
         var v = values[i][j];
-        r[h] = v instanceof Date ? v : String(v);
+        // Sheets può trasformare "2026-10-30" in una data anche nelle colonne testo: la riportiamo a stringa
+        if (v instanceof Date && COLONNE_TESTO.indexOf(h) >= 0) r[h] = Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
+        else r[h] = v instanceof Date ? v : String(v);
       });
       db[nome].push(r);
     }

@@ -54,6 +54,20 @@ Valori regolabili in `CONFIG` in cima a `apps-script/Code.gs`.
 
 ## 1. Backend: Google Sheet + Apps Script
 
+**Già attivo** sull'account `bollacatania@gmail.com`: foglio "bolla® — pass", progetto in `apps-script/.clasp.json`,
+ID del deployment in `apps-script/deployment-id.txt` (è quello dentro `apiUrl`).
+
+Per aggiornare il backend dopo una modifica a `Code.gs` (clasp con le credenziali salvate come utente `bolla`):
+
+```bash
+cd apps-script && npx @google/clasp -u bolla push --force && npx @google/clasp -u bolla update-deployment "$(cat deployment-id.txt)" --description "bolla pass"
+```
+
+Usa sempre `update-deployment` con lo stesso ID: un nuovo deployment cambierebbe l'URL.
+Aprire l'URL `…/exec` nel browser mostra lo stato del backend (e crea i fogli se mancano).
+
+### Installazione da zero (solo se serve rifarlo)
+
 1. Crea un nuovo Google Sheet (es. "bolla — pass").
 2. Menu **Estensioni → Apps Script**. Cancella il codice di esempio e incolla `apps-script/Code.gs`.
    Poi **File (+) → Script**, chiamalo `qrcode` e incolla `apps-script/qrcode.gs`.
