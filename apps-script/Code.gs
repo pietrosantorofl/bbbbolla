@@ -103,10 +103,11 @@ function creaInvitoDaMenu() {
   var ui = SpreadsheetApp.getUi();
   var r1 = ui.prompt('Nuovo invito', 'Nome del link (es. "Artisti", "Amici di Marco"):', ui.ButtonSet.OK_CANCEL);
   if (r1.getSelectedButton() !== ui.Button.OK) return;
-  var r2 = ui.prompt('Nuovo invito', 'Quanti pass al massimo con questo link?', ui.ButtonSet.OK_CANCEL);
+  var r2 = ui.prompt('Nuovo invito', 'Quanti pass al massimo con questo link? Lascia vuoto per nessun limite.', ui.ButtonSet.OK_CANCEL);
   if (r2.getSelectedButton() !== ui.Button.OK) return;
-  var max = Math.floor(Number(r2.getResponseText()));
-  if (!(max > 0)) { ui.alert('Numero non valido.'); return; }
+  var testoMax = r2.getResponseText().trim();
+  var max = testoMax ? Math.floor(Number(testoMax)) : '';
+  if (testoMax && !(max > 0)) { ui.alert('Numero non valido.'); return; }
   var token = token_(12);
   appendi_('Inviti', { token: token, etichetta: r1.getResponseText().trim(), serata: '', max: max, scadenza: '', attivo: 'TRUE', creato: new Date() });
   ui.alert('Link invito creato', CONFIG.sito + '/?invito=' + token +
@@ -183,7 +184,12 @@ function aggiornamentiUnaTantum_() {
     // i token nascono qui sul server: nel codice pubblico non c'è nessun link valido
     { id: 'inviti-2026-10-30-organizzatori', fai: function () {
       ['Pietro', 'Dario', 'Fabrizio', 'Tommaso'].forEach(function (nome) {
-        appendi_('Inviti', { token: token_(12), etichetta: nome, serata: '2026-10-30', max: 10, scadenza: '', attivo: 'TRUE', creato: new Date() });
+        appendi_('Inviti', { token: token_(12), etichetta: nome, serata: '2026-10-30', max: '', scadenza: '', attivo: 'TRUE', creato: new Date() });
+      });
+    } },
+    { id: 'inviti-organizzatori-senza-limite', fai: function () {
+      db.Inviti.forEach(function (inv) {
+        if (['Pietro', 'Dario', 'Fabrizio', 'Tommaso'].indexOf(inv.etichetta) >= 0) aggiorna_(db.Inviti, inv, { max: '' });
       });
     } }
   ].forEach(function (a) {
@@ -470,7 +476,8 @@ function invito_(db, token, s) {
   if (inv.serata && inv.serata !== s.id) return nonValido;
   if (inv.scadenza && new Date() > data_(inv.scadenza)) return nonValido;
   var usati = db.Pass.filter(function (r) { return r.tipo === 'invito' && r.rif === inv.token && r.stato === 'confermato'; }).length;
-  if (usati >= Number(inv.max)) return errore_('invito', 'I pass di questo invito sono finiti.');
+  // max vuoto = nessun limite: vale solo la capienza della serata
+  if (Number(inv.max) > 0 && usati >= Number(inv.max)) return errore_('invito', 'I pass di questo invito sono finiti.');
   return inv;
 }
 

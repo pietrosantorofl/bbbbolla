@@ -54,10 +54,6 @@ window.BOLLA = {
     }
   ],
 
-  infoUtili: [
-    { titolo: "Ingresso", testo: "Gratuito con pass personale, per gruppi da 3 persone oppure su invito. Ognuno si registra con la propria email. Il pass arriva solo quando tutti e 3 hanno confermato: se il gruppo non si completa, nessuno lo riceve. Senza pass: 5 € al botteghino dopo le 22:30." },
-    { titolo: "Capienza", testo: "I posti sono limitati. Il pass non garantisce l'ingresso dopo il raggiungimento della capienza massima del locale: arriva presto." },
-    { titolo: "Bar", testo: "Consumazioni a pagamento. Il vino del giorno è a cura di Cantina controcorrente." },
-    { titolo: "Foto e video", testo: "La serata sarà documentata con foto e video che potranno comparire sui canali social della rassegna." }
-  ]
+  /* testo unico sotto la line-up */
+  infoUtili: "Ingresso gratuito con pass personale, per gruppi da 3 persone oppure su invito: ognuno si registra con la propria email e il pass arriva solo quando tutti e 3 hanno confermato. Senza pass: 5 € al botteghino dopo le 22:30. I posti sono limitati e il pass non garantisce l'ingresso a capienza raggiunta: arriva presto."
 };

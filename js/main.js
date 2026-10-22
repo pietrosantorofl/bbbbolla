@@ -88,14 +88,7 @@
     });
   });
 
-  bind("info", function (n) {
-    C.infoUtili.forEach(function (i) {
-      var w = el("div");
-      w.appendChild(el("dt", null, i.titolo));
-      w.appendChild(el("dd", null, i.testo));
-      n.appendChild(w);
-    });
-  });
+  bind("info", function (n) { n.textContent = C.infoUtili; });
 
   bind("altreSerate", function (n) {
     var altre = future.filter(function (s) { return s.id !== serata.id; });

@@ -118,7 +118,7 @@ In demo non c'è rete: si usa la lista di riserva delle email temporanee e nient
 
 Ricarica il foglio dopo il setup: compare il menu **bolla®**.
 
-- **Nuovo link invito**: menu **bolla® → Crea link invito…**. Scegli un nome (es. "Artisti") e il tetto di pass.
+- **Nuovo link invito**: menu **bolla® → Crea link invito…**. Scegli un nome (es. "Artisti") e, se vuoi, un tetto di pass (vuoto = nessun limite).
   Il link appare a schermo. Colonna `serata` vuota = vale per tutte le serate. `attivo` = `FALSE` lo spegne. `scadenza` (data) opzionale.
 - **Annullare un pass**: foglio **Pass**, colonna `stato` = `annullato`.
 - **Annullare un gruppo**: foglio **Gruppi**, colonna `stato` = `annullato`. I posti tornano liberi.
