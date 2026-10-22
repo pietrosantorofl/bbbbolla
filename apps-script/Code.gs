@@ -126,6 +126,7 @@ function creaInvitoDaMenu() {
 // La prima volta, da proprietario, Google chiede anche le autorizzazioni.
 function doGet() {
   setup();
+  aggiornamentiUnaTantum_(); // idempotente: ogni aggiornamento gira una volta sola
   var sveglia = installaSveglia_();
   var ss = SpreadsheetApp.getActive();
   var html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
@@ -136,7 +137,8 @@ function doGet() {
     '<p>Email Gmail ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p>' +
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
-    '<p>Sveglia automatica: ' + sveglia + '</p></div>';
+    '<p>Sveglia automatica: ' + sveglia + '</p>' +
+    erroriAggiornamenti_() + '</div>';
   return HtmlService.createHtmlOutput(html).setTitle('bolla® backend');
 }
 
@@ -223,9 +225,20 @@ function aggiornamentiUnaTantum_() {
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
-    a.fai();
-    props.setProperty('fatto:' + a.id, new Date().toISOString());
+    try {
+      a.fai();
+      props.setProperty('fatto:' + a.id, new Date().toISOString());
+    } catch (err) {
+      // un aggiornamento fallito non blocca gli altri: l'errore compare nella pagina di stato
+      props.setProperty('errore:' + a.id, new Date().toISOString() + ' ' + String(err.message).slice(0, 200));
+    }
   });
+}
+
+function erroriAggiornamenti_() {
+  var props = PropertiesService.getScriptProperties().getProperties();
+  return Object.keys(props).filter(function (k) { return k.indexOf('errore:') === 0 && !props['fatto:' + k.slice(7)]; })
+    .map(function (k) { return '<p>Aggiornamento non riuscito ' + esc_(k.slice(7)) + ': ' + esc_(props[k]) + '</p>'; }).join('');
 }
 
 function installaSveglia_() {
