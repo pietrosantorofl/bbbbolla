@@ -204,6 +204,18 @@ function aggiornamentiUnaTantum_() {
       });
       provaBrevo_();
     } },
+    // la scheda vuota creata insieme al foglio confonde: si toglie (solo se vuota) e le schede vanno in ordine d'uso
+    { id: 'schede-ordinate', fai: function () {
+      var ss = SpreadsheetApp.getActive();
+      ss.getSheets().forEach(function (sh) {
+        if (COLONNE[sh.getName()] || sh.getName() === 'Newsletter') return;
+        if (sh.getLastRow() === 0 && sh.getLastColumn() === 0 && ss.getSheets().length > 1) ss.deleteSheet(sh);
+      });
+      ['Pass', 'Gruppi', 'Inviti', 'Attesa', 'Serate'].forEach(function (nome, i) {
+        var sh = ss.getSheetByName(nome);
+        if (sh) { ss.setActiveSheet(sh); ss.moveActiveSheet(i + 1); }
+      });
+    } },
     { id: 'inviti-organizzatori-senza-limite', fai: function () {
       db.Inviti.forEach(function (inv) {
         if (['Pietro', 'Dario', 'Fabrizio', 'Tommaso'].indexOf(inv.etichetta) >= 0) aggiorna_(db.Inviti, inv, { max: '' });
