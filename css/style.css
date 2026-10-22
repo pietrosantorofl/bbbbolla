@@ -94,16 +94,18 @@ a { color: inherit; }
   isolation: isolate;
   transition: transform .15s ease, opacity .2s;
 }
+/* sfumato al passaggio del mouse: stesso contorno del bottone, senza sfocatura
+   (Safari con blur + animazioni non ritaglia gli angoli e lo mostrava rettangolare) */
 .btn::before {
   content: "";
   position: absolute;
-  inset: -40%;
+  inset: 0;
+  border-radius: inherit;
   z-index: -1;
   background:
-    radial-gradient(circle at 25% 30%, var(--orange), transparent 35%),
-    radial-gradient(circle at 70% 70%, var(--red), transparent 40%),
-    radial-gradient(circle at 50% 50%, var(--magenta), var(--pink));
-  filter: blur(8px);
+    radial-gradient(ellipse 60% 120% at 15% 20%, var(--orange), transparent 70%),
+    radial-gradient(ellipse 60% 120% at 85% 80%, var(--red), transparent 70%),
+    linear-gradient(90deg, var(--magenta), var(--pink));
   opacity: 0;
   transition: opacity .35s;
 }
@@ -452,7 +454,29 @@ a { color: inherit; }
 .demo-inbox button { margin-top: 8px; font: inherit; background: none; color: #fff; border: 1px solid #fff; border-radius: 99px; padding: 4px 12px; cursor: pointer; }
 @media (max-width: 960px) { .demo-inbox { bottom: calc(84px + env(safe-area-inset-bottom)); } }
 
+/* pulsazione al clic su "Prenota pass" */
+@keyframes pulsa-btn {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(240, 48, 127, .5); }
+  35%  { transform: scale(1.05); }
+  100% { transform: scale(1); box-shadow: 0 0 0 16px rgba(240, 48, 127, 0); }
+}
+@keyframes pulsa-card {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.015); }
+  100% { transform: scale(1); }
+}
+@keyframes alone-card {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 48, 127, .45); }
+  100% { box-shadow: 0 0 0 24px rgba(240, 48, 127, 0); }
+}
+.btn.pulsa { animation: pulsa-btn .6s ease-out; }
+.card.pulsa { animation: pulsa-card .8s ease-out; position: relative; }
+.card.pulsa::before {
+  content: ""; position: absolute; inset: -1.5px; border-radius: inherit; pointer-events: none;
+  animation: alone-card .9s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .hero__sfera img, .result, .spinner { animation: none; }
+  .hero__sfera img, .result, .spinner, .btn.pulsa, .card.pulsa, .card.pulsa::before { animation: none; }
 }

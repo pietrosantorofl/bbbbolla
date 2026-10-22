@@ -129,7 +129,7 @@
     ContentService: { MimeType: { JSON: "json" }, createTextOutput: function (s) { return { setMimeType: function () { return s; } }; } }
   };
 
-  var gs = fetch("apps-script/Code.gs").then(function (r) { return r.text(); }).then(function (src) {
+  var gs = fetch("apps-script/Code.gs", { cache: "no-cache" }).then(function (r) { return r.text(); }).then(function (src) {
     var names = Object.keys(env);
     var make = new Function(names.join(","), src + "\nreturn { doPost: doPost, setup: setup, appendi_: appendi_ };");
     var api = make.apply(null, names.map(function (n) { return env[n]; }));

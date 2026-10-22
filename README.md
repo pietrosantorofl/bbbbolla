@@ -140,6 +140,7 @@ Repository `pietrosantorofl/bbbbolla`, branch `main`, cartella root. Dominio `bb
 DNS su Register.it: 4 record **A** su `@` (`185.199.108.153`, `.109.153`, `.110.153`, `.111.153`) e **CNAME** `www` verso `pietrosantorofl.github.io`.
 
 Ogni push su `main` pubblica il sito in circa un minuto.
+Prima di ogni push lancia `sh tools/versione.sh`: aggiorna il numero di versione di CSS e JS, così i browser non usano file vecchi.
 
 ## 4. Aggiornare i contenuti
 

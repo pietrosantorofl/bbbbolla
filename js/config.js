@@ -46,7 +46,7 @@ window.BOLLA = {
         mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
       },
       lineup: [
-        { nome: "Ritmi in Colombia", tag: "Lab" },
+        { nome: "Ritmi in Colombia", tag: "Workshop" },
         { nome: "Selva Cosmica", tag: "Live" },
         { nome: "Franzuà", tag: "Sel Musicali", note: "downtempo · cumbia · afrobeat" },
         { nome: "Cantina controcorrente", tag: "Vino del giorno" }

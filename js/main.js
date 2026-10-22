@@ -500,6 +500,15 @@
 
   avvia();
 
+  /* ---------- pulsazione: bottone cliccato e poi la scheda, quando ci arriva lo scorrimento ---------- */
+  function pulsa(n) { n.classList.remove("pulsa"); void n.offsetWidth; n.classList.add("pulsa"); }
+  $$('a[href="#prenota"]').forEach(function (a) {
+    a.addEventListener("click", function () {
+      pulsa(a);
+      setTimeout(function () { pulsa(card); }, 500);
+    });
+  });
+
   /* ---------- UI: barra in alto e CTA mobile ---------- */
   var topbar = $(".topbar");
   addEventListener("scroll", function () { topbar.classList.toggle("is-scrolled", scrollY > 8); }, { passive: true });
