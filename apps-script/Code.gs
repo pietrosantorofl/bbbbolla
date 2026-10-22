@@ -21,7 +21,8 @@
 
 var CONFIG = {
   nomeMittente: 'bolla®',
-  replyTo: '',                    // es. 'ciao@bbbbolla.it' (vuoto = account Google che pubblica lo script)
+  replyTo: 'bollacatania@gmail.com',   // le risposte alle email arrivano qui
+  mittenteBrevo: 'pass@bbbbolla.it',   // mittente delle email inviate con Brevo (dominio da autenticare su Brevo)
   sito: 'https://bbbbolla.it',
   luogo: 'MONO, Via Gornalunga 12, 95129 Catania CT',   // compare nelle email
   orario: 'dalle 20:00',          // compare nelle email
@@ -90,6 +91,8 @@ function onOpen() {
     .addItem('Esporta newsletter', 'esportaNewsletter')
     .addSeparator()
     .addItem('Crea PIN staff (app ingresso)', 'creaPinStaffDaMenu')
+    .addItem('Imposta chiave Brevo…', 'impostaChiaveBrevoDaMenu')
+    .addItem('Invia email di prova (Brevo)', 'emailProvaDaMenu')
     .addItem('Attiva sveglia automatica', 'attivaSvegliaDaMenu')
     .addToUi();
 }
@@ -130,7 +133,8 @@ function doGet() {
     '<h1 style="font-size:40px;margin:0">bolla&reg;</h1>' +
     '<p style="font-size:18px">Backend dei pass attivo.</p>' +
     '<p>Fogli: ' + Object.keys(COLONNE).map(function (n) { return ss.getSheetByName(n) ? n + ' ✓' : n + ' ✗'; }).join(' · ') + '</p>' +
-    '<p>Email ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p>' +
+    '<p>Email Gmail ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p>' +
+    '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p></div>';
   return HtmlService.createHtmlOutput(html).setTitle('bolla® backend');
 }
@@ -873,15 +877,105 @@ function bottone_(href, testo, secondario) {
   '</td></tr></table>';
 }
 
+/* Due canali di invio:
+ *  - Brevo (chiave API nelle proprietà dello script, menu bolla® → Imposta chiave Brevo): nessun limite giornaliero
+ *    con il piano Starter, mittente sul dominio bbbbolla.it.
+ *  - Gmail (MailApp): 100 email al giorno, ma l'unico che mostra il QR dentro il testo (Brevo non supporta immagini inline).
+ * Le email col QR partono da Gmail finché c'è quota, poi da Brevo con il QR in allegato.
+ * Tutte le altre partono da Brevo, così la quota Gmail resta per i pass. Se un canale fallisce si prova l'altro. */
 function invia_(a, oggetto, testo, html, immagini) {
+  var brevo = chiaveBrevo_();
+  var gmailLibero = MailApp.getRemainingDailyQuota() > 0;
+  var ordine = immagini && gmailLibero ? ['gmail', 'brevo'] : brevo ? ['brevo', 'gmail'] : ['gmail'];
+  var ultimoErrore = null;
+  for (var i = 0; i < ordine.length; i++) {
+    try {
+      if (ordine[i] === 'brevo') {
+        if (!brevo) continue;
+        inviaBrevo_(brevo, a, oggetto, testo, html, immagini);
+      } else {
+        if (!gmailLibero) continue;
+        inviaGmail_(a, oggetto, testo, html, immagini);
+      }
+      return ordine[i];
+    } catch (err) {
+      ultimoErrore = err;
+      console.error('Invio con ' + ordine[i] + ' non riuscito a ' + a + ': ' + err);
+    }
+  }
+  throw ultimoErrore || new Error('Nessun canale email disponibile');
+}
+
+function inviaGmail_(a, oggetto, testo, html, immagini) {
   var opzioni = { name: CONFIG.nomeMittente, htmlBody: html };
   if (immagini) opzioni.inlineImages = immagini;
   if (CONFIG.replyTo) opzioni.replyTo = CONFIG.replyTo;
   MailApp.sendEmail(a, oggetto, testo, opzioni);
 }
 
+function inviaBrevo_(chiave, a, oggetto, testo, html, immagini) {
+  var corpo = {
+    sender: { name: CONFIG.nomeMittente, email: CONFIG.mittenteBrevo },
+    to: [{ email: a }],
+    subject: oggetto,
+    htmlContent: html,
+    textContent: testo,
+    tags: ['bolla-pass']
+  };
+  if (CONFIG.replyTo) corpo.replyTo = { email: CONFIG.replyTo };
+  if (immagini && immagini.qr) {
+    // niente immagini inline su Brevo: il QR va in allegato e nel testo c'è il bottone per aprire il pass
+    corpo.htmlContent = html.replace(/<img src="cid:qr"[^>]*>/,
+      '<div style="width:200px;padding:28px 12px;font-size:14px;line-height:1.4;color:#5f5b56">Il QR è <strong>allegato</strong> a questa email e lo trovi aprendo il pass sul sito.</div>');
+    corpo.attachment = [{ name: 'pass-bolla-qr.gif', content: Utilities.base64Encode(immagini.qr.getBytes()) }];
+  }
+  var r = UrlFetchApp.fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'api-key': chiave, accept: 'application/json' },
+    payload: JSON.stringify(corpo),
+    muteHttpExceptions: true
+  });
+  if (r.getResponseCode() >= 300) throw new Error('Brevo ' + r.getResponseCode() + ': ' + r.getContentText().slice(0, 300));
+}
+
+function chiaveBrevo_() {
+  return PropertiesService.getScriptProperties().getProperty('BREVO_API_KEY');
+}
+
 function quotaOk_() {
-  return MailApp.getRemainingDailyQuota() > 0;
+  return !!chiaveBrevo_() || MailApp.getRemainingDailyQuota() > 0;
+}
+
+function impostaChiaveBrevoDaMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var r = ui.prompt('Chiave Brevo', 'Incolla la chiave API di Brevo (Brevo → SMTP & API → API Keys). Lascia vuoto per scollegare Brevo.', ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  var chiave = r.getResponseText().trim();
+  var props = PropertiesService.getScriptProperties();
+  if (chiave) props.setProperty('BREVO_API_KEY', chiave); else props.deleteProperty('BREVO_API_KEY');
+  ui.alert(chiave ? 'Chiave salvata. Ora usa "Invia email di prova" per controllare.' : 'Brevo scollegato: le email partono solo da Gmail.');
+}
+
+// Manda a te (replyTo) un'email di prova con QR passando da Brevo, per verificare chiave, mittente e dominio
+function emailProvaDaMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var chiave = chiaveBrevo_();
+  if (!chiave) { ui.alert('Prima imposta la chiave Brevo dal menu.'); return; }
+  var db = carica_();
+  var s = serata_(db, db.Serate[0] && db.Serate[0].id);
+  var finto = { nome: 'Prova', cognome: 'Brevo', email: CONFIG.replyTo, codice: 'BOL-PROVA', chiave: token_(24), tipo: 'invito', newsletter: 'FALSE' };
+  try {
+    var data = dataBreve_(s);
+    inviaBrevo_(chiave, CONFIG.replyTo, '[Prova] Il tuo pass bolla® — ' + data, 'Email di prova inviata con Brevo.',
+      layout_({ banner: 'banner-sfera.jpg', anteprima: 'Email di prova', corpo: kicker_('Prova') + titolo_('Brevo funziona') +
+        paragrafo_('Questa email è partita da Brevo con mittente ' + CONFIG.mittenteBrevo + '. Sotto trovi il QR come appare nelle email inviate con Brevo.') +
+        '<img src="cid:qr" width="200" height="200" alt="">', s: s, newsletter: false }),
+      { qr: qrBlob_(finto.chiave) });
+    ui.alert('Email di prova inviata a ' + CONFIG.replyTo + '. Controlla la posta (anche lo spam).');
+  } catch (err) {
+    ui.alert('Invio con Brevo non riuscito:\n\n' + err.message);
+  }
 }
 
 function erroreQuota_() {

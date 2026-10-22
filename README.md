@@ -128,6 +128,16 @@ Ricarica il foglio dopo il setup: compare il menu **bolla®**.
 - **Disiscrizione**: `FALSE` nella colonna `newsletter` di tutti i pass di quella email.
 - **Privacy**: 30 giorni dopo la serata esporta la newsletter, poi cancella le righe di quella serata da Pass e Gruppi.
 
+### Email: Brevo + Gmail
+
+- **Brevo** (piano Starter, nessun limite giornaliero): manda conferme, liste d'attesa e i pass quando Gmail ha finito la quota.
+  Mittente `pass@bbbbolla.it` (dominio autenticato su Brevo), risposte a `bollacatania@gmail.com`.
+  Chiave API: menu **bolla® → Imposta chiave Brevo…** (resta nelle proprietà dello script, mai nel codice).
+  Prova: menu **bolla® → Invia email di prova (Brevo)**.
+- **Gmail** (100 al giorno): manda i pass finché c'è quota, perché è l'unico che mostra il QR dentro l'email.
+  Con Brevo il QR arriva in allegato, e il bottone "Apri il pass sul sito" lo mostra comunque.
+- Se un canale non funziona il backend prova l'altro.
+
 ### Limiti di Google
 
 Un account Gmail gratuito invia **100 email al giorno** con Apps Script (Google Workspace: 1500).
