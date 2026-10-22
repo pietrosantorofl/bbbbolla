@@ -59,10 +59,12 @@
     if (l.indirizzo) { n.appendChild(document.createElement("br")); n.appendChild(document.createTextNode(l.indirizzo)); }
   });
 
+  // prima il prezzo al botteghino, sotto l'ingresso gratuito con pass
   bind("ingresso", function (n) {
     if (!serata.senzaPass) return;
+    n.textContent = serata.senzaPass;
     n.appendChild(document.createElement("br"));
-    n.appendChild(el("span", "pending", "Senza pass: " + serata.senzaPass));
+    n.appendChild(el("strong", null, "Gratuito con pass"));
   });
 
   bind("intro", function (n) { C.rassegna.intro.forEach(function (p) { n.appendChild(el("p", null, p)); }); });

@@ -25,7 +25,7 @@ var CONFIG = {
   sito: 'https://bbbbolla.it',
   luogo: 'MONO, Via Gornalunga 12, 95129 Catania CT',   // compare nelle email
   orario: 'dalle 20:00',          // compare nelle email
-  senzaPass: '5 € al botteghino dopo le 22:30',  // compare nelle email ('' = niente)
+  senzaPass: '5€ al botteghino dopo le 22:30',  // compare nelle email ('' = niente)
   newsletterObbligatoria: true,   // deve coincidere con newsletterObbligatoria in js/config.js
   dimensioneGruppo: 3,
   oreValiditaGruppo: 48,          // dopo, un gruppo incompleto scade e libera i posti
@@ -855,7 +855,7 @@ function nota_(t) {
 function dettagli_(s, data) {
   var righe = [['Quando', data + (CONFIG.orario ? ', ' + CONFIG.orario : '')]];
   if (CONFIG.luogo) righe.push(['Dove', CONFIG.luogo]);
-  righe.push(['Ingresso', 'Gratuito con pass' + (CONFIG.senzaPass ? ' (senza pass: ' + CONFIG.senzaPass + ')' : '')]);
+  righe.push(['Ingresso', (CONFIG.senzaPass ? CONFIG.senzaPass + ' · ' : '') + 'Gratuito con pass']);
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;font-size:15px">' +
     righe.map(function (r) {
       return '<tr><td style="padding:8px 0;border-top:1px solid #d6d3ce;width:90px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#5f5b56">' + r[0] + '</td>' +

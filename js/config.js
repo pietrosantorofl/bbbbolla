@@ -39,7 +39,7 @@ window.BOLLA = {
       id: "2026-10-30",
       data: "2026-10-30",          // AAAA-MM-GG
       orario: { inizio: "20:00", fine: null },   // fine: null = "dalle 20:00"
-      senzaPass: "5 € al botteghino dopo le 22:30",   // null = nessun ingresso senza pass
+      senzaPass: "5€ al botteghino dopo le 22:30",   // null = nessun ingresso senza pass
       luogo: {
         nome: "MONO",
         indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
