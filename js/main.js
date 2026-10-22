@@ -36,7 +36,6 @@
   var dataLunga = GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()] + " " + d.getFullYear();
 
   /* ---------- contenuti ---------- */
-  setText("nome", C.rassegna.nome);
   setText("sottotitolo", C.rassegna.sottotitolo);
   setText("dataBreve", dataBreve);
   setText("dataLunga", dataLunga);
