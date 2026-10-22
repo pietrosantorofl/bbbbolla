@@ -87,17 +87,42 @@
     });
   });
 
+  // voci con "dettagli": si aprono e chiudono con un clic (details/summary, accessibile da tastiera)
   bind("lineup", function (n) {
     serata.lineup.forEach(function (a) {
-      var li = el("li", a.minore ? "is-minore" : null);
+      var li = el("li", [a.minore ? "is-minore" : "", a.dettagli ? "ha-dettagli" : ""].join(" ").trim() || null);
+      var riga = li;
+      if (a.dettagli) {
+        var det = el("details");
+        riga = el("summary");
+        det.appendChild(riga);
+        det.appendChild(dettagliArtista(a.dettagli));
+        li.appendChild(det);
+      }
       var name = el("span", "lineup__name");
       name.appendChild(nomeArtista(a));
       if (a.note) name.appendChild(el("span", "lineup__note", a.note));
-      li.appendChild(name);
-      if (a.tag) li.appendChild(el("span", "lineup__tag", a.tag));
+      riga.appendChild(name);
+      if (a.tag) riga.appendChild(el("span", "lineup__tag", a.tag));
+      if (a.dettagli) riga.appendChild(el("span", "lineup__toggle"));
       n.appendChild(li);
     });
   });
+
+  function dettagliArtista(d) {
+    var box = el("div", "lineup__more");
+    if (d.titolo) box.appendChild(el("p", "lineup__more-titolo", d.titolo));
+    (d.testo || []).forEach(function (t) { box.appendChild(el("p", null, t)); });
+    (d.persone || []).forEach(function (p) {
+      var w = el("div", "lineup__persona");
+      var h = el("p", "lineup__persona-nome", p.nome);
+      if (p.ruolo) h.appendChild(el("span", null, " · " + p.ruolo));
+      w.appendChild(h);
+      if (p.testo) w.appendChild(el("p", null, p.testo));
+      box.appendChild(w);
+    });
+    return box;
+  }
 
   bind("info", function (n) { n.textContent = C.infoUtili; });
 
