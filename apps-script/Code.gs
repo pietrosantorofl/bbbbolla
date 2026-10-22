@@ -36,7 +36,7 @@ var CONFIG = {
   /* anti-bot */
   secondiMinimiModulo: 4,         // un modulo inviato prima di N secondi dall'apertura viene respinto
   oreValiditaModulo: 2,           // dopo, il modulo va ricaricato
-  maxRegistrazioniAlMinuto: 20,   // tetto globale: oltre, le richieste vengono respinte per un minuto
+  maxRegistrazioniAlMinuto: 60,   // tetto globale: oltre, le richieste vengono respinte per un minuto
 
   /* email temporanee: lista pubblica aggiornata (~10.000 domini) + controllo che il dominio riceva posta */
   listaUsaEGetta: 'https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/main/disposable_email_blocklist.conf',
@@ -222,6 +222,17 @@ function aggiornamentiUnaTantum_() {
     { id: 'prova-pass-brevo-1', fai: function () {
       var s = serata_(db, '2026-10-30');
       emailPass_({ nome: 'Prova', cognome: 'Pass', email: CONFIG.replyTo, codice: 'BOL-PROVA', chiave: token_(24), tipo: 'invito', newsletter: 'FALSE' }, s);
+    } },
+    // prima del lancio: annulla i pass e i gruppi creati durante i test (i posti tornano liberi)
+    { id: 'pulizia-test-2026-10-22', fai: function () {
+      var codici = ['BOL-MTFSG', 'BOL-XH2CG', 'BOL-ZY6WN'];
+      var gruppi = {};
+      db.Pass.forEach(function (r) {
+        if (codici.indexOf(r.codice) < 0) return;
+        if (r.tipo === 'gruppo') gruppi[r.rif] = true;
+        aggiorna_(db.Pass, r, { stato: 'annullato' });
+      });
+      db.Gruppi.forEach(function (g) { if (gruppi[g.id]) aggiorna_(db.Gruppi, g, { stato: 'annullato' }); });
     } },
     { id: 'inviti-organizzatori-senza-limite', fai: function () {
       db.Inviti.forEach(function (inv) {
