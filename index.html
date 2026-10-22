@@ -19,25 +19,17 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <svg class="sr-only" aria-hidden="true">
-    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
-  </svg>
-
   <header class="topbar">
-    <a href="./" class="topbar__logo" aria-label="bolla® home"><img src="assets/bolla-logo.png" alt="bolla®" width="859" height="306"></a>
+    <a href="./" class="topbar__logo" aria-label="bolla® home"><img src="assets/bolla-logo.png" alt="bolla®" width="808" height="312"></a>
     <a href="#prenota" class="btn btn--small">Prenota pass</a>
   </header>
 
-  <!-- HERO: ricostruzione del poster -->
+  <!-- HERO: sfera con logo, date in verticale, line-up -->
   <section class="hero" aria-label="Serata">
     <div class="hero__stage">
       <span class="hero__date hero__date--left" data-bind="dataBreve"></span>
-      <div class="hero__mark">
-        <img class="hero__logo" src="assets/bolla-logo.png" alt="bolla®" width="859" height="306">
-        <div class="sphere" aria-hidden="true">
-          <div class="sphere__paint"></div>
-          <div class="sphere__grain"></div>
-        </div>
+      <div class="hero__sfera">
+        <img src="assets/sfera-logo.webp" alt="bolla®" width="900" height="900" fetchpriority="high">
       </div>
       <span class="hero__date hero__date--right" aria-hidden="true" data-bind="dataBreve"></span>
     </div>

@@ -49,8 +49,7 @@ window.BOLLA = {
         { nome: "Selva Cosmica", tag: "Live" },
         { nome: "Franzuà", tag: "Sel Musicali", note: "downtempo · cumbia · afrobeat" },
         { nome: "Cantina controcorrente", tag: "Vino del giorno" }
-      ],
-      poster: "assets/poster.jpg"
+      ]
     }
   ],
 
