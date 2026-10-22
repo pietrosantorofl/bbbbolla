@@ -85,7 +85,14 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('bolla®')
     .addItem('Crea link invito…', 'creaInvitoDaMenu')
     .addItem('Esporta newsletter', 'esportaNewsletter')
+    .addSeparator()
+    .addItem('Attiva sveglia automatica', 'attivaSvegliaDaMenu')
     .addToUi();
+}
+
+// Dal menu: Google chiede qui le autorizzazioni nuove (la pagina della Web App non può farlo).
+function attivaSvegliaDaMenu() {
+  SpreadsheetApp.getUi().alert('Sveglia automatica: ' + installaSveglia_());
 }
 
 function creaInvitoDaMenu() {

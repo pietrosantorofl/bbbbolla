@@ -65,6 +65,7 @@ cd apps-script && npx @google/clasp -u bolla push --force && npx @google/clasp -
 
 Usa sempre `update-deployment` con lo stesso ID: un nuovo deployment cambierebbe l'URL.
 Aprire l'URL `…/exec` nel browser mostra lo stato del backend (e crea i fogli se mancano).
+Se aggiungi permessi al manifest, l'URL mostra "Authorization is required": autorizza dal foglio, menu **bolla® → Attiva sveglia automatica** (o un'altra voce del menu).
 
 ### Installazione da zero (solo se serve rifarlo)
 
