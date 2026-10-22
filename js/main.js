@@ -69,10 +69,18 @@
 
   bind("intro", function (n) { C.rassegna.intro.forEach(function (p) { n.appendChild(el("p", null, p)); }); });
 
+  // nome dell'artista: link al profilo (Instagram) se c'è
+  function nomeArtista(a, cls) {
+    if (!a.link) return el("span", cls, a.nome);
+    var l = el("a", (cls ? cls + " " : "") + "artista", a.nome);
+    l.href = a.link; l.target = "_blank"; l.rel = "noopener";
+    return l;
+  }
+
   bind("lineupHero", function (n) {
     serata.lineup.forEach(function (a) {
       var li = el("li", a.minore ? "is-minore" : null);
-      li.appendChild(document.createTextNode(a.nome));
+      li.appendChild(nomeArtista(a));
       if (a.tag) li.appendChild(el("sup", "tag", a.tag));
       if (a.note) li.appendChild(el("span", "note", "[" + a.note + "]"));
       n.appendChild(li);
@@ -82,7 +90,8 @@
   bind("lineup", function (n) {
     serata.lineup.forEach(function (a) {
       var li = el("li", a.minore ? "is-minore" : null);
-      var name = el("span", "lineup__name", a.nome);
+      var name = el("span", "lineup__name");
+      name.appendChild(nomeArtista(a));
       if (a.note) name.appendChild(el("span", "lineup__note", a.note));
       li.appendChild(name);
       if (a.tag) li.appendChild(el("span", "lineup__tag", a.tag));

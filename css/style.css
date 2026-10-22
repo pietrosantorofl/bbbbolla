@@ -164,12 +164,14 @@ a { color: inherit; }
   max-width: 860px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px clamp(16px, 4vw, 48px);
+  gap: .35em clamp(16px, 4vw, 48px);
   font-size: clamp(20px, 3.6vw, 44px);
   line-height: 1.05;
   letter-spacing: -.02em;
 }
 .hero__lineup li { min-width: 0; }
+.artista { color: inherit; text-decoration: none; background-image: linear-gradient(currentColor, currentColor); background-size: 0 1.5px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size .25s; }
+.artista:hover, .artista:focus-visible { background-size: 100% 1.5px; }
 /* vino e cibo: più piccoli delle proposte musicali */
 .hero__lineup .is-minore { font-size: .55em; align-self: end; }
 .hero__lineup .is-minore .tag { font-size: .5em; }
