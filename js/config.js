@@ -66,7 +66,7 @@ window.BOLLA = {
         },
         { nome: "Selva Cosmica", tag: "Live", link: "https://www.instagram.com/selvacosmica_music/" },
         { nome: "Franzuà", tag: "Sel Musicali", note: "downtempo · cumbia · afrobeat", link: "https://www.instagram.com/franzua_imagerie/" },
-        { nome: "Dario Aiello", tag: "Sel Musicali", link: "https://www.instagram.com/darioaiello77/" },
+        { nome: "Dario Aiello", tag: "Sel Musicali", note: "elettronica · dub · downtempo", link: "https://www.instagram.com/darioaiello77/" },
         // minore: true = più piccolo delle proposte musicali (vino, cibo)
         { nome: "Cantina controcorrente", tag: "Vino del giorno", minore: true, link: "https://www.instagram.com/controcorrente.etnawines/" },
         { nome: "SPIZZICO", tag: "Food dalle 20:00", minore: true }
