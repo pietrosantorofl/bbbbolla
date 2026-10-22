@@ -111,13 +111,15 @@ function creaInvitoDaMenu() {
 // La prima volta, da proprietario, Google chiede anche le autorizzazioni.
 function doGet() {
   setup();
+  var sveglia = installaSveglia_();
   var ss = SpreadsheetApp.getActive();
   var html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px;margin:40px auto;padding:0 16px">' +
     '<h1 style="font-size:40px;margin:0">bolla&reg;</h1>' +
     '<p style="font-size:18px">Backend dei pass attivo.</p>' +
     '<p>Fogli: ' + Object.keys(COLONNE).map(function (n) { return ss.getSheetByName(n) ? n + ' ✓' : n + ' ✗'; }).join(' · ') + '</p>' +
-    '<p>Email ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p></div>';
+    '<p>Email ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p>' +
+    '<p>Sveglia automatica: ' + sveglia + '</p></div>';
   return HtmlService.createHtmlOutput(html).setTitle('bolla® backend');
 }
 
@@ -141,6 +143,22 @@ function doPost(e) {
     console.error(err && err.stack || err);
     return json_(errore_('server', 'Errore temporaneo. Riprova tra poco.'));
   }
+}
+
+/* ---------- sveglia ----------
+ * Apps Script "si addormenta" dopo qualche minuto senza richieste e la prima risposta
+ * può impiegare oltre 20 secondi. Un trigger ogni 5 minuti tiene caldi script, cache e foglio.
+ * Lo installa doGet: basta aprire l'URL della Web App da proprietario. */
+function sveglia() {
+  CacheService.getScriptCache().get('sveglia');
+  carica_();
+  dominiUsaEGetta_();
+}
+
+function installaSveglia_() {
+  var esiste = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'sveglia'; });
+  if (!esiste) ScriptApp.newTrigger('sveglia').timeBased().everyMinutes(5).create();
+  return esiste ? 'attiva ✓' : 'attivata ora ✓';
 }
 
 /* ============================================================

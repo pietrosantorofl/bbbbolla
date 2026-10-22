@@ -267,9 +267,16 @@
   var SECONDI_MINIMI = 4.5;
   function nuovoModulo(r) { modulo = r.modulo; moduloDa = Date.now(); }
 
+  // Il backend può impiegare diversi secondi a rispondere: il modulo si mostra subito
+  // e si compila nel frattempo; l'invio aspetta la risposta (serve il modulo firmato).
+  var statoPronto = null;
+
   function avvia() {
     if (modo === "pass") return caricaPass();
-    api("stato", { invito: idInvito, gruppo: idGruppo }).then(function (r) {
+    if (modo === "invito") lead.textContent = "Controllo il tuo invito…";
+    if (modo === "unisciti") lead.textContent = "Carico il gruppo…";
+    form.hidden = false;
+    statoPronto = api("stato", { invito: idInvito, gruppo: idGruppo }).then(function (r) {
       if (!r || !r.ok) { renderMeter(null); blocca((r && r.messaggio) || "Serata non disponibile."); return; }
       if (r.dimensioneGruppo) DIM = r.dimensioneGruppo;
       nuovoModulo(r);
@@ -291,7 +298,6 @@
       } else if (r.serata.disponibili < DIM) {
         return blocca("Non ci sono più posti per un nuovo gruppo da " + DIM + ".");
       }
-      form.hidden = false;
     }).catch(function () {
       renderMeter(null);
       blocca("Connessione non riuscita. Ricarica la pagina tra poco.");
@@ -404,9 +410,13 @@
     if (modo === "invito") dati.invito = idInvito;
     if (modo === "unisciti") dati.gruppo = idGruppo;
 
-    // chi compila più in fretta del minimo aspetta in silenzio il tempo che manca
-    var attesa = Math.max(0, SECONDI_MINIMI * 1000 - (Date.now() - moduloDa));
-    new Promise(function (ok) { setTimeout(ok, attesa); })
+    // aspetta la risposta di "stato"; chi compila più in fretta del minimo aspetta in silenzio il tempo che manca
+    statoPronto
+      .then(function () {
+        if (form.hidden || !modulo) throw new Error("modulo");
+        var attesa = Math.max(0, SECONDI_MINIMI * 1000 - (Date.now() - moduloDa));
+        return new Promise(function (ok) { setTimeout(ok, attesa); });
+      })
       .then(function () { dati.modulo = modulo; return api(azione, dati); })
       .then(function (r) {
         if (!r || !r.ok) {
