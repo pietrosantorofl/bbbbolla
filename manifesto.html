@@ -14,7 +14,7 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/style.css?v=202610222205">
+  <link rel="stylesheet" href="css/style.css?v=202610222207">
   <style>
     .manifesto { max-width: 980px; margin: 0 auto; padding: 0 var(--gutter) 40px; }
     .m-cover { display: grid; justify-items: center; gap: 18px; padding: clamp(28px, 6vw, 64px) 0 clamp(40px, 8vw, 96px); text-align: center; }
@@ -22,27 +22,18 @@
     .m-cover h1 { margin: 0; font-size: clamp(56px, 12vw, 120px); line-height: .9; letter-spacing: -.05em; font-weight: 700; }
     .m-cover p { margin: 0; font-size: clamp(18px, 2.4vw, 24px); }
 
-    /* ogni capitolo: grafica + testo grande, come le slide del carosello */
-    .m-cap { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 64px); align-items: center; padding: clamp(40px, 7vw, 88px) 0; border-top: 1.5px solid var(--ink); }
-    .m-cap--rovescio .m-cap__img { order: 2; }
-    .m-cap__img { width: 100%; height: auto; }
-    .m-cap p { margin: 0 0 .7em; font-size: clamp(22px, 3vw, 34px); line-height: 1.18; letter-spacing: -.02em; font-weight: 500; }
-    .m-cap p:last-child { margin-bottom: 0; }
-    .m-cap strong { font-weight: 700; }
-    .m-cap--solo { grid-template-columns: 1fr; }
-    .m-cap--solo p { font-size: clamp(30px, 5vw, 58px); line-height: 1.05; font-weight: 700; letter-spacing: -.035em; max-width: 16ch; }
+    /* testo unico in due parti, dopo l'unica grafica di copertina */
+    .m-testo { border-top: 1.5px solid var(--ink); padding: clamp(40px, 7vw, 88px) 0; }
+    .m-testo p { margin: 0 0 .8em; max-width: 30ch; font-size: clamp(22px, 3vw, 34px); line-height: 1.22; letter-spacing: -.02em; font-weight: 500; }
+    .m-testo p:last-child { margin-bottom: 0; }
+    .m-testo strong { font-weight: 700; }
 
     .m-finale { border-top: 1.5px solid var(--ink); padding: clamp(40px, 7vw, 88px) 0 24px; display: grid; gap: 24px; }
     .m-finale p { margin: 0; font-size: clamp(22px, 3vw, 34px); line-height: 1.18; letter-spacing: -.02em; font-weight: 500; max-width: 26ch; }
     .m-finale .m-claim { font-size: clamp(40px, 7vw, 84px); line-height: .98; letter-spacing: -.045em; font-weight: 700; max-width: none; }
     .m-finale img { width: min(560px, 100%); height: auto; margin-top: 24px; }
-    .m-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .m-cta { display: flex; justify-content: center; margin-top: 16px; }
 
-    @media (max-width: 760px) {
-      .m-cap { grid-template-columns: 1fr; }
-      .m-cap--rovescio .m-cap__img { order: 0; }
-      .m-cap__img { max-width: 420px; }
-    }
   </style>
 </head>
 <body>
@@ -61,25 +52,11 @@
       <p>uno spazio comodo</p>
     </section>
 
-    <section class="m-cap">
-      <img class="m-cap__img" src="assets/manifesto-sfere.webp" alt="" width="900" height="454" loading="lazy">
-      <div>
-        <p><strong>BOLLA</strong> è ricerca artistica, sperimentazione e condivisione: Live music, Workshop, Lab e Talk dedicati all'arte, alla creazione e al talento, insieme a sessioni di improvvisazione.</p>
-        <p>Elettronica, world music, nu-jazz, soul, fino ad arrivare ai ritmi ancestrali del sud del mondo. Suoni e ritmi diversi che si incontrano e si trasformano.</p>
-      </div>
-    </section>
-
-    <section class="m-cap m-cap--rovescio">
-      <img class="m-cap__img" src="assets/manifesto-angolo.webp" alt="" width="600" height="580" loading="lazy">
-      <div>
-        <p><strong>BOLLA</strong> è uno spazio da abitare, fragile e prezioso, da vivere e custodire insieme.</p>
-        <p>Un luogo dove sentirsi liberi, trovare la propria dimensione e incontrarsi, lasciandosi sorprendere dalla bellezza e riscoprendo il piacere di toccare la realtà con gentilezza.</p>
-      </div>
-    </section>
-
-    <section class="m-cap m-cap--solo">
+    <section class="m-testo">
+      <p><strong>BOLLA</strong> è ricerca artistica, sperimentazione e condivisione: Live music, Workshop, Lab e Talk dedicati all'arte, alla creazione e al talento, insieme a sessioni di improvvisazione.</p>
+      <p>Elettronica, world music, nu-jazz, soul, fino ad arrivare ai ritmi ancestrali del sud del mondo. Suoni e ritmi diversi che si incontrano e si trasformano.</p>
+      <p><strong>BOLLA</strong> è uno spazio da abitare, fragile e prezioso, da vivere e custodire insieme. Un luogo dove sentirsi liberi, trovare la propria dimensione e incontrarsi, lasciandosi sorprendere dalla bellezza e riscoprendo il piacere di toccare la realtà con gentilezza.</p>
       <p>Crediamo nel rispetto, nell'ascolto e nella musica come linguaggio universale, capace di avvicinare mondi diversi e aprire nuove prospettive.</p>
-      <img class="m-cap__img" src="assets/manifesto-basso.webp" alt="" width="800" height="485" loading="lazy" style="max-width: 520px; justify-self: end;">
     </section>
 
     <section class="m-finale">
@@ -88,7 +65,6 @@
       <p class="m-claim">Entra in BOLLA.<br>Lasciati sorprendere.</p>
       <div class="m-cta">
         <a href="./#prenota" class="btn">Prenota il pass</a>
-        <a href="./" class="btn btn--ghost">Torna alla serata</a>
       </div>
       <img src="assets/logo-alone.webp" alt="bolla®" width="498" height="200" loading="lazy">
     </section>
