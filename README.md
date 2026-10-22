@@ -11,7 +11,7 @@ Una persona = un pass = un QR. Due strade:
 | Strada | Link | Come funziona |
 |---|---|---|
 | **Invito** | `bbbbolla.it/?invito=<token>` | Link unlisted creato da te. Nome, cognome, email: il pass con QR arriva subito via email. Ogni link ha un tetto di pass. |
-| **Gruppo da 5** | `bbbbolla.it` | Il capogruppo si registra e riceve il link del gruppo `?gruppo=<id>` da girare a 4 amici. Ognuno si registra con la propria email e conferma aprendo il link personale. Quando tutti e 5 hanno confermato, ognuno riceve il suo QR. |
+| **Gruppo da 3** | `bbbbolla.it` | Il capogruppo si registra e riceve il link del gruppo `?gruppo=<id>` da girare a 2 amici. Ognuno si registra con la propria email e conferma aprendo il link personale. Solo quando tutti e 3 hanno confermato ognuno riceve il suo QR: se il gruppo non si completa, nessuno riceve il pass. |
 
 - I posti del gruppo si bloccano quando il capogruppo conferma la sua email.
 - Un gruppo incompleto scade dopo 48 ore (o a fine serata) e libera i posti.
@@ -86,6 +86,7 @@ Così l'URL resta lo stesso.
 
 Senza `apiUrl` il sito gira in **modalità demo**: stesso `Code.gs`, ma fogli ed email finti salvati nel browser.
 Le email compaiono nella casella "Email demo". Invito di prova: `?invito=demoinvito01`.
+Con `apiUrl` impostato, aggiungi `?demo` all'indirizzo (es. `http://localhost:8770/?demo`) per provare in demo senza toccare il foglio vero.
 In demo non c'è rete: si usa la lista di riserva delle email temporanee e niente controllo DNS.
 
 ## 2. Gestione dal foglio
@@ -105,7 +106,7 @@ Ricarica il foglio dopo il setup: compare il menu **bolla®**.
 ### Limiti di Google
 
 Un account Gmail gratuito invia **100 email al giorno** con Apps Script (Google Workspace: 1500).
-Ogni gruppo completo usa circa 10 email (5 conferme + 5 QR), ogni invito 1.
+Ogni gruppo completo usa circa 6 email (3 conferme + 3 QR), ogni invito 1.
 Con il limite raggiunto il sito respinge le nuove registrazioni con un messaggio chiaro.
 
 ## 3. Sito su GitHub Pages

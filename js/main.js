@@ -152,7 +152,7 @@
   var TESTI = {
     crea: {
       titolo: "Pass di gruppo",
-      lead: "Il pass gratuito è per gruppi da " + DIM + ". Registrati, poi manda il link del gruppo ai tuoi " + (DIM - 1) + " amici. Quando tutti hanno confermato la propria email, ognuno riceve il suo pass con QR.",
+      lead: "Il pass gratuito è per gruppi da " + DIM + ". Registrati, poi manda il link del gruppo ai tuoi " + (DIM - 1) + " amici. Quando tutti e " + DIM + " hanno confermato la propria email, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno riceve il pass.",
       bottone: "Crea il gruppo",
       cta: "Crea il tuo gruppo"
     },
@@ -287,7 +287,7 @@
         renderGruppo(g, groupBox);
         if (g.stato !== "aperto") return blocca(g.stato === "completo" ? "Questo gruppo è già completo." : "Questo gruppo è scaduto prima di essere completato.", true);
         if (g.membri.length >= g.dimensione) return blocca("Il gruppo è al completo. Se qualcuno non conferma entro poche ore il posto si libera.", true);
-        lead.textContent = (g.capogruppo || "Un amico") + " ti ha invitato nel suo gruppo. Registrati con la tua email e conferma dal link che ti arriva: quando tutti e " + g.dimensione + " hanno confermato, ognuno riceve il suo pass con QR.";
+        lead.textContent = (g.capogruppo || "Un amico") + " ti ha invitato nel suo gruppo. Registrati con la tua email e conferma dal link che ti arriva: quando tutti e " + g.dimensione + " hanno confermato, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno lo riceve.";
       } else if (r.serata.disponibili < DIM) {
         return blocca("Non ci sono più posti per un nuovo gruppo da " + DIM + ".");
       }
@@ -320,7 +320,7 @@
           renderGruppo(r.gruppo, gbox);
           nodi.push(gbox);
           if (r.gruppo.stato === "aperto") {
-            nodi.push(el("p", "done__text", "Il pass con QR si attiva quando tutti hanno confermato: ti arriva via email e lo trovi anche qui. Manca qualcuno? Rimanda il link del gruppo:"));
+            nodi.push(el("p", "done__text", "Il pass con QR si attiva solo quando tutti e " + r.gruppo.dimensione + " hanno confermato: ti arriva via email e lo trovi anche qui. Se il gruppo non si completa in tempo, nessuno riceve il pass. Manca qualcuno? Rimanda il link del gruppo:"));
             nodi.push(shareBox(linkGruppo(r.gruppo.id)));
           } else if (r.gruppo.stato !== "completo") {
             var a = el("a", "btn btn--ghost btn--block", "Crea un nuovo gruppo");
@@ -338,6 +338,9 @@
     nodi.push(el("p", "done__kicker", r.pass.checkin ? "Sei già entrato" : "Ci vediamo dentro la bolla"));
     nodi.push(el("p", "done__name", r.pass.nome + " " + r.pass.cognome));
     var t = el("div", "ticket");
+    var banner = el("img", "ticket__banner");
+    banner.src = "assets/banner-sfera.jpg"; banner.alt = ""; banner.width = 851; banner.height = 315;
+    t.appendChild(banner);
     t.appendChild(el("span", "ticket__label", "Codice pass"));
     t.appendChild(el("span", "ticket__code", r.pass.codice));
     t.appendChild(el("span", "ticket__meta", (r.pass.tipo === "invito" ? "Su invito" : "Pass di gruppo") + " · " + dataBreve));
@@ -430,7 +433,7 @@
       var ol = el("ol", "steps");
       ol.appendChild(el("li", null, "Apri l'email che ti abbiamo mandato a " + dati.email + " e conferma (controlla anche lo spam)."));
       ol.appendChild(el("li", null, "Manda questo link ai tuoi " + (DIM - 1) + " amici: ognuno si registra con la propria email."));
-      ol.appendChild(el("li", null, "Quando tutti hanno confermato, ognuno riceve il suo pass con QR."));
+      ol.appendChild(el("li", null, "Quando tutti e " + DIM + " hanno confermato, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno riceve il pass."));
       nodi.push(ol);
       nodi.push(shareBox(linkGruppo(r.gruppo.id)));
     } else if (azione === "unisciti") {

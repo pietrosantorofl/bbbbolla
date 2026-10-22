@@ -402,37 +402,29 @@ a { color: inherit; }
 .done__kicker { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .done__name { margin: 4px 0 18px; font-size: 26px; letter-spacing: -.02em; }
 .ticket {
-  position: relative;
   display: grid;
-  gap: 4px;
-  padding: 22px 16px;
-  border-radius: 16px;
-  color: #fff;
+  gap: 2px;
+  padding: 0 16px 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 18px;
+  background: #fff;
   overflow: hidden;
-  isolation: isolate;
-  background: var(--pink);
 }
-.ticket::before {
+/* striscia sfumata in fondo al biglietto, come nell'email */
+.ticket::after {
   content: "";
-  position: absolute; inset: -30%; z-index: -1;
-  background:
-    radial-gradient(circle at 20% 20%, var(--orange), transparent 30%),
-    radial-gradient(ellipse 50% 20% at 45% 35%, var(--navy), transparent 70%),
-    radial-gradient(circle at 80% 80%, var(--red), transparent 40%),
-    var(--pink);
-  filter: blur(14px);
+  height: 8px;
+  margin: 18px -16px 0;
+  background: linear-gradient(90deg, var(--orange), var(--pink) 50%, var(--red));
 }
-.ticket::after { content: ""; position: absolute; inset: 0; z-index: -1; background-image: var(--noise); mix-blend-mode: overlay; opacity: .6; }
-.ticket__label { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; opacity: .9; }
+.ticket__banner { width: calc(100% + 32px); max-width: none; height: auto; margin: 0 -16px 16px; }
+.ticket__label { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
 .ticket__code { font-size: 34px; font-weight: 600; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
 .ticket__meta { font-size: 14px; }
 .ticket__qr {
   justify-self: center;
-  width: 168px;
-  margin-top: 14px;
-  padding: 8px;
-  background: #fff;
-  border-radius: 12px;
+  width: 196px;
+  margin-top: 10px;
 }
 .ticket__qr:empty { display: none; }
 .ticket__qr svg { display: block; width: 100%; height: auto; }
@@ -447,7 +439,7 @@ a { color: inherit; }
   gap: 16px;
   text-align: center;
 }
-.footer__logo { width: 140px; height: auto; }
+.footer__banner { width: min(560px, 100%); height: auto; border-radius: 18px; }
 .footer__links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
 .footer__links a { text-underline-offset: 3px; }
 .footer__small { margin: 0; font-size: 13px; color: var(--muted); }

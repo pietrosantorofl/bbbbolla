@@ -25,7 +25,7 @@ var CONFIG = {
   luogo: '',                      // compare nelle email, es. 'Nome locale, Via ..., Catania'
   orario: '',                     // compare nelle email, es. 'dalle 19:30'
   newsletterObbligatoria: true,   // deve coincidere con newsletterObbligatoria in js/config.js
-  dimensioneGruppo: 5,
+  dimensioneGruppo: 3,
   oreValiditaGruppo: 48,          // dopo, un gruppo incompleto scade e libera i posti
   oreConferma: 12,                // dopo, un membro che non ha confermato perde il posto nel gruppo
   minutiTraReinvii: 15,           // anti-spam: ogni quanto si può rimandare il link alla stessa persona
@@ -571,55 +571,115 @@ function dominioRiceveEmail_(dominio) {
 function emailConferma_(pass, s, g, capogruppo) {
   var data = dataBreve_(s);
   var link = linkPass_(pass.chiave);
+  var dim = CONFIG.dimensioneGruppo;
   var corpo =
-    '<p style="margin:8px 0 16px;font-size:17px">Ciao ' + esc_(pass.nome) + ', apri il tuo link personale per confermare la tua email.</p>' +
-    bottone_(link, 'Conferma e vedi il tuo pass') +
-    '<p style="margin:20px 0 8px;font-size:15px">Il pass gratuito è per gruppi da ' + CONFIG.dimensioneGruppo + '. ' +
-    'Si attiva quando tutti hanno confermato: a quel punto ognuno riceve il proprio QR.</p>' +
+    kicker_('Un ultimo passo') +
+    titolo_('Ciao ' + esc_(pass.nome) + ', conferma la tua email') +
+    paragrafo_('Apri il tuo link personale: così sappiamo che l\'indirizzo è tuo e il tuo posto nel gruppo è confermato.') +
+    bottone_(link, 'Conferma la mia email') +
+    riquadro_(
+      '<p style="margin:0 0 6px;font-size:15px;font-weight:700">Come funziona il pass di gruppo</p>' +
+      '<p style="margin:0;font-size:14px;line-height:1.5">Il pass è per gruppi da ' + dim + '. Si attiva solo quando <strong>tutti e ' + dim + '</strong> hanno confermato la propria email: ' +
+      'allora ognuno riceve il suo QR. Se il gruppo non si completa entro ' + CONFIG.oreValiditaGruppo + ' ore, <strong>nessuno riceve il pass</strong>.</p>') +
     (capogruppo && g ?
-      '<p style="margin:16px 0 6px;font-size:15px"><strong>Manda questo link ai tuoi ' + (CONFIG.dimensioneGruppo - 1) + ' amici:</strong></p>' +
-      '<p style="margin:0 0 16px;font-size:15px;word-break:break-all"><a href="' + linkGruppo_(g.id) + '" style="color:#121212">' + linkGruppo_(g.id) + '</a></p>' +
-      '<p style="margin:0;font-size:13px;color:#5f5b56">Il gruppo va completato entro ' + CONFIG.oreValiditaGruppo + ' ore, poi scade.</p>' : '') +
-    '<p style="margin:16px 0 0;font-size:13px;color:#5f5b56">Hai ' + CONFIG.oreConferma + ' ore per confermare, poi il tuo posto nel gruppo può essere preso da altri.</p>';
+      '<p style="margin:24px 0 8px;font-size:15px;font-weight:700">Manda questo link ai tuoi ' + (dim - 1) + ' amici</p>' +
+      '<p style="margin:0 0 12px;padding:12px 14px;border:1.5px dashed #121212;border-radius:12px;background:#ffffff;font-size:14px;word-break:break-all">' +
+        '<a href="' + linkGruppo_(g.id) + '" style="color:#121212">' + linkGruppo_(g.id) + '</a></p>' +
+      bottone_('https://wa.me/?text=' + encodeURIComponent('Entra nel mio gruppo per il pass gratuito di bolla® (' + data + '): ' + linkGruppo_(g.id)), 'Invia su WhatsApp', true) : '') +
+    nota_('Hai ' + CONFIG.oreConferma + ' ore per confermare: dopo, il tuo posto nel gruppo può essere preso da qualcun altro.');
   invia_(pass.email, 'Conferma il tuo posto — bolla® ' + data,
-    'Ciao ' + pass.nome + ', conferma la tua email aprendo questo link: ' + link,
-    layout_(corpo, s, vero_(pass.newsletter)), null);
+    'Ciao ' + pass.nome + ', conferma la tua email aprendo questo link: ' + link +
+      '. Il pass si attiva solo quando tutti e ' + dim + ' i membri del gruppo hanno confermato.',
+    layout_({ banner: 'banner-logo.jpg', anteprima: 'Conferma la tua email per il pass di gruppo', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }), null);
 }
 
 function emailPass_(pass, s) {
   var data = dataBreve_(s);
-  var dettagli = [data, CONFIG.orario, CONFIG.luogo].filter(String).join(' · ');
   var corpo =
-    '<p style="margin:8px 0 20px;font-size:17px">Ciao ' + esc_(pass.nome) + ', il tuo pass gratuito è attivo.</p>' +
-    '<div style="background:#f0307f;background-image:linear-gradient(135deg,#f8893c 0%,#f0307f 45%,#ff3b1c 100%);color:#fff;border-radius:16px;padding:22px 16px;text-align:center">' +
-      '<div style="font-size:12px;letter-spacing:2px;text-transform:uppercase">Codice pass</div>' +
-      '<div style="font-size:34px;font-weight:700;letter-spacing:3px;margin:4px 0">' + pass.codice + '</div>' +
-      '<div style="font-size:14px">' + esc_(pass.nome + ' ' + pass.cognome) + ' · ' + esc_(dettagli) + '</div>' +
-      '<div style="display:inline-block;margin-top:14px;padding:8px;background:#ffffff;border-radius:12px">' +
-        '<img src="cid:qr" width="180" height="180" alt="QR ' + pass.codice + '" style="display:block">' +
-      '</div>' +
-    '</div>' +
-    '<p style="margin:20px 0 16px;font-size:14px;color:#5f5b56">Mostra il QR all\'ingresso. Il pass è personale: vale una sola volta e non garantisce l\'ingresso dopo il raggiungimento della capienza massima.</p>' +
-    bottone_(linkPass_(pass.chiave), 'Apri il pass sul sito');
+    kicker_('Il tuo pass è attivo') +
+    titolo_('Ciao ' + esc_(pass.nome) + ', ci vediamo dentro la bolla') +
+    // biglietto: QR grande, codice, nome
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;border:1.5px solid #121212;border-radius:18px;background:#ffffff">' +
+      '<tr><td align="center" style="padding:24px 16px 8px">' +
+        '<img src="cid:qr" width="200" height="200" alt="QR ' + pass.codice + '" style="display:block;width:200px;height:200px">' +
+      '</td></tr>' +
+      '<tr><td align="center" style="padding:4px 16px 0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#5f5b56">Codice pass</td></tr>' +
+      '<tr><td align="center" style="padding:2px 16px 0;font-size:32px;font-weight:700;letter-spacing:3px;color:#121212">' + pass.codice + '</td></tr>' +
+      '<tr><td align="center" style="padding:4px 16px 20px;font-size:15px;color:#121212">' + esc_(pass.nome + ' ' + pass.cognome) +
+        ' · ' + (pass.tipo === 'invito' ? 'su invito' : 'pass di gruppo') + '</td></tr>' +
+      '<tr><td style="height:8px;font-size:0;line-height:0;background:#f0307f;background-image:linear-gradient(90deg,#f8893c,#f0307f 50%,#ff3b1c);border-radius:0 0 16px 16px">&nbsp;</td></tr>' +
+    '</table>' +
+    dettagli_(s, data) +
+    bottone_(linkPass_(pass.chiave), 'Apri il pass sul sito') +
+    nota_('Mostra il QR all\'ingresso, dal telefono va benissimo. Il pass è personale e vale una sola volta: non condividerlo. ' +
+      'Non garantisce l\'ingresso dopo il raggiungimento della capienza massima: arriva presto.');
   invia_(pass.email, 'Il tuo pass bolla® — ' + data + ' · ' + pass.codice,
-    'Pass ' + pass.codice + ' per ' + pass.nome + ' ' + pass.cognome + ' — ' + dettagli + '. Apri: ' + linkPass_(pass.chiave),
-    layout_(corpo, s, vero_(pass.newsletter)), { qr: qrBlob_(pass.chiave) });
+    'Pass ' + pass.codice + ' per ' + pass.nome + ' ' + pass.cognome + ' — ' + data + '. Apri: ' + linkPass_(pass.chiave),
+    layout_({ banner: 'banner-sfera.jpg', anteprima: 'Pass ' + pass.codice + ': mostra il QR all\'ingresso', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }),
+    { qr: qrBlob_(pass.chiave) });
 }
 
-function layout_(corpo, s, newsletter) {
-  return '<div style="background:#e9e7e3;padding:32px 16px;font-family:Helvetica,Arial,sans-serif;color:#121212">' +
-    '<div style="max-width:480px;margin:0 auto;background:#f3f2ef;border:1.5px solid #121212;border-radius:22px;padding:28px 24px">' +
-      '<p style="margin:0;font-size:40px;font-weight:700;letter-spacing:-2px">bolla&reg;</p>' +
-      '<p style="margin:0;font-size:14px;color:#5f5b56">' + esc_(s.titolo) + '</p>' +
-      corpo +
-      (newsletter ? '<p style="margin:20px 0 0;font-size:12px;color:#5f5b56">Sei iscritto alla newsletter di bolla®: ti scriveremo solo per le prossime serate e non cederemo la tua email a terzi. Per disiscriverti rispondi con "cancellami".</p>' : '') +
-    '</div>' +
-    '<p style="text-align:center;font-size:12px;color:#5f5b56;margin:16px 0 0"><a href="' + CONFIG.sito + '" style="color:#5f5b56">bbbbolla.it</a></p>' +
-  '</div>';
+// Struttura a tabelle: è quella che i client email (Gmail, Outlook, Apple Mail) mostrano meglio.
+function layout_(o) {
+  var img = CONFIG.sito + '/assets/' + o.banner;
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+  '<body style="margin:0;padding:0;background:#e9e7e3">' +
+  '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + esc_(o.anteprima) + '</div>' +
+  '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e9e7e3;font-family:Helvetica,Arial,sans-serif;color:#121212">' +
+    '<tr><td align="center" style="padding:28px 12px">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#f3f2ef;border:1.5px solid #121212;border-radius:22px;overflow:hidden">' +
+        '<tr><td style="padding:0;line-height:0"><a href="' + CONFIG.sito + '"><img src="' + img + '" width="520" alt="bolla®" style="display:block;width:100%;max-width:520px;height:auto;border:0"></a></td></tr>' +
+        '<tr><td style="padding:28px 24px 8px">' + o.corpo + '</td></tr>' +
+        '<tr><td style="padding:8px 24px 28px">' +
+          '<p style="margin:16px 0 0;padding-top:16px;border-top:1px solid #d6d3ce;font-size:13px;color:#5f5b56">' + esc_(o.s.titolo) + '</p>' +
+          (o.newsletter ? '<p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#5f5b56">Sei iscritto alla newsletter di bolla®: ti scriveremo solo per le prossime serate e non cederemo la tua email a terzi. Per disiscriverti rispondi con "cancellami".</p>' : '') +
+        '</td></tr>' +
+      '</table>' +
+      '<p style="margin:16px 0 0;font-size:12px;color:#5f5b56;font-family:Helvetica,Arial,sans-serif"><a href="' + CONFIG.sito + '" style="color:#5f5b56">bbbbolla.it</a></p>' +
+    '</td></tr>' +
+  '</table></body></html>';
 }
 
-function bottone_(href, testo) {
-  return '<p style="margin:0;text-align:center"><a href="' + href + '" style="display:inline-block;background:#121212;color:#f3f2ef;text-decoration:none;font-weight:600;padding:14px 26px;border-radius:999px">' + testo + '</a></p>';
+function kicker_(t) {
+  return '<p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#e5249a">' + t + '</p>';
+}
+
+function titolo_(t) {
+  return '<h1 style="margin:0 0 14px;font-size:28px;line-height:1.1;letter-spacing:-0.5px;font-weight:700;color:#121212">' + t + '</h1>';
+}
+
+function paragrafo_(t) {
+  return '<p style="margin:0 0 20px;font-size:16px;line-height:1.5">' + t + '</p>';
+}
+
+function riquadro_(html) {
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0"><tr>' +
+    '<td style="padding:16px;border-radius:14px;background:#ffffff;border-left:4px solid #f0307f">' + html + '</td></tr></table>';
+}
+
+function nota_(t) {
+  return '<p style="margin:20px 0 0;font-size:13px;line-height:1.5;color:#5f5b56">' + t + '</p>';
+}
+
+function dettagli_(s, data) {
+  var righe = [['Quando', data + (CONFIG.orario ? ', ' + CONFIG.orario : '')]];
+  if (CONFIG.luogo) righe.push(['Dove', CONFIG.luogo]);
+  righe.push(['Ingresso', 'Gratuito con questo pass']);
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;font-size:15px">' +
+    righe.map(function (r) {
+      return '<tr><td style="padding:8px 0;border-top:1px solid #d6d3ce;width:90px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#5f5b56">' + r[0] + '</td>' +
+        '<td style="padding:8px 0;border-top:1px solid #d6d3ce">' + esc_(r[1]) + '</td></tr>';
+    }).join('') +
+  '</table>';
+}
+
+function bottone_(href, testo, secondario) {
+  var stile = secondario
+    ? 'background:#ffffff;color:#121212;border:1.5px solid #121212'
+    : 'background:#121212;color:#f3f2ef;border:1.5px solid #121212';
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px"><tr><td align="center">' +
+    '<a href="' + href + '" style="display:inline-block;' + stile + ';text-decoration:none;font-weight:700;font-size:16px;padding:14px 28px;border-radius:999px">' + testo + '</a>' +
+  '</td></tr></table>';
 }
 
 function invia_(a, oggetto, testo, html, immagini) {
