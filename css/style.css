@@ -220,8 +220,7 @@ a { color: inherit; }
   display: grid; gap: .4em;
   font-size: clamp(22px, 3vw, 36px); line-height: 1.05; letter-spacing: -.02em;
 }
-.programma__lista li { display: grid; grid-template-columns: 2.2em minmax(0, 1fr); align-items: baseline; gap: .3em; }
-.programma__ora { font-size: .5em; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.programma__lista li { min-width: 0; }
 .programma__nome { min-width: 0; }
 .programma__fb { font-size: clamp(17px, 1.9vw, 22px); line-height: 1.15; letter-spacing: -.01em; }
 .programma__fb-titolo { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }

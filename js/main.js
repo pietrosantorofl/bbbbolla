@@ -80,20 +80,17 @@
     return l;
   }
 
-  // locandina: a sinistra il programma in ordine di orario, a destra food & beverage.
-  // Più voci consecutive con lo stesso orario lo mostrano solo sulla prima.
+  // locandina: a sinistra il programma in ordine di orario (gli orari sono nella line-up), a destra food & beverage
   bind("lineupHero", function (n) {
-    var lista = $(".programma__lista", n), fb = $(".programma__fb ul", n), oraPrecedente = null;
+    var lista = $(".programma__lista", n), fb = $(".programma__fb ul", n);
     serata.lineup.forEach(function (a) {
       var li = el("li");
-      if (!a.minore) li.appendChild(el("span", "programma__ora", a.ora && a.ora !== oraPrecedente ? a.ora : ""));
       var nome = el("span", "programma__nome");
       nome.appendChild(nomeArtista(a));
       if (a.tag) nome.appendChild(el("sup", "tag", L(a.tag)));
       if (a.note) nome.appendChild(el("span", "note", "[" + L(a.note) + "]"));
       li.appendChild(nome);
-      if (a.minore) fb.appendChild(li);
-      else { lista.appendChild(li); oraPrecedente = a.ora; }
+      (a.minore ? fb : lista).appendChild(li);
     });
     if (!fb.children.length) $(".programma__fb", n).hidden = true;
   });
