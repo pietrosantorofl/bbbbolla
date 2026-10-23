@@ -40,7 +40,7 @@ window.BOLLA = {
       id: "2026-10-30",
       data: "2026-10-30",          // AAAA-MM-GG
       orario: { inizio: "20:00", fine: null },   // fine: null = "dalle 20:00"
-      senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },   // null = nessun ingresso senza pass
+      senzaPass: { it: "5€ al botteghino", en: "€5 at the box office" },   // null = nessun ingresso senza pass
       luogo: {
         nome: "MONO",
         indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
@@ -80,7 +80,7 @@ window.BOLLA = {
 
   /* testo unico sotto la line-up */
   infoUtili: {
-    it: "Ingresso gratuito con pass personale, per gruppi da 3 persone oppure su invito. Senza pass: 5 € al botteghino dopo le 22:30. I posti sono limitati e il pass non garantisce l'ingresso a capienza raggiunta: arriva presto.",
-    en: "Free entry with a personal pass, for groups of 3 or by invitation. Without a pass: €5 at the box office after 10:30 pm. Places are limited and the pass doesn't guarantee entry once the venue is full: come early."
+    it: "Ingresso gratuito con pass personale, per gruppi da 3 persone oppure su invito. Senza pass: 5 € al botteghino. I posti sono limitati e il pass non garantisce l'ingresso a capienza raggiunta: arriva presto.",
+    en: "Free entry with a personal pass, for groups of 3 or by invitation. Without a pass: €5 at the box office. Places are limited and the pass doesn't guarantee entry once the venue is full: come early."
   }
 };
