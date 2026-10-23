@@ -80,24 +80,34 @@
     return l;
   }
 
+  // locandina: a sinistra il programma in ordine di orario, a destra food & beverage.
+  // Più voci consecutive con lo stesso orario lo mostrano solo sulla prima.
   bind("lineupHero", function (n) {
+    var lista = $(".programma__lista", n), fb = $(".programma__fb ul", n), oraPrecedente = null;
     serata.lineup.forEach(function (a) {
-      var li = el("li", a.minore ? "is-minore" : null);
-      li.appendChild(nomeArtista(a));
-      if (a.tag) li.appendChild(el("sup", "tag", L(a.tag)));
-      if (a.note) li.appendChild(el("span", "note", "[" + L(a.note) + "]"));
-      n.appendChild(li);
+      var li = el("li");
+      if (!a.minore) li.appendChild(el("span", "programma__ora", a.ora && a.ora !== oraPrecedente ? a.ora : ""));
+      var nome = el("span", "programma__nome");
+      nome.appendChild(nomeArtista(a));
+      if (a.tag) nome.appendChild(el("sup", "tag", L(a.tag)));
+      if (a.note) nome.appendChild(el("span", "note", "[" + L(a.note) + "]"));
+      li.appendChild(nome);
+      if (a.minore) fb.appendChild(li);
+      else { lista.appendChild(li); oraPrecedente = a.ora; }
     });
+    if (!fb.children.length) $(".programma__fb", n).hidden = true;
   });
 
   // voci con "dettagli": si aprono e chiudono con un clic (details/summary, accessibile da tastiera)
   bind("lineup", function (n) {
     serata.lineup.forEach(function (a) {
       var li = el("li", [a.minore ? "is-minore" : "", a.dettagli ? "ha-dettagli" : ""].join(" ").trim() || null);
+      li.setAttribute("data-ora", a.ora || "");
       var riga = li;
       if (a.dettagli) {
         var det = el("details");
         riga = el("summary");
+        riga.setAttribute("data-ora", a.ora || "");
         det.appendChild(riga);
         det.appendChild(dettagliArtista(a.dettagli));
         li.appendChild(det);

@@ -48,7 +48,8 @@ window.BOLLA = {
       },
       lineup: [
         {
-          nome: "Ritmi in Colombia", tag: "Workshop", link: "https://www.instagram.com/karvpercu/",
+          // ora: orario in locandina (in ordine di programma); minore: true = food & beverage, colonna a destra
+          nome: "Ritmi in Colombia", ora: "20:00", tag: "Workshop", link: "https://www.instagram.com/karvpercu/",
           // dettagli: testo breve (massimo 5 righe) che si apre cliccando la voce nella line-up
           dettagli: {
             titolo: { it: "Radici in cerchio: voce, tamburo e creazione collettiva", en: "Roots in a circle: voice, drum and collective creation" },
@@ -60,7 +61,7 @@ window.BOLLA = {
           }
         },
         {
-          nome: "Selva Cosmica", tag: "Live", link: "https://www.instagram.com/selvacosmica_music/",
+          nome: "Selva Cosmica", ora: "22:00", tag: "Live", link: "https://www.instagram.com/selvacosmica_music/",
           dettagli: {
             testo: [
               { it: "Un ponte sonoro tra Sicilia e Colombia, nato dal DJ e produttore Dario Aiello con le percussioni di Romina Adorno Pincha e Karen Andrea Ramirez e la voce di La Sol. Ritmi ancestrali del Sud del mondo che si rivestono di elettronica, sfumature mediterranee e dub techno: una preghiera psichedelica per la pista da ballo.",
@@ -68,8 +69,8 @@ window.BOLLA = {
             ]
           }
         },
-        { nome: "Franzuà", tag: { it: "Sel Musicali", en: "Selections" }, note: "downtempo · cumbia · afrobeat", link: "https://www.instagram.com/franzua_imagerie/" },
-        { nome: "Dario Aiello", tag: { it: "Sel Musicali", en: "Selections" }, note: { it: "elettronica · dub · downtempo", en: "electronic · dub · downtempo" }, link: "https://www.instagram.com/darioaiello77/" },
+        { nome: "Franzuà", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, note: "downtempo · cumbia · afrobeat", link: "https://www.instagram.com/franzua_imagerie/" },
+        { nome: "Dario Aiello", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, note: { it: "elettronica · dub · downtempo", en: "electronic · dub · downtempo" }, link: "https://www.instagram.com/darioaiello77/" },
         // minore: true = più piccolo delle proposte musicali (vino, cibo)
         { nome: "Cantina controcorrente", tag: { it: "Vino del giorno", en: "Wine of the day" }, minore: true, link: "https://www.instagram.com/controcorrente.etnawines/" },
         { nome: "SPIZZICO", tag: { it: "Food dalle 20:00", en: "Food from 8 pm" }, minore: true }
