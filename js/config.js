@@ -10,11 +10,6 @@ window.BOLLA = {
   apiUrl: /[?&]demo\b/.test(location.search) ? "" :   // ?demo = prova nel browser, senza toccare il foglio vero
     "https://script.google.com/macros/s/AKfycbzEckzChK4ZcFHJ7wOjREzUTepDHg8QxMismXJwFMElQ1BRL8c74Ltsrsx2YinHvO5v4w/exec",
 
-  contatti: {
-    email: "bollacatania@gmail.com",
-    instagram: null           // es. "https://instagram.com/bbbbolla"
-  },
-
   rassegna: {
     nome: "bolla®",
     // i testi possono essere una stringa o { it: "...", en: "..." } (versione inglese del sito)

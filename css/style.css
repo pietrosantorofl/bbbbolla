@@ -488,7 +488,16 @@ a { color: inherit; }
   text-align: center;
 }
 .footer__logo { width: 160px; height: auto; }
-.footer__links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+/* icone social nel footer */
+.social { display: flex; gap: 12px; justify-content: center; }
+.social a {
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border: 1.5px solid var(--ink); border-radius: 50%; color: var(--ink);
+  transition: background .2s, color .2s, transform .2s;
+}
+.social a:hover, .social a:focus-visible { background: var(--ink); color: var(--paper-2); transform: translateY(-2px); }
+.social svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.social svg .pieno { fill: currentColor; stroke: none; }
 .footer__links a { text-underline-offset: 3px; }
 .footer__small { margin: 0; font-size: 13px; color: var(--muted); }
 

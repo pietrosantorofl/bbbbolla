@@ -151,11 +151,6 @@
     n.hidden = false;
   });
 
-  bind("contatti", function (n) {
-    if (C.contatti.instagram) { var ig = el("a", null, "Instagram"); ig.href = C.contatti.instagram; ig.target = "_blank"; ig.rel = "noopener"; n.appendChild(ig); }
-    if (C.contatti.email) { var m = el("a", null, C.contatti.email); m.href = "mailto:" + C.contatti.email; n.appendChild(m); }
-  });
-
   bind("maggiorenne", function (n) {
     if (C.rassegna.richiediMaggiorenne) { n.hidden = false; $("input", n).required = true; }
   });
