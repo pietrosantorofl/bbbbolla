@@ -5,6 +5,6 @@
 cd "$(dirname "$0")/.." || exit 1
 V=$(date +%Y%m%d%H%M)
 for f in index.html staff.html privacy.html manifesto.html; do
-  sed -i '' -E "s#(href=\"css/style\.css)(\?v=[0-9]+)?\"#\1?v=$V\"#; s#(src=\"js/[a-zA-Z/]+\.js)(\?v=[0-9]+)?\"#\1?v=$V\"#" "$f"
+  sed -i '' -E "s#(href=\"css/style\.css)(\?v=[0-9]+)?\"#\1?v=$V\"#; s#(src=\"js/[a-zA-Z0-9/]+\.js)(\?v=[0-9]+)?\"#\1?v=$V\"#" "$f"
 done
 echo "versione $V"

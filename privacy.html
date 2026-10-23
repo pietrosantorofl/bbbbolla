@@ -8,7 +8,7 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/style.css?v=202610230519">
+  <link rel="stylesheet" href="css/style.css?v=202610230525">
   <style>
     .legal { max-width: 720px; margin: 0 auto; padding: 40px var(--gutter) 96px; }
     .legal h1 { font-size: clamp(36px, 6vw, 56px); letter-spacing: -.035em; font-weight: 500; line-height: 1; margin: 0 0 24px; }
@@ -19,10 +19,15 @@
 <body>
   <header class="topbar">
     <a href="./" class="topbar__logo" aria-label="bolla® home"><img src="assets/bolla-logo.png" alt="bolla®" width="808" height="312"></a>
-    <a href="./#prenota" class="btn btn--small">Prenota pass</a>
+    <nav class="topbar__nav">
+      <a href="manifesto.html" class="topbar__link" data-i18n>Manifesto</a>
+      <a href="./#prenota" class="btn btn--small" data-i18n>Prenota pass</a>
+      <button type="button" class="lingua" data-lingua>EN</button>
+    </nav>
   </header>
 
   <main class="legal">
+    <div data-lang="it">
     <h1>Informativa privacy</h1>
     <p>Informativa ai sensi degli artt. 13 e 14 del Regolamento (UE) 2016/679 (GDPR) per chi prenota un pass gratuito su bbbbolla.it.</p>
 
@@ -52,7 +57,7 @@
     <p>Puoi disiscriverti in qualsiasi momento rispondendo "cancellami" a una nostra email o scrivendo al contatto indicato sopra. La revoca non incide sulla validità di un pass già emesso.</p>
 
     <h2>Dove sono conservati</h2>
-    <p>Le prenotazioni sono salvate in un foglio Google Sheets e le email di conferma partono tramite Google Apps Script. Google opera come responsabile del trattamento. Per verificare l'email inviamo al servizio DNS pubblico di Google (dns.google) solo il dominio dell'indirizzo (es. "gmail.com"), mai l'indirizzo completo. Il sito è ospitato su GitHub Pages, che può registrare dati tecnici di navigazione (es. indirizzo IP) per motivi di sicurezza.</p>
+    <p>Le prenotazioni sono salvate in un foglio Google Sheets gestito con Google Apps Script. Le email (conferme, pass, lista d'attesa) partono tramite Brevo (Sendinblue SAS, Francia). Google e Brevo operano come responsabili del trattamento; i dati possono essere trattati anche negli Stati Uniti, con le garanzie del Data Privacy Framework UE-USA. Per verificare l'email inviamo al servizio DNS pubblico di Google (dns.google) solo il dominio dell'indirizzo (es. "gmail.com"), mai l'indirizzo completo. Il sito è ospitato su GitHub Pages, che può registrare dati tecnici di navigazione (es. indirizzo IP) per motivi di sicurezza.</p>
 
     <h2>Per quanto tempo</h2>
     <p>I dati della prenotazione (numero di pass, codice, ingresso) fino a 30 giorni dopo la serata. Nome, cognome ed email per la newsletter fino alla tua disiscrizione.</p>
@@ -67,6 +72,54 @@
     <p>Il sito non usa cookie di profilazione né strumenti di analisi. Nessun font o script viene caricato da servizi esterni.</p>
 
     <p style="margin-top:40px;color:var(--muted);font-size:14px">Ultimo aggiornamento: ottobre 2026</p>
+    </div>
+    <div data-lang="en" hidden>
+    <h1>Privacy notice</h1>
+    <p>Notice under Articles 13 and 14 of Regulation (EU) 2016/679 (GDPR) for people who book a free pass on bbbbolla.it. This is a translation: in case of differences, the Italian version prevails.</p>
+
+    <h2>Data controller</h2>
+    <p>Pietro Santoro, Via Gornalunga, 12, 95129 Catania CT, Italy — Tax code SNTPTR90S05A089F<br>
+    Contact: <a href="mailto:bollacatania@gmail.com">bollacatania@gmail.com</a></p>
+
+    <h2>Data we collect</h2>
+    <p>First name, last name, email address, date and time of registration and confirmation, the group or invitation you got the pass with, and your check-in at the event. If passes are sold out and you join the waiting list: first name, last name if given, email and sign-up date.</p>
+
+    <h2>How you give consent</h2>
+    <p>By clicking the form button you confirm you have read this notice and agree to subscribe to the newsletter, which is required to get the free pass or join the waiting list. The text under the button reminds you of this before sending.</p>
+
+    <h2>Purposes and legal basis</h2>
+    <ul>
+      <li>Managing your booking, sending you the pass code and checking entry to the event (Art. 6.1.b GDPR, performance of a request by the data subject).</li>
+      <li>Respecting the venue's capacity and safety rules (Art. 6.1.c and 6.1.f GDPR).</li>
+      <li>Preventing abuse and automated sign-ups: checking that the email is not temporary and that its domain receives mail, time and frequency limits on sign-ups (Art. 6.1.f GDPR, legitimate interest).</li>
+      <li>Newsletter: sending you emails about upcoming events and bolla® activities (Art. 6.1.a GDPR, consent). The free pass is reserved for newsletter subscribers.</li>
+    </ul>
+    <p>Your data is not sold or given to third parties and is not used on behalf of others.</p>
+
+    <h2>Group passes</h2>
+    <p>If you join a group, the other members see your first name, the initial of your last name and whether you have confirmed your email. They do not see your email. Everyone enters only their own details: nobody can register another person.</p>
+
+    <h2>Withdrawing newsletter consent</h2>
+    <p>You can unsubscribe at any time by replying "cancellami" (unsubscribe) to one of our emails or by writing to the contact above. Withdrawal does not affect a pass already issued.</p>
+
+    <h2>Where data is stored</h2>
+    <p>Bookings are stored in a Google Sheets file managed with Google Apps Script. Emails (confirmations, passes, waiting list) are sent through Brevo (Sendinblue SAS, France). Google and Brevo act as data processors; data may also be processed in the United States, under the safeguards of the EU-US Data Privacy Framework. To check your email we send only the domain of the address (e.g. "gmail.com") to Google's public DNS service (dns.google), never the full address. The website is hosted on GitHub Pages, which may log technical browsing data (e.g. IP address) for security reasons.</p>
+
+    <h2>How long we keep it</h2>
+    <p>Booking data (pass, code, check-in) until 30 days after the event. First name, last name and email for the newsletter until you unsubscribe.</p>
+
+    <h2>Photos and videos</h2>
+    <p>Photos and videos may be taken during the event for the series' social media channels. If you don't want to appear, tell the staff or write to us.</p>
+
+    <h2>Your rights</h2>
+    <p>You can ask for access, rectification, erasure, restriction or objection by writing to the contact above. You can also lodge a complaint with the Italian Data Protection Authority (garanteprivacy.it).</p>
+
+    <h2>Cookies</h2>
+    <p>The website uses no profiling cookies or analytics tools. No fonts or scripts are loaded from external services.</p>
+
+    <p style="margin-top:40px;color:var(--muted);font-size:14px">Last updated: October 2026</p>
+    </div>
   </main>
+  <script src="js/i18n.js?v=202610230525"></script>
 </body>
 </html>

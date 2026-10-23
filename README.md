@@ -158,6 +158,14 @@ Tutto in `js/config.js`: luogo, orario, line-up, testi, info utili, contatti.
 Un valore `null` mostra "in arrivo" o nasconde l'elemento.
 La pagina mostra da sola la prossima serata; `?serata=<id>` apre una serata specifica.
 
+## Lingue (IT / EN)
+
+Tastino in alto a destra su home, manifesto e privacy; la scelta resta salvata nel browser (`?lang=en` / `?lang=it` per forzarla).
+- Testi della pagina: dizionario in `js/i18n.js` (chiave = testo italiano). Una frase nuova in `main.js` va scritta come `T("…")` e aggiunta al dizionario.
+- Testi di `config.js`: stringa oppure `{ it: "…", en: "…" }`.
+- Manifesto e privacy: blocchi `data-lang="it"` / `data-lang="en"` nell'HTML.
+- Le email e l'app staff restano in italiano.
+
 ## Anteprima locale
 
 ```bash

@@ -74,6 +74,14 @@ a { color: inherit; }
 .topbar__nav { display: flex; align-items: center; gap: 18px; }
 .topbar__link { font-size: 15px; font-weight: 600; text-decoration: none; }
 .topbar__link:hover, .topbar__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 4px; }
+/* tastino lingua IT / EN */
+.lingua {
+  min-width: 40px; height: 40px; padding: 0 10px;
+  border: 1.5px solid var(--ink); border-radius: 999px; background: transparent;
+  font: 700 13px/1 var(--font); letter-spacing: .06em; color: var(--ink); cursor: pointer;
+}
+.lingua:hover { background: var(--ink); color: var(--paper-2); }
+.lingua:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
 
 /* ---------- presentazione in cima, prima della sfera ---------- */
 .presentazione {

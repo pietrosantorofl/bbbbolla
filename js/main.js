@@ -4,8 +4,10 @@
 
   var C = window.BOLLA;
   var DEMO = !C.apiUrl;
-  var MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
-  var GIORNI = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
+  // lingua (js/i18n.js): T traduce i testi della pagina, L i valori di config.js, M i messaggi del backend
+  var T = I18N.T, L = I18N.L, M = I18N.M;
+  var MESI = I18N.mesi;
+  var GIORNI = I18N.giorni;
 
   /* ---------- serata da mostrare ---------- */
   function parseData(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
@@ -36,23 +38,23 @@
   var dataLunga = GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()] + " " + d.getFullYear();
 
   /* ---------- contenuti ---------- */
-  setText("sottotitolo", C.rassegna.sottotitolo);
+  setText("sottotitolo", L(C.rassegna.sottotitolo));
   setText("dataBreve", dataBreve);
   setText("dataLunga", dataLunga);
   setText("anno", new Date().getFullYear());
-  document.title = C.rassegna.nome + " — " + dataBreve + " · Pass gratuiti";
+  document.title = C.rassegna.nome + " — " + dataBreve + T(" · Pass gratuiti");
 
   bind("quando", function (n) {
     n.textContent = dataLunga.charAt(0).toUpperCase() + dataLunga.slice(1);
     n.appendChild(document.createElement("br"));
     n.appendChild(serata.orario
-      ? document.createTextNode(serata.orario.fine ? "Ore " + serata.orario.inizio + " – " + serata.orario.fine : "Dalle " + serata.orario.inizio)
-      : pending("Orario in arrivo"));
+      ? document.createTextNode(serata.orario.fine ? T("Ore {inizio} – {fine}", serata.orario) : T("Dalle {ora}", { ora: serata.orario.inizio }))
+      : pending(T("Orario in arrivo")));
   });
 
   bind("dove", function (n) {
     var l = serata.luogo || {};
-    if (!l.nome) { n.appendChild(pending("Location in arrivo")); return; }
+    if (!l.nome) { n.appendChild(pending(T("Location in arrivo"))); return; }
     var nome = l.mappa ? el("a", null, l.nome) : document.createTextNode(l.nome);
     if (l.mappa) { nome.href = l.mappa; nome.target = "_blank"; nome.rel = "noopener"; }
     n.appendChild(nome);
@@ -62,12 +64,12 @@
   // prima il prezzo al botteghino, sotto l'ingresso gratuito con pass
   bind("ingresso", function (n) {
     if (!serata.senzaPass) return;
-    n.textContent = serata.senzaPass;
+    n.textContent = L(serata.senzaPass);
     n.appendChild(document.createElement("br"));
-    n.appendChild(el("strong", null, "Gratuito con pass"));
+    n.appendChild(el("strong", null, T("Gratuito con pass")));
   });
 
-  bind("presentazione", function (n) { if (C.rassegna.presentazione) n.textContent = C.rassegna.presentazione; });
+  bind("presentazione", function (n) { if (C.rassegna.presentazione) n.textContent = L(C.rassegna.presentazione); });
 
 
   // nome dell'artista: link al profilo (Instagram) se c'è
@@ -82,8 +84,8 @@
     serata.lineup.forEach(function (a) {
       var li = el("li", a.minore ? "is-minore" : null);
       li.appendChild(nomeArtista(a));
-      if (a.tag) li.appendChild(el("sup", "tag", a.tag));
-      if (a.note) li.appendChild(el("span", "note", "[" + a.note + "]"));
+      if (a.tag) li.appendChild(el("sup", "tag", L(a.tag)));
+      if (a.note) li.appendChild(el("span", "note", "[" + L(a.note) + "]"));
       n.appendChild(li);
     });
   });
@@ -102,9 +104,9 @@
       }
       var name = el("span", "lineup__name");
       name.appendChild(nomeArtista(a));
-      if (a.note) name.appendChild(el("span", "lineup__note", a.note));
+      if (a.note) name.appendChild(el("span", "lineup__note", L(a.note)));
       riga.appendChild(name);
-      if (a.tag) riga.appendChild(el("span", "lineup__tag", a.tag));
+      if (a.tag) riga.appendChild(el("span", "lineup__tag", L(a.tag)));
       if (a.dettagli) riga.appendChild(el("span", "lineup__toggle"));
       n.appendChild(li);
     });
@@ -112,20 +114,20 @@
 
   function dettagliArtista(d) {
     var box = el("div", "lineup__more");
-    if (d.titolo) box.appendChild(el("p", "lineup__more-titolo", d.titolo));
-    (d.testo || []).forEach(function (t) { box.appendChild(el("p", null, t)); });
+    if (d.titolo) box.appendChild(el("p", "lineup__more-titolo", L(d.titolo)));
+    (d.testo || []).forEach(function (t) { box.appendChild(el("p", null, L(t))); });
     (d.persone || []).forEach(function (p) {
       var w = el("div", "lineup__persona");
       var h = el("p", "lineup__persona-nome", p.nome);
-      if (p.ruolo) h.appendChild(el("span", null, " · " + p.ruolo));
+      if (p.ruolo) h.appendChild(el("span", null, " · " + L(p.ruolo)));
       w.appendChild(h);
-      if (p.testo) w.appendChild(el("p", null, p.testo));
+      if (p.testo) w.appendChild(el("p", null, L(p.testo)));
       box.appendChild(w);
     });
     return box;
   }
 
-  bind("info", function (n) { n.textContent = C.infoUtili; });
+  bind("info", function (n) { n.textContent = L(C.infoUtili); });
 
   bind("altreSerate", function (n) {
     var altre = future.filter(function (s) { return s.id !== serata.id; });
@@ -183,14 +185,14 @@
 
   var TESTI = {
     crea: {
-      titolo: "Pass di gruppo",
-      lead: "Il pass gratuito è per gruppi da " + DIM + ". Registrati, poi manda il link del gruppo ai tuoi " + (DIM - 1) + " amici. Quando tutti e " + DIM + " hanno confermato la propria email, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno riceve il pass.",
-      bottone: "Crea il gruppo",
-      cta: "Crea il tuo gruppo"
+      titolo: T("Pass di gruppo"),
+      lead: T("Il pass gratuito è per gruppi da {n}. Registrati, poi manda il link del gruppo ai tuoi {amici} amici. Quando tutti e {n} hanno confermato la propria email, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno riceve il pass.", { n: DIM, amici: DIM - 1 }),
+      bottone: T("Crea il gruppo"),
+      cta: T("Crea il tuo gruppo")
     },
-    unisciti: { titolo: "Entra nel gruppo", lead: "", bottone: "Entra nel gruppo", cta: "Entra nel gruppo" },
-    invito: { titolo: "Pass su invito", lead: "", bottone: "Richiedi il pass", cta: "Richiedi il pass" },
-    pass: { titolo: "Il tuo pass", lead: "", bottone: "", cta: "Il tuo pass" }
+    unisciti: { titolo: T("Entra nel gruppo"), lead: "", bottone: T("Entra nel gruppo"), cta: T("Entra nel gruppo") },
+    invito: { titolo: T("Pass su invito"), lead: "", bottone: T("Richiedi il pass"), cta: T("Richiedi il pass") },
+    pass: { titolo: T("Il tuo pass"), lead: "", bottone: "", cta: T("Il tuo pass") }
   };
   titolo.textContent = TESTI[modo].titolo;
   lead.textContent = TESTI[modo].lead;
@@ -210,24 +212,24 @@
   var inAttesa = false;
   function attivaAttesa() {
     inAttesa = true;
-    titolo.textContent = "Lista d'attesa";
-    lead.textContent = "I pass gratuiti sono esauriti. Lascia nome ed email: se si libera un posto ti scriviamo noi." +
-      (serata.senzaPass ? " Senza pass: " + serata.senzaPass + "." : "");
+    titolo.textContent = T("Lista d'attesa");
+    lead.textContent = T("I pass gratuiti sono esauriti. Lascia nome ed email: se si libera un posto ti scriviamo noi.") +
+      (serata.senzaPass ? T(" Senza pass: {prezzo}.", { prezzo: L(serata.senzaPass) }) : "");
     var cognome = form.cognome;
     cognome.required = false;
     cognome.closest(".field").hidden = true;
     cognome.closest(".field-row").classList.add("field-row--uno");
-    $("[type=submit]", form).textContent = "Mettimi in lista d'attesa";
-    cta.textContent = "Lista d'attesa";
+    $("[type=submit]", form).textContent = T("Mettimi in lista d'attesa");
+    cta.textContent = T("Lista d'attesa");
   }
 
   function blocca(messaggio, conLinkNuovoGruppo) {
     form.hidden = true;
-    var p = el("p", "notice", messaggio);
+    var p = el("p", "notice", M(messaggio));
     lead.textContent = "";
     lead.appendChild(p);
     if (conLinkNuovoGruppo) {
-      var a = el("a", "btn btn--ghost btn--block", "Crea un nuovo gruppo");
+      var a = el("a", "btn btn--ghost btn--block", T("Crea un nuovo gruppo"));
       a.href = base;
       lead.appendChild(a);
     }
@@ -239,35 +241,36 @@
     target.textContent = "";
     target.hidden = false;
     var head = el("div", "group__head");
-    head.appendChild(el("span", null, g.capogruppo ? "Gruppo di " + g.capogruppo : "Il gruppo"));
-    head.appendChild(el("strong", null, g.confermati + "/" + g.dimensione + " confermati"));
+    head.appendChild(el("span", null, g.capogruppo ? T("Gruppo di {nome}", { nome: g.capogruppo }) : T("Il gruppo")));
+    head.appendChild(el("strong", null, T("{n}/{tot} confermati", { n: g.confermati, tot: g.dimensione })));
     target.appendChild(head);
     var ol = el("ol", "group__slots");
     for (var i = 0; i < g.dimensione; i++) {
       var m = g.membri[i];
       var li = el("li", m ? (m.confermato ? "is-ok" : "is-wait") : "is-free");
       li.appendChild(el("span", "group__dot"));
-      li.appendChild(el("span", "group__name", m ? m.nome + (m.tu ? " (tu)" : "") : "Posto libero"));
-      li.appendChild(el("span", "group__state", m ? (m.confermato ? "confermato" : "deve confermare l'email") : ""));
+      li.appendChild(el("span", "group__name", m ? m.nome + (m.tu ? T(" (tu)") : "") : T("Posto libero")));
+      li.appendChild(el("span", "group__state", m ? (m.confermato ? T("confermato") : T("deve confermare l'email")) : ""));
       ol.appendChild(li);
     }
     target.appendChild(ol);
     if (g.stato === "aperto") {
       var sc = new Date(g.scadenza);
-      target.appendChild(el("p", "group__note", "Il gruppo va completato entro " + GIORNI[sc.getDay()] + " " + sc.getDate() + " " + MESI[sc.getMonth()] + " alle " + ("0" + sc.getHours()).slice(-2) + ":" + ("0" + sc.getMinutes()).slice(-2) + "."));
+      var quando = T("{giorno} {d} {mese} alle {ora}", { giorno: GIORNI[sc.getDay()], d: sc.getDate(), mese: MESI[sc.getMonth()], ora: ("0" + sc.getHours()).slice(-2) + ":" + ("0" + sc.getMinutes()).slice(-2) });
+      target.appendChild(el("p", "group__note", T("Il gruppo va completato entro {quando}.", { quando: quando })));
     }
   }
 
   function shareBox(link) {
     var w = el("div", "share");
     var input = el("input", "share__link");
-    input.readOnly = true; input.value = link; input.setAttribute("aria-label", "Link del gruppo");
+    input.readOnly = true; input.value = link; input.setAttribute("aria-label", T("Link del gruppo"));
     input.addEventListener("focus", function () { input.select(); });
     w.appendChild(input);
     var row = el("div", "share__row");
-    var testo = "Ti aspetto a " + C.rassegna.nome + " il " + dataBreve + ": entra nel mio gruppo per il pass gratuito ";
+    var testo = T("Ti aspetto a {nome} il {data}: entra nel mio gruppo per il pass gratuito ", { nome: C.rassegna.nome, data: dataBreve });
     if (navigator.share) {
-      var sh = el("button", "btn btn--small", "Condividi");
+      var sh = el("button", "btn btn--small", T("Condividi"));
       sh.type = "button";
       sh.addEventListener("click", function () { navigator.share({ title: C.rassegna.nome, text: testo, url: link }).catch(function () {}); });
       row.appendChild(sh);
@@ -276,12 +279,12 @@
     wa.href = "https://wa.me/?text=" + encodeURIComponent(testo + link);
     wa.target = "_blank"; wa.rel = "noopener";
     row.appendChild(wa);
-    var cp = el("button", "btn btn--small btn--ghost", "Copia link");
+    var cp = el("button", "btn btn--small btn--ghost", T("Copia link"));
     cp.type = "button";
     cp.addEventListener("click", function () {
       (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject())
-        .then(function () { cp.textContent = "Copiato"; }, function () { input.focus(); document.execCommand("copy"); cp.textContent = "Copiato"; });
-      setTimeout(function () { cp.textContent = "Copia link"; }, 2000);
+        .then(function () { cp.textContent = T("Copiato"); }, function () { input.focus(); document.execCommand("copy"); cp.textContent = T("Copiato"); });
+      setTimeout(function () { cp.textContent = T("Copia link"); }, 2000);
     });
     row.appendChild(cp);
     w.appendChild(row);
@@ -313,44 +316,44 @@
 
   function avvia() {
     if (modo === "pass") return caricaPass();
-    if (modo === "invito") lead.textContent = "Controllo il tuo invito…";
-    if (modo === "unisciti") lead.textContent = "Carico il gruppo…";
+    if (modo === "invito") lead.textContent = T("Controllo il tuo invito…");
+    if (modo === "unisciti") lead.textContent = T("Carico il gruppo…");
     form.hidden = false;
     statoPronto = api("stato", { invito: idInvito, gruppo: idGruppo }).then(function (r) {
-      if (!r || !r.ok) { renderStato("Non disponibile", "esaurito"); blocca((r && r.messaggio) || "Serata non disponibile."); return; }
+      if (!r || !r.ok) { renderStato(T("Non disponibile"), "esaurito"); blocca((r && r.messaggio) || T("Serata non disponibile.")); return; }
       if (r.dimensioneGruppo) DIM = r.dimensioneGruppo;
       nuovoModulo(r);
       if (!r.serata.aperta) {
-        renderStato(passata ? "Serata passata" : "Prenotazioni chiuse", "esaurito");
+        renderStato(passata ? T("Serata passata") : T("Prenotazioni chiuse"), "esaurito");
         return blocca(passata ? "Questa serata è passata." : "Le prenotazioni per questa serata sono chiuse.");
       }
       var esaurito = modo === "invito" ? !r.serata.postiSingolo : modo === "crea" && !r.serata.postiGruppo;
-      renderStato(esaurito ? "Esaurito" : "Disponibile", esaurito ? "esaurito" : "ok");
+      renderStato(esaurito ? T("Esaurito") : T("Disponibile"), esaurito ? "esaurito" : "ok");
 
       if (modo === "invito") {
-        if (!r.invito.valido) return blocca(r.invito.messaggio + " Senza invito puoi creare un gruppo da " + DIM + ".", true);
+        if (!r.invito.valido) return blocca(M(r.invito.messaggio) + T(" Senza invito puoi creare un gruppo da {n}.", { n: DIM }), true);
         if (esaurito) return attivaAttesa();
-        lead.textContent = "Hai un invito: il pass è personale e arriva via email con il QR.";
+        lead.textContent = T("Hai un invito: il pass è personale e arriva via email con il QR.");
       } else if (modo === "unisciti") {
         var g = r.gruppo;
         if (!g.valido) return blocca(g.messaggio, true);
         statoGruppo = g;
         renderGruppo(g, groupBox);
-        if (g.stato !== "aperto") return blocca(g.stato === "completo" ? "Questo gruppo è già completo." : "Questo gruppo è scaduto prima di essere completato.", true);
-        if (g.membri.length >= g.dimensione) return blocca("Il gruppo è al completo. Se qualcuno non conferma entro poche ore il posto si libera.", true);
-        lead.textContent = (g.capogruppo || "Un amico") + " ti ha invitato nel suo gruppo. Registrati con la tua email e conferma dal link che ti arriva: quando tutti e " + g.dimensione + " hanno confermato, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno lo riceve.";
+        if (g.stato !== "aperto") return blocca(g.stato === "completo" ? "Questo gruppo è già completo." : T("Questo gruppo è scaduto prima di essere completato."), true);
+        if (g.membri.length >= g.dimensione) return blocca(T("Il gruppo è al completo. Se qualcuno non conferma entro poche ore il posto si libera."), true);
+        lead.textContent = T("{chi} ti ha invitato nel suo gruppo. Registrati con la tua email e conferma dal link che ti arriva: quando tutti e {n} hanno confermato, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno lo riceve.", { chi: g.capogruppo || T("Un amico"), n: g.dimensione });
       } else if (esaurito) {
         attivaAttesa();
       }
     }).catch(function () {
-      renderStato("Non verificabile");
-      blocca("Connessione non riuscita. Ricarica la pagina tra poco.");
+      renderStato(T("Non verificabile"));
+      blocca(T("Connessione non riuscita. Ricarica la pagina tra poco."));
     });
   }
 
   function caricaPass() {
     $(".status").hidden = true;
-    lead.textContent = "Carico il tuo pass…";
+    lead.textContent = T("Carico il tuo pass…");
     api("pass", { chiave: chiavePass }).then(function (r) {
       if (!r || !r.ok) return blocca((r && r.messaggio) || "Link non valido.", true);
       if (r.pass.serata !== serata.id) {
@@ -359,54 +362,54 @@
       }
       lead.textContent = "";
       var nodi = [];
-      if (r.avviso) nodi.push(el("p", "notice", r.avviso));
+      if (r.avviso) nodi.push(el("p", "notice", M(r.avviso)));
       if (r.pass.attivo) {
         nodi = nodi.concat(ticket(r));
       } else {
-        nodi.push(el("p", "done__kicker", "Ciao " + r.pass.nome));
-        if (r.pass.stato === "confermato") nodi.push(el("p", "done__name", "Email confermata"));
+        nodi.push(el("p", "done__kicker", T("Ciao {nome}", { nome: r.pass.nome })));
+        if (r.pass.stato === "confermato") nodi.push(el("p", "done__name", T("Email confermata")));
         if (r.gruppo) {
           var gbox = el("div", "group");
           renderGruppo(r.gruppo, gbox);
           nodi.push(gbox);
           if (r.gruppo.stato === "aperto") {
-            nodi.push(el("p", "done__text", "Il pass con QR si attiva solo quando tutti e " + r.gruppo.dimensione + " hanno confermato: ti arriva via email e lo trovi anche qui. Se il gruppo non si completa in tempo, nessuno riceve il pass. Manca qualcuno? Rimanda il link del gruppo:"));
+            nodi.push(el("p", "done__text", T("Il pass con QR si attiva solo quando tutti e {n} hanno confermato: ti arriva via email e lo trovi anche qui. Se il gruppo non si completa in tempo, nessuno riceve il pass. Manca qualcuno? Rimanda il link del gruppo:", { n: r.gruppo.dimensione })));
             nodi.push(shareBox(linkGruppo(r.gruppo.id)));
           } else if (r.gruppo.stato !== "completo") {
-            var a = el("a", "btn btn--ghost btn--block", "Crea un nuovo gruppo");
+            var a = el("a", "btn btn--ghost btn--block", T("Crea un nuovo gruppo"));
             a.href = base;
             nodi.push(a);
           }
         }
       }
       mostraRisultato(nodi);
-    }).catch(function () { blocca("Connessione non riuscita. Ricarica la pagina tra poco."); });
+    }).catch(function () { blocca(T("Connessione non riuscita. Ricarica la pagina tra poco.")); });
   }
 
   function ticket(r) {
     var nodi = [];
-    nodi.push(el("p", "done__kicker", r.pass.checkin ? "Sei già entrato" : "Ci vediamo dentro la bolla"));
+    nodi.push(el("p", "done__kicker", r.pass.checkin ? T("Sei già entrato") : T("Ci vediamo dentro la bolla")));
     nodi.push(el("p", "done__name", r.pass.nome + " " + r.pass.cognome));
     var t = el("div", "ticket");
     var banner = el("img", "ticket__banner");
     banner.src = "assets/banner-sfera.jpg"; banner.alt = ""; banner.width = 851; banner.height = 315;
     t.appendChild(banner);
-    t.appendChild(el("span", "ticket__label", "Codice pass"));
+    t.appendChild(el("span", "ticket__label", T("Codice pass")));
     t.appendChild(el("span", "ticket__code", r.pass.codice));
-    t.appendChild(el("span", "ticket__meta", (r.pass.tipo === "invito" ? "Su invito" : "Pass di gruppo") + " · " + dataBreve));
+    t.appendChild(el("span", "ticket__meta", (r.pass.tipo === "invito" ? T("Su invito") : T("Pass di gruppo")) + " · " + dataBreve));
     if (window.qrcode && r.qr) {
       var qr = qrcode(0, "M");
       qr.addData(r.qr);
       qr.make();
       var box = el("div", "ticket__qr");
       box.setAttribute("role", "img");
-      box.setAttribute("aria-label", "QR code del pass");
+      box.setAttribute("aria-label", T("QR code del pass"));
       box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
       t.appendChild(box);
     }
     nodi.push(t);
-    nodi.push(el("p", "done__text", "Mostra questo QR all'ingresso. Vale una sola volta: non condividerlo."));
-    var ics = el("button", "btn btn--ghost btn--block", "Aggiungi al calendario");
+    nodi.push(el("p", "done__text", T("Mostra questo QR all'ingresso. Vale una sola volta: non condividerlo.")));
+    var ics = el("button", "btn btn--ghost btn--block", T("Aggiungi al calendario"));
     ics.type = "button";
     ics.addEventListener("click", function () { scaricaIcs(r.pass.codice); });
     nodi.push(ics);
@@ -415,7 +418,7 @@
 
   /* ---------- invio ---------- */
   var errBox = $(".form__error");
-  function errore(msg) { errBox.textContent = msg; errBox.hidden = !msg; }
+  function errore(msg) { errBox.textContent = M(msg); errBox.hidden = !msg; }
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -428,15 +431,15 @@
       i.setAttribute("aria-invalid", ok ? "false" : "true");
       if (!ok && !primoErrato) primoErrato = i;
     });
-    if (primoErrato) { errore(primoErrato.name === "email" ? "Controlla l'indirizzo email." : inAttesa ? "Inserisci il tuo nome." : "Inserisci nome e cognome."); primoErrato.focus(); return; }
-    if (C.rassegna.richiediMaggiorenne && !form.maggiorenne.checked) { errore("L'evento è riservato ai maggiorenni."); return; }
+    if (primoErrato) { errore(T(primoErrato.name === "email" ? "Controlla l'indirizzo email." : inAttesa ? "Inserisci il tuo nome." : "Inserisci nome e cognome.")); primoErrato.focus(); return; }
+    if (C.rassegna.richiediMaggiorenne && !form.maggiorenne.checked) { errore(T("L'evento è riservato ai maggiorenni.")); return; }
     if (form.website.value) return; // bot
 
     var btn = $("[type=submit]", form);
     var testo = btn.textContent;
     btn.textContent = "";
     btn.appendChild(el("span", "spinner"));
-    btn.appendChild(el("span", null, "Un attimo…"));
+    btn.appendChild(el("span", null, T("Un attimo…")));
     form.classList.add("is-loading");
 
     var dati = {
@@ -463,17 +466,17 @@
       .then(function () { dati.modulo = modulo; return api(azione, dati); })
       .then(function (r) {
         if (!r || !r.ok) {
-          errore((r && r.messaggio) || "Qualcosa è andato storto. Riprova tra poco.");
+          errore((r && r.messaggio) || T("Qualcosa è andato storto. Riprova tra poco."));
           if (r && r.errore === "modulo") {
             return api("stato", {}).then(function (s) {
-              if (s && s.ok) { nuovoModulo(s); errore("La sessione era scaduta: abbiamo ricaricato il modulo, premi di nuovo il bottone."); }
+              if (s && s.ok) { nuovoModulo(s); errore(T("La sessione era scaduta: abbiamo ricaricato il modulo, premi di nuovo il bottone.")); }
             });
           }
           return;
         }
         fatto(azione, dati, r);
       })
-      .catch(function () { errore("Connessione non riuscita. Controlla la rete e riprova."); })
+      .catch(function () { errore(T("Connessione non riuscita. Controlla la rete e riprova.")); })
       .then(function () {
         form.classList.remove("is-loading");
         btn.textContent = testo;
@@ -481,22 +484,22 @@
   });
 
   function fatto(azione, dati, r) {
-    var nodi = [el("p", "done__kicker", "Ci siamo quasi"), el("p", "done__name", (dati.nome + " " + dati.cognome).trim())];
+    var nodi = [el("p", "done__kicker", T("Ci siamo quasi")), el("p", "done__name", (dati.nome + " " + dati.cognome).trim())];
     if (azione === "lista_attesa") {
-      nodi[0].textContent = "Sei in lista d'attesa";
-      nodi.push(el("p", "done__text", "Se si libera un posto ti scriviamo a " + dati.email + ". Non serve fare altro."));
+      nodi[0].textContent = T("Sei in lista d'attesa");
+      nodi.push(el("p", "done__text", T("Se si libera un posto ti scriviamo a {email}. Non serve fare altro.", dati)));
     } else if (azione === "crea_gruppo") {
       var ol = el("ol", "steps");
-      ol.appendChild(el("li", null, "Apri l'email che ti abbiamo mandato a " + dati.email + " e conferma (controlla anche lo spam)."));
-      ol.appendChild(el("li", null, "Manda questo link ai tuoi " + (DIM - 1) + " amici: ognuno si registra con la propria email."));
-      ol.appendChild(el("li", null, "Quando tutti e " + DIM + " hanno confermato, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno riceve il pass."));
+      ol.appendChild(el("li", null, T("Apri l'email che ti abbiamo mandato a {email} e conferma (controlla anche lo spam).", dati)));
+      ol.appendChild(el("li", null, T("Manda questo link ai tuoi {amici} amici: ognuno si registra con la propria email.", { amici: DIM - 1 })));
+      ol.appendChild(el("li", null, T("Quando tutti e {n} hanno confermato, ognuno riceve il suo pass con QR. Se il gruppo non si completa, nessuno riceve il pass.", { n: DIM })));
       nodi.push(ol);
       nodi.push(shareBox(linkGruppo(r.gruppo.id)));
     } else if (azione === "unisciti") {
-      nodi.push(el("p", "done__text", "Ti abbiamo mandato una email a " + dati.email + ". Apri il link per confermare il tuo posto nel gruppo (controlla anche lo spam)."));
+      nodi.push(el("p", "done__text", T("Ti abbiamo mandato una email a {email}. Apri il link per confermare il tuo posto nel gruppo (controlla anche lo spam).", dati)));
     } else {
-      nodi[0].textContent = "Pass inviato";
-      nodi.push(el("p", "done__text", "Il tuo pass con QR è in arrivo a " + dati.email + ". Controlla anche lo spam."));
+      nodi[0].textContent = T("Pass inviato");
+      nodi.push(el("p", "done__text", T("Il tuo pass con QR è in arrivo a {email}. Controlla anche lo spam.", dati)));
     }
     mostraRisultato(nodi);
   }
