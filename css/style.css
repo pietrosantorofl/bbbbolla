@@ -134,6 +134,32 @@ a { color: inherit; }
 .btn--ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
 .btn--ghost:hover { color: var(--paper-2); }
 
+/* ---------- locandina della serata: riquadro in evidenza, è un evento singolo della rassegna ---------- */
+.locandina {
+  position: relative;
+  padding: clamp(36px, 5vw, 64px) clamp(16px, 4vw, 48px) clamp(28px, 4vw, 48px);
+  border: 1.5px solid var(--ink);
+  border-radius: 28px;
+  background: var(--paper-2);
+  box-shadow: 10px 10px 0 var(--ink);
+}
+.locandina__etichetta {
+  position: absolute;
+  top: 0;
+  left: clamp(16px, 4vw, 48px);
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper-2);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 /* ---------- hero: sfera con logo ---------- */
 .hero {
   max-width: var(--wrap);
@@ -212,7 +238,6 @@ a { color: inherit; }
   grid-template-columns: minmax(0, 1fr) 400px;
   gap: clamp(32px, 6vw, 80px);
   align-items: start;
-  border-top: 1.5px solid var(--ink);
 }
 
 .layout__cta { grid-column: 1 / -1; display: flex; justify-content: center; margin-bottom: clamp(-8px, -2vw, -24px); }
@@ -480,7 +505,9 @@ a { color: inherit; }
 }
 @media (max-width: 600px) {
   body { font-size: 16px; }
-  .hero { padding-top: 20px; }
+  .hero { padding-top: 28px; }
+  .locandina { border-radius: 22px; box-shadow: 6px 6px 0 var(--ink); }
+  .locandina__etichetta { font-size: 11px; }
   .hero__stage { gap: 2px; }
   .hero__lineup { grid-template-columns: 1fr; font-size: 26px; gap: 10px; }
   .hero__lineup .tag { font-size: 11px; }
