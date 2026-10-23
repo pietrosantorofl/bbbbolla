@@ -20,11 +20,6 @@ window.BOLLA = {
     sottotitolo: "Rassegna di musica live",
     /* testo in cima alla pagina, prima della sfera (con il link al manifesto) */
     presentazione: "bolla® è una rassegna di musica dal vivo a Catania: live, workshop, lab e talk, tra elettronica, world music, nu-jazz, soul e i ritmi ancestrali del sud del mondo.",
-    intro: [
-      "bolla® è una rassegna di musica live: una serata alla volta, un piccolo mondo che si gonfia, galleggia e poi scoppia.",
-      "Ritmi che arrivano da lontano, selezioni lente e calde, un bicchiere di vino buono. Entri, ti lasci portare, esci un po' diverso.",
-      "L'ingresso è gratuito: forma un gruppo da 3 con i tuoi amici, oppure usa il link di invito che ti hanno mandato."
-    ],
     /* Senza invito il pass è per gruppi: deve coincidere con CONFIG.dimensioneGruppo in apps-script/Code.gs */
     dimensioneGruppo: 3,
     richiediMaggiorenne: false,

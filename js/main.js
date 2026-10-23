@@ -69,7 +69,6 @@
 
   bind("presentazione", function (n) { if (C.rassegna.presentazione) n.textContent = C.rassegna.presentazione; });
 
-  bind("intro", function (n) { C.rassegna.intro.forEach(function (p) { n.appendChild(el("p", null, p)); }); });
 
   // nome dell'artista: link al profilo (Instagram) se c'è
   function nomeArtista(a, cls) {
