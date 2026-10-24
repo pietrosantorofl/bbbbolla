@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>bolla® — visuals</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="../favicon.ico" sizes="any">
+  <!-- Modak: il carattere più vicino al logo bolla®, per i testi sul muro (solo pagina schermo) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Modak&display=swap">
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; color: #f3f2ef; overflow: hidden; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+    [hidden] { display: none !important; }
+
+    /* QR e chat si spostano dal pannello comandi o trascinandoli: la posizione è impostata da schermo.js */
+    .spostabile { position: fixed; left: 0; top: 0; cursor: grab; touch-action: none; transition: left .5s ease, top .5s ease; }
+    .spostabile.trascina { cursor: grabbing; transition: none; }
+    body.regia .spostabile { outline: 1px dashed rgba(255, 255, 255, .45); outline-offset: 6px; }
+
+    .qr { padding: 1.2vh; border-radius: 2vh; background: rgba(255, 255, 255, .92); box-shadow: 0 0 40px rgba(0, 0, 0, .4); }
+    .qr svg { width: 15vh; height: 15vh; display: block; pointer-events: none; }
+
+    /* mini chat: nickname ed emozione scorrono e spariscono dopo 10 secondi */
+    .chat { width: min(32vw, 460px); height: 40vh; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+    .chat.in-alto { justify-content: flex-start; }
+    .chat ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1vh; pointer-events: none; }
+    .chat li { display: flex; align-items: center; gap: 1.2vh; padding: 1vh 2vh 1vh 1.2vh; border-radius: 99px; align-self: flex-start; max-width: 100%;
+      background: rgba(0, 0, 0, .32); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      font: 2.6vh/1.25 Modak, "Helvetica Neue", Helvetica, Arial, sans-serif; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: 8vh;
+      animation: entra 1.2s cubic-bezier(.2, .7, .2, 1) both; transition: opacity 1.2s ease, filter 1.2s ease, transform 1.2s ease, max-height 1.2s ease, padding 1.2s ease; }
+    .chat li.esce { opacity: 0; filter: blur(10px); transform: translateY(-1.5vh); max-height: 0; padding-top: 0; padding-bottom: 0; }
+    .chat.a-destra li { align-self: flex-end; }
+    .chat li i { width: 2.4vh; height: 2.4vh; border-radius: 50%; background: var(--c); box-shadow: 0 0 1.6vh var(--c); flex: none; }
+    .chat li b { font-weight: 400; text-shadow: 0 0 1.4vh var(--c); }
+    .chat li span { opacity: .85; }
+    @keyframes entra { from { opacity: 0; filter: blur(12px); transform: translateY(2vh); } }
+    body.regia .chat ol:empty::before { content: "chat"; opacity: .5; font-size: 14px; padding: 8px; }
+
+    /* pannello comandi: compare quando si muove il mouse */
+    .comandi { position: fixed; left: 50%; top: 2.4vh; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+      max-width: 94vw; padding: 8px; border-radius: 16px; background: rgba(10, 10, 14, .72); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+      transition: opacity .4s; }
+    .comandi.nascosti { opacity: 0; pointer-events: none; }
+    .comandi button { border: 0; border-radius: 10px; padding: 9px 12px; background: rgba(255, 255, 255, .08); color: inherit; font: 600 14px/1 inherit; cursor: pointer; }
+    .comandi button:hover { background: rgba(255, 255, 255, .18); }
+    .comandi button[aria-pressed=true] { background: #f0307f; }
+    .comandi kbd { font: 11px/1 ui-monospace, Menlo, monospace; opacity: .55; margin-right: 6px; }
+    .comandi hr { width: 1px; height: 30px; margin: 0 4px; border: 0; background: rgba(255, 255, 255, .2); align-self: center; }
+    .comandi output { align-self: center; min-width: 44px; text-align: center; font: 600 14px/1 ui-monospace, Menlo, monospace; }
+
+    .avvio { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #2b2f8e 0, #0d0c10 60%); }
+    .avvio__box { display: grid; gap: 14px; width: min(380px, 90vw); text-align: center; }
+    .avvio h1 { margin: 0; font-size: 44px; letter-spacing: -.04em; }
+    .avvio p { margin: 0; opacity: .75; }
+    .avvio input { min-height: 56px; border-radius: 14px; border: 0; padding: 0 16px; font: 600 26px/1 inherit; letter-spacing: .3em; text-align: center; }
+    .avvio button { min-height: 56px; border: 0; border-radius: 99px; background: #f0307f; color: #fff; font: 800 20px/1 inherit; cursor: pointer; }
+    .avvio button:disabled { opacity: .5; }
+    .avvio small { opacity: .6; line-height: 1.5; }
+    .avvio .err { color: #ff8a73; min-height: 1.2em; }
+
+    .hud { position: fixed; left: 16px; bottom: 16px; padding: 12px 14px; border-radius: 12px; background: rgba(0, 0, 0, .6); font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre; }
+    .hud b { display: inline-block; height: 8px; background: #f0307f; vertical-align: middle; }
+    .avviso { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 10px 18px; border-radius: 99px; background: rgba(0, 0, 0, .65); font-size: 16px; }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <div class="chat spostabile" id="chat" hidden><ol id="chatLista" aria-live="polite"></ol></div>
+  <div class="qr spostabile" id="qr" hidden><div id="qrCodice"></div></div>
+  <div class="hud" id="hud" hidden></div>
+  <div class="avviso" id="avviso" hidden></div>
+  <nav class="comandi nascosti" id="comandi" hidden></nav>
+
+  <div class="avvio" id="avvio">
+    <form class="avvio__box" id="avvioModulo">
+      <h1>bolla® visuals</h1>
+      <p id="avvioTesto">PIN staff per collegare lo schermo alle parole del pubblico.</p>
+      <input id="pin" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="PIN">
+      <button id="avvia" type="submit">Avvia</button>
+      <p class="err" id="avvioErrore"></p>
+      <small>Il browser chiede il microfono: le visuals seguono la musica in sala.<br>
+        Muovi il mouse per il pannello comandi: tipo di visuals, velocità, chat, QR, schermo intero.</small>
+    </form>
+  </div>
+
+  <script src="../js/config.js?v=202610241645"></script>
+  <script src="../js/vendor/qrcode.js?v=202610241645"></script>
+  <script src="live-api.js?v=202610241645"></script>
+  <script src="schermo.js?v=202610241645"></script>
+</body>
+</html>

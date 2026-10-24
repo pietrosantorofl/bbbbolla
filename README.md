@@ -39,6 +39,31 @@ Pagina **bbbbolla.it/staff.html**, da aprire sul telefono di chi sta alla porta 
 
 Prova senza toccare i dati veri: `staff.html?demo`, PIN `12345678`.
 
+## Live: cosa prova il pubblico, nelle visuals
+
+Il pubblico inquadra il QR proiettato, sceglie nickname e colore e scrive cosa prova (testo libero, massimo 24 caratteri).
+L'invio scorre nella mini chat sul muro e sparisce dopo 10 secondi; il testo appare grande nel colore scelto, poi si scioglie
+dentro le visuals. Per una ventina di secondi il testo cambia anche il carattere del flusso: parole come gioia, amore,
+calma, euforia, malinconia… hanno un carattere proprio; qualunque altro testo ne riceve uno ricavato dalle sue lettere.
+
+- **Schermo**: sul computer collegato al proiettore apri **bbbbolla.it/live/schermo.html** in Chrome, inserisci il PIN staff
+  (lo stesso dell'app ingresso) e premi **Avvia**. Consenti il microfono: le visuals seguono la musica in sala
+  (meglio ancora un ingresso audio dal mixer, da scegliere con il tasto `I`). Senza microfono gira un suono simulato.
+- **Telefono**: il QR porta a `bbbbolla.it/live/?c=<codice>`. Senza codice valido la pagina non invia nulla.
+  Per invalidare i QR vecchi: menu **bolla® → Rigenera codice live** (lo schermo mostra il nuovo QR da solo).
+- **Comandi**: muovi il mouse e in alto compare il pannello; chat e QR mostrano un bordo e si trascinano dove vuoi.
+  Tasti: `1`–`7` tipo di visuals (Seta, Liquido, Lava, Aurora, Caleidoscopio, Tunnel, Mandala) · `A` giro automatico dei tipi ·
+  `-` / `+` velocità · `B` / `N` sensibilità ai bassi (da 0 = ignorati a ×4) · `C` mostra/nasconde la chat · `V` sposta la chat · `Q` mostra/nasconde il QR · `P` sposta il QR ·
+  `F` schermo intero · `X` toglie subito l'invio sul muro e in chat · `T` invio di prova · `I` cambia ingresso audio ·
+  `H` pannello audio e rete. Le scelte restano salvate nel browser.
+- **Musica**: il movimento è lento; volume, medi, alti e timbro decidono velocità, forma e colore. I bassi toccano appena lo sfondo
+  (con `N` contano di più: lo sfondo si accende e il campo respira sui colpi).
+- **Carattere**: testi sul muro e chat usano Modak (Google Fonts), il più vicino al logo; senza internet si torna a Helvetica.
+- **Filtro**: nickname e testi volgari vengono respinti dal server; ogni telefono può mandare un testo ogni 30 secondi
+  (`liveSecondiTraInvii` in Code.gs). Tutto finisce anche nel foglio **Live**.
+
+Prova senza toccare i dati veri, nello stesso browser: `live/schermo.html?demo` in una scheda e `live/?demo` in un'altra.
+
 ## Protezioni
 
 - **Tutti i controlli sono sul server** (Apps Script): il sito si può aggirare, il backend no.

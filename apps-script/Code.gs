@@ -40,7 +40,12 @@ var CONFIG = {
 
   /* email temporanee: lista pubblica aggiornata (~10.000 domini) + controllo che il dominio riceva posta */
   listaUsaEGetta: 'https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/main/disposable_email_blocklist.conf',
-  controlloDominio: true
+  controlloDominio: true,
+
+  /* live: cosa prova il pubblico, sulle visuals (bbbbolla.it/live/) */
+  liveSecondiTraInvii: 30,        // ogni telefono può mandare un'emozione ogni N secondi
+  liveMaxAlMinuto: 120,           // tetto globale di invii al minuto
+  liveMemoria: 80                 // quanti invii restano in cache per lo schermo
 };
 
 var TZ = 'Europe/Rome';
@@ -49,7 +54,8 @@ var COLONNE = {
   Inviti: ['token', 'etichetta', 'serata', 'max', 'scadenza', 'attivo', 'creato'],
   Gruppi: ['id', 'serata', 'creato', 'scadenza', 'capogruppo', 'stato', 'completato'],
   Pass: ['creato', 'serata', 'tipo', 'rif', 'nome', 'cognome', 'email', 'email_norm', 'chiave', 'codice', 'stato', 'confermato', 'checkin', 'newsletter', 'checkin_da'],
-  Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note']
+  Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note'],
+  Live: ['creato', 'serata', 'nickname', 'colore', 'emozione', 'dispositivo']
 };
 var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome'];
 // riserva se la lista online non è raggiungibile
@@ -91,6 +97,7 @@ function onOpen() {
     .addItem('Esporta newsletter', 'esportaNewsletter')
     .addSeparator()
     .addItem('Crea PIN staff (app ingresso)', 'creaPinStaffDaMenu')
+    .addItem('Rigenera codice live (QR in sala)', 'rigeneraCodiceLiveDaMenu')
     .addItem('Imposta chiave Brevo…', 'impostaChiaveBrevoDaMenu')
     .addItem('Invia email di prova (Brevo)', 'emailProvaDaMenu')
     .addItem('Attiva sveglia automatica', 'attivaSvegliaDaMenu')
@@ -159,6 +166,8 @@ function doPost(e) {
       case 'lista_attesa': return json_(azioneListaAttesa_(d));
       case 'staff_lista': return json_(azioneStaffLista_(d));
       case 'staff_checkin': return json_(azioneStaffCheckin_(d));
+      case 'live_invia': return json_(azioneLiveInvia_(d));
+      case 'live_feed': return json_(azioneLiveFeed_(d));
     }
     return json_(errore_('dati', 'Azione sconosciuta.'));
   } catch (err) {
@@ -618,6 +627,120 @@ function controllaPin_(pin) {
     return errore_('pin', 'PIN sbagliato.');
   }
   return null;
+}
+
+/* ============================================================
+   Live: il pubblico manda nickname, colore ed emozione alle visuals proiettate.
+   Telefono: bbbbolla.it/live/?c=<codice> (dal QR proiettato in sala).
+   Schermo: bbbbolla.it/live/schermo.html, accesso con il PIN staff; mostra anche il QR.
+   Gli invii stanno in cache (lo schermo li legge ogni secondo e mezzo) e in archivio nel foglio Live.
+   Il codice nel QR blocca chi trova il link fuori dalla sala: rigenerarlo invalida i QR vecchi.
+   ============================================================ */
+
+function codiceLive_() {
+  var props = PropertiesService.getScriptProperties();
+  var c = props.getProperty('LIVE_CODICE');
+  if (!c) { c = token_(8); props.setProperty('LIVE_CODICE', c); }
+  return c;
+}
+
+function rigeneraCodiceLiveDaMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var r = ui.alert('Codice live', 'Il QR proiettato cambia da solo al prossimo aggiornamento dello schermo; i link già aperti sui telefoni smettono di funzionare. Continuo?', ui.ButtonSet.YES_NO);
+  if (r !== ui.Button.YES) return;
+  var c = token_(8);
+  PropertiesService.getScriptProperties().setProperty('LIVE_CODICE', c);
+  ui.alert('Codice live', 'Nuovo link: ' + CONFIG.sito + '/live/?c=' + c, ui.ButtonSet.OK);
+}
+
+function azioneLiveInvia_(d) {
+  if (String(d.codice || '') !== codiceLive_()) return errore_('codice', 'Link non valido: scansiona il QR proiettato in sala.');
+  var nickname = pulisciLive_(d.nickname, 16);
+  var emozione = pulisciLive_(d.emozione, 24);
+  var colore = String(d.colore || '').toLowerCase();
+  var dispositivo = String(d.dispositivo || '').slice(0, 40);
+  if (!nickname) return errore_('nickname', 'Scegli un nickname.');
+  if (!/^[\p{L}\p{N}'’ \-]{1,24}$/u.test(emozione)) return errore_('emozione', 'Scrivi cosa provi, solo lettere e spazi.');
+  if (!/^#[0-9a-f]{6}$/.test(colore)) return errore_('colore', 'Scegli un colore.');
+  if (volgare_(nickname)) return errore_('nickname', 'Questo nickname non può andare sul muro. Prova con un altro.');
+  if (volgare_(emozione)) return errore_('emozione', 'Questo testo non può andare sul muro. Prova con altre parole.');
+
+  var cache = CacheService.getScriptCache();
+  var kDisp = 'live:disp:' + dispositivo;
+  if (dispositivo && cache.get(kDisp)) return errore_('attendi', 'La tua emozione è appena partita: aspetta qualche secondo prima di mandarne un\'altra.');
+  var kMin = 'live:min:' + Math.floor(Date.now() / 60000);
+  if (Number(cache.get(kMin) || 0) >= CONFIG.liveMaxAlMinuto) return errore_('attendi', 'Troppi invii tutti insieme: riprova tra un minuto.');
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var feed = leggiFeedLive_();
+    var voce = { id: feed.ultimo + 1, nickname: nickname, colore: colore, emozione: emozione, t: Date.now() };
+    feed.ultimo = voce.id;
+    feed.voci.push(voce);
+    if (feed.voci.length > CONFIG.liveMemoria) feed.voci = feed.voci.slice(-CONFIG.liveMemoria);
+    cache.put('live:feed', JSON.stringify(feed), 21600);
+    cache.put(kMin, String(Number(cache.get(kMin) || 0) + 1), 120);
+    if (dispositivo) cache.put(kDisp, '1', CONFIG.liveSecondiTraInvii);
+  } finally {
+    lock.releaseLock();
+  }
+  try {
+    if (!SpreadsheetApp.getActive().getSheetByName('Live')) setup();
+    appendi_('Live', { creato: new Date(), serata: String(d.serata || ''), nickname: nickname, colore: colore, emozione: emozione, dispositivo: dispositivo });
+  } catch (err) {
+    console.error('Archivio live non riuscito: ' + err);
+  }
+  return { ok: true, attesa: CONFIG.liveSecondiTraInvii };
+}
+
+// Lo schermo chiede gli invii arrivati dopo l'ultimo che ha già (dopo = id).
+// Se la cache si è svuotata gli id ripartono: "ultimo" più basso di "dopo" dice allo schermo di ricominciare.
+function azioneLiveFeed_(d) {
+  var e = controllaPin_(d.pin);
+  if (e) return e;
+  var feed = leggiFeedLive_();
+  var dopo = Number(d.dopo) || 0;
+  return {
+    ok: true,
+    codice: codiceLive_(),
+    ultimo: feed.ultimo,
+    voci: feed.voci.filter(function (v) { return v.id > dopo; })
+  };
+}
+
+function leggiFeedLive_() {
+  var testo = CacheService.getScriptCache().get('live:feed');
+  return testo ? JSON.parse(testo) : { ultimo: 0, voci: [] };
+}
+
+function pulisciLive_(v, max) {
+  return String(v || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+// Filtro essenziale per un muro pubblico: confronta il testo senza accenti, simboli e lettere ripetute
+// ("c4zz000" = "cazo"), così le varianti più comuni non passano.
+// Radici lunghe: bloccate anche dentro altre parole. Corte: solo se sono la parola intera ("nazi" sì, "nazione" no).
+var PAROLE_VIETATE = ['cazo', 'minchi', 'figa', 'troia', 'puttan', 'zoccol', 'bagasc', 'stronz', 'vafancul', 'fancul',
+  'culatton', 'ricchion', 'frocio', 'froci', 'negr', 'terron', 'coglion', 'merd', 'porcodi', 'diocan', 'dioporc',
+  'porcamadon', 'bastard', 'sucami', 'pompin', 'scopat', 'fuck', 'shit', 'bitch', 'cunt', 'pussy', 'nigg', 'whore',
+  'slut', 'stupr', 'hitler', 'mussolin', 'sieg', 'jihad', 'pedof', 'porn', 'sesso', 'tette', 'uccid', 'ammazz'];
+var PAROLE_CORTE_VIETATE = ['caz', 'sega', 'duce', 'culo', 'fag', 'anal', 'sex', 'fica', 'dick', 'cock', 'kill', 'nazi',
+  'isis', 'rape', 'pirla', 'mign', 'pota'];
+var PAROLE_AMMESSE = ['negroni'];
+
+function volgare_(testo) {
+  var s = String(testo).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[0@4]/g, function (c) { return c === '4' || c === '@' ? 'a' : 'o'; })
+    .replace(/1|!/g, 'i').replace(/3/g, 'e').replace(/5|\$/g, 's').replace(/7/g, 't')
+    .replace(/[^a-z]/g, '').replace(/(.)\1+/g, '$1');
+  var corte = PAROLE_CORTE_VIETATE.map(function (p) { return p.replace(/(.)\1+/g, '$1'); });
+  if (PAROLE_AMMESSE.indexOf(s) >= 0) return false;
+  if (corte.indexOf(s) >= 0) return true;
+  return PAROLE_VIETATE.some(function (p) {
+    p = p.replace(/(.)\1+/g, '$1');
+    return p.length >= 4 && s.indexOf(p) >= 0;
+  });
 }
 
 // Un pass fa entrare se: confermato, non annullato e (su invito, oppure gruppo completo)
