@@ -16,6 +16,7 @@
 
   var CHIAVE_PIN = "bolla-staff-pin";   // lo stesso PIN dell'app ingresso
   var CHIAVE_IMPOSTAZIONI = "bolla-live-visuals";
+  var SITO_LIVE = "https://bbbbolla.it/live/";   // dove porta il QR proiettato
   var SCALA_FEEDBACK = 0.6;             // il campo gira a risoluzione ridotta: più fluido e più morbido
   var DURATA_CHAT = 10;                 // secondi prima che una voce della chat sparisca
   var MAX_CHAT = 7;
@@ -609,7 +610,8 @@
 
   function mostraQr() {
     if (!window.qrcode) return;
-    var link = new URL("./", location.href).href + (L.demo ? "?demo" : "?c=" + encodeURIComponent(codice));
+    // il QR porta sempre al sito pubblico, anche se lo schermo è aperto da localhost; in demo resta locale
+    var link = L.demo ? new URL("./", location.href).href + "?demo" : SITO_LIVE + "?c=" + encodeURIComponent(codice);
     var qr = qrcode(0, "M");
     qr.addData(link); qr.make();
     $("qrCodice").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 1, scalable: true });
