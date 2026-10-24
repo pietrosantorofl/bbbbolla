@@ -140,9 +140,11 @@
       window.BOLLA.serate.forEach(function (s) { db.sheets.Serate.push([s.id, "bolla® — " + s.lineup.map(function (a) { return a.nome; }).join(", "), s.data, "150", "TRUE"]); });
       api.appendi_("Inviti", { token: "demoinvito01", etichetta: "Invito di prova", serata: "", max: 3, scadenza: "", attivo: "TRUE", creato: new Date() });
       db.props = db.props || {};
-      db.props.PIN_STAFF = "12345678"; // PIN staff della demo
       save();
     }
+    // link segreto staff della demo: staff.html?demo entra da solo
+    db.props = db.props || {};
+    if (!db.props.LINK_STAFF) { db.props.LINK_STAFF = "demostaff"; save(); }
     return api;
   });
 

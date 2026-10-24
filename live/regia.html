@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>bolla® — regia visuals</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0d0c10">
+  <link rel="icon" href="../favicon.ico" sizes="any">
+  <style>
+    :root { --ink: #0d0c10; --card: #19181f; --card-2: #24232c; --paper: #f3f2ef; --muted: #a29fa8; --pink: #f0307f; --ok: #3ddc97; --err: #ff6b5b;
+      --font: "Helvetica Neue", Helvetica, "Inter", Arial, system-ui, sans-serif; }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { margin: 0; }
+    body { background: var(--ink); color: var(--paper); font: 15px/1.4 var(--font); -webkit-font-smoothing: antialiased; }
+    button, select, input { font: inherit; color: inherit; }
+
+    .regia { max-width: 1100px; margin: 0 auto; padding: 16px 16px calc(32px + env(safe-area-inset-bottom)); }
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .top__logo { display: flex; align-items: center; gap: 12px; }
+    .top__logo img { height: 28px; width: auto; filter: invert(1); }
+    .top__logo b { font-size: 13px; letter-spacing: .18em; text-transform: uppercase; opacity: .7; font-weight: 600; }
+    .stato { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px; background: var(--card); font-size: 13px; white-space: nowrap; }
+    .stato::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--err); }
+    .stato.ok::before { background: var(--ok); }
+
+    .griglia { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); align-items: start; }
+    .card { background: var(--card); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+    .card h2 { margin: 0; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+    .tipi { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+    .bottone { min-height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--card-2); cursor: pointer; font-weight: 600; }
+    .bottone:hover { background: #2f2e39; }
+    .bottone[aria-pressed=true] { background: var(--pink); }
+    .bottone--piccolo { min-height: 34px; padding: 0 12px; font-size: 13px; }
+    .riga { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+    .interruttore { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+    .interruttore input { appearance: none; -webkit-appearance: none; width: 46px; height: 28px; border-radius: 99px; background: var(--card-2); position: relative; cursor: pointer; transition: background .2s; flex: none; margin: 0; }
+    .interruttore input::after { content: ""; position: absolute; left: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .2s; }
+    .interruttore input:checked { background: var(--pink); }
+    .interruttore input:checked::after { transform: translateX(18px); }
+
+    .cursore { display: grid; gap: 6px; }
+    .cursore div { display: flex; justify-content: space-between; }
+    .cursore output { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .cursore input { width: 100%; accent-color: var(--pink); }
+
+    .misure { display: grid; gap: 6px; }
+    .misura { display: grid; grid-template-columns: 70px 1fr; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
+    .misura span { height: 8px; border-radius: 99px; background: var(--card-2); overflow: hidden; }
+    .misura i { display: block; height: 100%; width: 0; background: var(--pink); border-radius: 99px; transition: width .2s; }
+    select { width: 100%; min-height: 42px; border-radius: 12px; border: 0; padding: 0 12px; background: var(--card-2); }
+
+    /* mappa dello schermo: QR e chat si trascinano dove compariranno */
+    .mappa { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: radial-gradient(circle at 40% 40%, #3a1f4f, #120f18 70%); overflow: hidden; touch-action: none; }
+    .blocco { position: absolute; display: grid; place-items: center; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: grab; user-select: none; touch-action: none; }
+    .blocco.trascina { cursor: grabbing; }
+    .blocco--qr { background: #fff; color: #121212; }
+    .blocco--chat { background: rgba(240, 48, 127, .35); border: 1px dashed rgba(255, 255, 255, .6); }
+    .blocco.spento { opacity: .25; }
+
+    .invii { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 420px; overflow: auto; }
+    .invii li { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; background: var(--card-2); }
+    .invii li.nascosto { opacity: .4; }
+    .invii li.nascosto .testo { text-decoration: line-through; }
+    .invii i { width: 12px; height: 12px; border-radius: 50%; }
+    .invii .testo { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .invii small { color: var(--muted); margin-left: 6px; }
+    .vuoto { color: var(--muted); margin: 0; }
+
+    .accesso { margin: 18vh auto 0; max-width: 420px; text-align: center; display: grid; gap: 10px; }
+    .accesso h1 { margin: 0; font-size: 32px; letter-spacing: -.03em; }
+    .accesso p { margin: 0; color: var(--muted); }
+    .link { background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; color: var(--muted); font-size: 13px; }
+    a.bottone { display: inline-flex; align-items: center; text-decoration: none; color: inherit; }
+  </style>
+</head>
+<body>
+  <main class="regia">
+    <header class="top">
+      <div class="top__logo"><img src="../assets/bolla-logo.png" alt="bolla®" width="808" height="312"><b>Regia visuals</b></div>
+      <span class="stato" id="stato">schermo non collegato</span>
+    </header>
+
+    <section class="accesso" id="senzaAccesso" hidden>
+      <h1>Regia visuals</h1>
+      <p id="senzaAccessoTesto">Apri questa pagina dal link segreto visuals. Lo crei dal foglio: menu bolla® → Crea link segreto visuals.</p>
+    </section>
+
+    <div class="griglia" id="pannello" hidden>
+      <section class="card">
+        <h2>Visuals</h2>
+        <div class="tipi" id="tipi"></div>
+        <label class="interruttore">Giro automatico (cambia tipo ogni 90 s)<input type="checkbox" id="auto"></label>
+      </section>
+
+      <section class="card">
+        <h2>Movimento</h2>
+        <label class="cursore"><div><span>Velocità</span><output id="velocitaValore"></output></div>
+          <input type="range" id="velocita" min="0.25" max="2.5" step="0.05"></label>
+        <label class="cursore"><div><span>Sensibilità ai bassi</span><output id="bassiValore"></output></div>
+          <input type="range" id="bassi" min="0" max="4" step="0.1"></label>
+      </section>
+
+      <section class="card">
+        <h2>Suono in sala</h2>
+        <div class="misure" id="misure"></div>
+        <select id="ingresso" aria-label="Ingresso audio dello schermo"><option value="">Ingresso audio predefinito</option></select>
+      </section>
+
+      <section class="card">
+        <h2>Schermo</h2>
+        <div class="mappa" id="mappa">
+          <div class="blocco blocco--chat" id="bloccoChat">chat</div>
+          <div class="blocco blocco--qr" id="bloccoQr">QR</div>
+        </div>
+        <label class="interruttore">Mostra il QR<input type="checkbox" id="mostraQr"></label>
+        <label class="interruttore">Mostra la chat<input type="checkbox" id="mostraChat"></label>
+        <div class="riga">
+          <button class="bottone bottone--piccolo" type="button" id="pulisci">Pulisci il campo</button>
+          <a class="bottone bottone--piccolo" id="apriSchermo" target="_blank" rel="noopener">Apri lo schermo ↗</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="riga"><h2>Invii del pubblico</h2><button class="bottone bottone--piccolo" type="button" id="prova">Invio di prova</button></div>
+        <ul class="invii" id="invii"></ul>
+        <p class="vuoto" id="nessunInvio">Ancora nessun invio.</p>
+      </section>
+    </div>
+
+    <p style="margin-top:18px"><button class="link" type="button" id="esci" hidden>Esci da questo dispositivo</button></p>
+  </main>
+
+  <script src="../js/config.js?v=202610241844"></script>
+  <script src="live-api.js?v=202610241844"></script>
+  <script src="regia.js?v=202610241844"></script>
+</body>
+</html>

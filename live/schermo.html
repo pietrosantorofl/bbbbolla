@@ -15,10 +15,8 @@
     canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
     [hidden] { display: none !important; }
 
-    /* QR e chat si spostano dal pannello comandi o trascinandoli: la posizione è impostata da schermo.js */
-    .spostabile { position: fixed; left: 0; top: 0; cursor: grab; touch-action: none; transition: left .5s ease, top .5s ease; }
-    .spostabile.trascina { cursor: grabbing; transition: none; }
-    body.regia .spostabile { outline: 1px dashed rgba(255, 255, 255, .45); outline-offset: 6px; }
+    /* QR e chat: la posizione la decide la regia (live/regia.html) e la imposta schermo.js */
+    .spostabile { position: fixed; left: 0; top: 0; transition: left .8s ease, top .8s ease; }
 
     .qr { padding: 1.2vh; border-radius: 2vh; background: rgba(255, 255, 255, .92); box-shadow: 0 0 40px rgba(0, 0, 0, .4); }
     .qr svg { width: 15vh; height: 15vh; display: block; pointer-events: none; }
@@ -37,25 +35,11 @@
     .chat li b { font-weight: 400; text-shadow: 0 0 1.4vh var(--c); }
     .chat li span { opacity: .85; }
     @keyframes entra { from { opacity: 0; filter: blur(12px); transform: translateY(2vh); } }
-    body.regia .chat ol:empty::before { content: "chat"; opacity: .5; font-size: 14px; padding: 8px; }
-
-    /* pannello comandi: compare quando si muove il mouse */
-    .comandi { position: fixed; left: 50%; top: 2.4vh; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
-      max-width: 94vw; padding: 8px; border-radius: 16px; background: rgba(10, 10, 14, .72); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-      transition: opacity .4s; }
-    .comandi.nascosti { opacity: 0; pointer-events: none; }
-    .comandi button { border: 0; border-radius: 10px; padding: 9px 12px; background: rgba(255, 255, 255, .08); color: inherit; font: 600 14px/1 inherit; cursor: pointer; }
-    .comandi button:hover { background: rgba(255, 255, 255, .18); }
-    .comandi button[aria-pressed=true] { background: #f0307f; }
-    .comandi kbd { font: 11px/1 ui-monospace, Menlo, monospace; opacity: .55; margin-right: 6px; }
-    .comandi hr { width: 1px; height: 30px; margin: 0 4px; border: 0; background: rgba(255, 255, 255, .2); align-self: center; }
-    .comandi output { align-self: center; min-width: 44px; text-align: center; font: 600 14px/1 ui-monospace, Menlo, monospace; }
 
     .avvio { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #2b2f8e 0, #0d0c10 60%); }
     .avvio__box { display: grid; gap: 14px; width: min(380px, 90vw); text-align: center; }
     .avvio h1 { margin: 0; font-size: 44px; letter-spacing: -.04em; }
     .avvio p { margin: 0; opacity: .75; }
-    .avvio input { min-height: 56px; border-radius: 14px; border: 0; padding: 0 16px; font: 600 26px/1 inherit; letter-spacing: .3em; text-align: center; }
     .avvio button { min-height: 56px; border: 0; border-radius: 99px; background: #f0307f; color: #fff; font: 800 20px/1 inherit; cursor: pointer; }
     .avvio button:disabled { opacity: .5; }
     .avvio small { opacity: .6; line-height: 1.5; }
@@ -63,7 +47,6 @@
 
     .hud { position: fixed; left: 16px; bottom: 16px; padding: 12px 14px; border-radius: 12px; background: rgba(0, 0, 0, .6); font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre; }
     .hud b { display: inline-block; height: 8px; background: #f0307f; vertical-align: middle; }
-    .avviso { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 10px 18px; border-radius: 99px; background: rgba(0, 0, 0, .65); font-size: 16px; }
   </style>
 </head>
 <body>
@@ -71,24 +54,22 @@
   <div class="chat spostabile" id="chat" hidden><ol id="chatLista" aria-live="polite"></ol></div>
   <div class="qr spostabile" id="qr" hidden><div id="qrCodice"></div></div>
   <div class="hud" id="hud" hidden></div>
-  <div class="avviso" id="avviso" hidden></div>
-  <nav class="comandi nascosti" id="comandi" hidden></nav>
 
   <div class="avvio" id="avvio">
     <form class="avvio__box" id="avvioModulo">
       <h1>bolla® visuals</h1>
-      <p id="avvioTesto">PIN staff per collegare lo schermo alle parole del pubblico.</p>
-      <input id="pin" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="PIN">
+      <p id="avvioTesto">Premi Avvia sul computer collegato al proiettore. Tutto il resto si comanda dalla regia.</p>
       <button id="avvia" type="submit">Avvia</button>
       <p class="err" id="avvioErrore"></p>
       <small>Il browser chiede il microfono: le visuals seguono la musica in sala.<br>
-        Muovi il mouse per il pannello comandi: tipo di visuals, velocità, chat, QR, schermo intero.</small>
+        Tipo di visuals, velocità, bassi, QR e chat si cambiano da live/regia.html (stesso link segreto).<br>
+        Qui solo: F schermo intero · H pannello audio.</small>
     </form>
   </div>
 
-  <script src="../js/config.js?v=202610241733"></script>
-  <script src="../js/vendor/qrcode.js?v=202610241733"></script>
-  <script src="live-api.js?v=202610241733"></script>
-  <script src="schermo.js?v=202610241733"></script>
+  <script src="../js/config.js?v=202610241844"></script>
+  <script src="../js/vendor/qrcode.js?v=202610241844"></script>
+  <script src="live-api.js?v=202610241844"></script>
+  <script src="schermo.js?v=202610241844"></script>
 </body>
 </html>

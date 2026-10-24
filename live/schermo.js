@@ -14,8 +14,7 @@
   function liscio(x) { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }
   function verso(attuale, obiettivo, dt, tau) { return attuale + (obiettivo - attuale) * (1 - Math.exp(-dt / tau)); }
 
-  var CHIAVE_PIN = "bolla-staff-pin";   // lo stesso PIN dell'app ingresso
-  var CHIAVE_IMPOSTAZIONI = "bolla-live-visuals";
+  var CHIAVE_REGIA = "bolla-live-regia-schermo";   // ultime impostazioni ricevute dalla regia: si riparte uguali
   var SITO_LIVE = "https://bbbbolla.it/live/";   // dove porta il QR proiettato
   var SCALA_FEEDBACK = 0.6;             // il campo gira a risoluzione ridotta: più fluido e più morbido
   var DURATA_CHAT = 10;                 // secondi prima che una voce della chat sparisca
@@ -71,10 +70,10 @@
     return { vel: .6 + r(0) * .9, warp: .7 + r(8) * 1.1, zoom: .4 + r(16) * 1.4, tinta: (r(24) - .5) * .01 };
   }
 
-  var imp = { tipo: 0, auto: false, velocita: 1, bassi: 1, qr: { x: 1, y: 1 }, qrVisibile: true, chat: { x: 0, y: 1 }, chatVisibile: true };
-  try { Object.assign(imp, JSON.parse(leggi(CHIAVE_IMPOSTAZIONI)) || {}); } catch (e) { /* niente */ }
+  // impostazioni decise dalla regia (live/regia.html): sullo schermo non c'è nessun pannello
+  var imp = L.regiaIniziale();
+  try { Object.assign(imp, JSON.parse(leggi(CHIAVE_REGIA)) || {}); } catch (e) { /* niente */ }
   imp.tipo = clamp(imp.tipo | 0, 0, TIPI.length - 1);
-  function salvaImpostazioni() { scrivi(CHIAVE_IMPOSTAZIONI, JSON.stringify(imp)); }
 
   /* ============================================================
      Shader
@@ -306,7 +305,7 @@
      ============================================================ */
   var audio = { bass: 0, mid: 0, high: 0, level: 0, tono: .5, nome: "simulato", vero: false };
   var actx = null, analizzatore = null, fft = null, flusso = null;
-  var picco = { bass: .2, mid: .2, high: .2, level: .2 }, dispositivi = [], indiceIngresso = 0;
+  var picco = { bass: .2, mid: .2, high: .2, level: .2 }, dispositivi = [];
   // secondi per salire e per scendere: si accende in fretta, si spegne piano
   var INVILUPPI = { level: [.4, 1.6], mid: [.35, 1.4], high: [.25, 1.1], bass: [.6, 2], tono: [1.5, 2.5] };
 
@@ -326,6 +325,7 @@
       fft = new Uint8Array(analizzatore.frequencyBinCount);
       audio.vero = true;
       audio.nome = stream.getAudioTracks()[0].label || "microfono";
+      audio.id = stream.getAudioTracks()[0].getSettings().deviceId || "";
       return navigator.mediaDevices.enumerateDevices().then(function (d) {
         dispositivi = d.filter(function (x) { return x.kind === "audioinput"; });
         return true;
@@ -333,10 +333,12 @@
     }).catch(function () { audio.vero = false; audio.nome = "simulato (microfono non disponibile)"; return false; });
   }
 
-  function prossimoIngresso() {
-    if (!dispositivi.length) { avviso("Nessun altro ingresso audio"); return; }
-    indiceIngresso = (indiceIngresso + 1) % dispositivi.length;
-    avviaAudio(dispositivi[indiceIngresso].deviceId).then(function () { avviso("Ingresso audio: " + audio.nome); });
+  // la regia sceglie l'ingresso audio tra quelli di questo computer ("" = predefinito)
+  var ingressoChiesto = imp.audioId || "";
+  function usaIngresso(id) {
+    if (id === ingressoChiesto) return;
+    ingressoChiesto = id;
+    avviaAudio(id || undefined);
   }
 
   function segui(k, valore, dt) {
@@ -398,20 +400,7 @@
     // il tempo del flusso scorre più veloce quando la musica è piena, quasi fermo nel silenzio
     ft += dt * imp.velocita * umore.vel * (.25 + .8 * audio.level + .35 * audio.mid);
   }
-  function scegliTipo(i) {
-    imp.tipo = i; tipoDal = performance.now();
-    salvaImpostazioni(); aggiornaComandi();
-    avviso(TIPI[i].nome);
-  }
-  function cambiaBassi(passo) {
-    imp.bassi = Math.round(clamp(imp.bassi + passo, 0, 4) * 100) / 100;
-    salvaImpostazioni(); aggiornaComandi();
-    avviso(imp.bassi ? "Sensibilità ai bassi ×" + imp.bassi : "Bassi ignorati");
-  }
-  function cambiaVelocita(passo) {
-    imp.velocita = Math.round(clamp(imp.velocita + passo, .25, 2.5) * 100) / 100;
-    salvaImpostazioni(); aggiornaComandi();
-  }
+  function scegliTipo(i) { imp.tipo = i; tipoDal = performance.now(); }
 
   /* ============================================================
      Mini chat: ogni invio scorre con nickname e cosa prova, e sparisce dopo 10 secondi
@@ -442,8 +431,9 @@
   /* ============================================================
      Cosa prova il pubblico, sul muro: appare, viene versato nel flusso, si scioglie
      ============================================================ */
-  var coda = [], parola = null, nascoste = {};
-  try { nascoste = JSON.parse(leggi("bolla-live-nascoste")) || {}; } catch (e) { /* niente */ }
+  var coda = [], parola = null;
+  // invii nascosti dalla regia: non compaiono, e se sono già sul muro spariscono
+  function nascosta(id) { return (imp.nascoste || []).indexOf(id) >= 0; }
 
   function disegnaParola(v) {
     var w = testoCanvas.width, h = testoCanvas.height;
@@ -480,7 +470,7 @@
     }
     if ((!parola || parola.s > PROSSIMA_DOPO) && coda.length) {
       var v = coda.shift();
-      if (nascoste[v.id]) return;
+      if (nascosta(v.id)) return;
       // con tanti invii in coda il ritmo accelera un po', senza scatti
       parola = { voce: v, inizio: ora, s: 0, velocita: coda.length > 3 ? 1.8 : coda.length > 1 ? 1.35 : 1 };
       disegnaParola(v);
@@ -499,20 +489,20 @@
     return { overlay: overlay, ink: ink, melt: melt, wob: liscio((s - 3.5) / 4) };
   }
 
-  // tasto X: toglie subito dal muro e dalla chat l'invio che si vede
-  function togliParola() {
-    if (!parola) return;
-    var id = parola.voce.id;
-    nascoste[id] = 1;
-    scrivi("bolla-live-nascoste", JSON.stringify(nascoste));
+  function svuotaCampo() {
+    fb.forEach(function (f) { gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  // invio nascosto dalla regia: via dalla chat, dalla coda e, se è sul muro, anche dal campo
+  function togliInvio(id) {
     Array.prototype.forEach.call(document.querySelectorAll("#chatLista li"), function (li) { if (li.dataset.id === String(id)) li.remove(); });
+    coda = coda.filter(function (v) { return v.id !== id; });
+    if (!parola || parola.voce.id !== id) return;
     parola = null;
     umore.forza = 0;
     svuotaTesto();
-    // svuota anche il campo: l'emozione tolta non deve restare come scia
-    fb.forEach(function (f) { gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); });
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    avviso("Invio tolto");
+    svuotaCampo();   // il testo tolto non deve restare come scia
   }
 
   /* ============================================================
@@ -587,26 +577,72 @@
   /* ============================================================
      Collegamento: legge gli invii nuovi ogni secondo e mezzo
      ============================================================ */
-  var pin = leggi(CHIAVE_PIN) || "";
+  var accesso = L.accesso();
   var ultimo = null, codice = "", inLinea = false, ultimaRisposta = 0;
 
   function giro() {
-    L.api("live_feed", { pin: pin, dopo: ultimo || 0 }).then(function (r) {
+    L.api("live_feed", { accesso: accesso, dopo: ultimo || 0, stato: statoPerRegia() }).then(function (r) {
       if (!r.ok) {
-        if (r.errore === "pin") { scrivi(CHIAVE_PIN, null); location.reload(); }
+        if (r.errore === "accesso") { L.dimentica(); location.reload(); }
         return;
       }
       inLinea = true; ultimaRisposta = Date.now();
+      applicaRegia(r.regia);
       if (r.codice !== codice) { codice = r.codice; mostraQr(); }
       if (ultimo !== null && r.ultimo < ultimo) { ultimo = 0; return; }   // la cache si è svuotata: si riparte
       // al primo giro gli invii già arrivati colorano solo la tavolozza; i nuovi vanno in chat e sul muro
-      var voci = r.voci.filter(function (v) { return !nascoste[v.id]; });
+      var voci = r.voci.filter(function (v) { return !nascosta(v.id); });
       if (ultimo === null) voci.slice(-4).forEach(function (v) { nuovoColore(rgb(v.colore)); });
       else voci.forEach(function (v) { aggiungiChat(v); coda.push(v); });
       ultimo = r.ultimo;
     }).catch(function () { inLinea = false; })
       .then(function () { setTimeout(giro, 1500); });
   }
+
+  /* ============================================================
+     Regia: applica le impostazioni nuove e rimanda lo stato dello schermo
+     ============================================================ */
+  var revApplicata = imp.rev || 0;
+  var comandiFatti = {};
+  (imp.comandi || []).forEach(function (c) { comandiFatti[c.id] = 1; });   // i comandi vecchi non si ripetono
+
+  function applicaRegia(r) {
+    if (!r || !(r.rev > revApplicata)) return;
+    revApplicata = r.rev;
+    var tipoPrima = imp.tipo, autoPrima = imp.auto;
+    imp = Object.assign(L.regiaIniziale(), r);
+    imp.tipo = clamp(imp.tipo | 0, 0, TIPI.length - 1);
+    if (imp.tipo !== tipoPrima || imp.auto !== autoPrima) tipoDal = performance.now();
+    scrivi(CHIAVE_REGIA, JSON.stringify(imp));
+    $("chat").hidden = !imp.chat.visibile;
+    spostabili.chat.posiziona();
+    if (codice) { $("qr").hidden = !imp.qr.visibile; spostabili.qr.posiziona(); }
+    imp.nascoste.forEach(togliInvio);
+    if (audio.vero || imp.audioId) usaIngresso(imp.audioId || "");
+    imp.comandi.forEach(function (c) {
+      if (comandiFatti[c.id]) return;
+      comandiFatti[c.id] = 1;
+      if (c.cosa === "prova") invioDiProva();
+      if (c.cosa === "pulisci") svuotaCampo();
+    });
+  }
+
+  function statoPerRegia() {
+    var r2 = function (v) { return Math.round(v * 100) / 100; };
+    return {
+      fps: Math.round(fps), tipo: imp.tipo, tipi: TIPI.map(function (t) { return t.nome; }), coda: coda.length,
+      audio: { vero: audio.vero, nome: audio.nome, level: r2(audio.level), mid: r2(audio.mid), high: r2(audio.high), bass: r2(audio.bass) },
+      dispositivi: dispositivi.map(function (d) { return { id: d.deviceId, nome: d.label }; }),
+      larghezza: innerWidth, altezza: innerHeight,
+      umore: umore.testo && umore.forza > .05 ? umore.testo : ""
+    };
+  }
+
+  // regia aperta nello stesso computer: impostazioni e stato passano subito, senza aspettare il server
+  if (L.canale) L.canale.addEventListener("message", function (e) {
+    if (avvioT && e.data && e.data.tipo === "regia") applicaRegia(e.data.regia);
+  });
+  setInterval(function () { if (avvioT && L.canale) L.canale.postMessage({ tipo: "schermo", stato: statoPerRegia() }); }, 500);
 
   function mostraQr() {
     if (!window.qrcode) return;
@@ -616,16 +652,14 @@
     qr.addData(link); qr.make();
     $("qrCodice").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 1, scalable: true });
     $("qr").title = link;
-    $("qr").hidden = !imp.qrVisibile;
+    $("qr").hidden = !imp.qr.visibile;
     spostabili.qr.posiziona();
   }
 
   /* ============================================================
-     QR e chat spostabili: posizioni pronte (tasto) o trascinamento libero
+     QR e chat: la posizione la decide la regia.
      x e y da 0 a 1 dentro lo schermo (0,0 in alto a sinistra), con un margine dai bordi
      ============================================================ */
-  var POSIZIONI = [{ x: 1, y: 1 }, { x: .5, y: 1 }, { x: 0, y: 1 }, { x: 0, y: .5 }, { x: 0, y: 0 }, { x: .5, y: 0 }, { x: 1, y: 0 }, { x: 1, y: .5 }];
-
   function spostabile(el, chiave) {
     function posiziona() {
       var m = innerWidth * .024, pos = imp[chiave];
@@ -635,51 +669,13 @@
       el.classList.toggle("in-alto", pos.y < .5);
       el.classList.toggle("a-destra", pos.x > .5);
     }
-    function sposta() {
-      var pos = imp[chiave];
-      var i = POSIZIONI.findIndex(function (p) { return Math.abs(p.x - pos.x) < .02 && Math.abs(p.y - pos.y) < .02; });
-      imp[chiave] = Object.assign({}, POSIZIONI[(i + 1) % POSIZIONI.length]);
-      salvaImpostazioni(); posiziona();
-    }
-    var da = null;
-    el.addEventListener("pointerdown", function (e) {
-      da = { x: e.clientX - el.offsetLeft, y: e.clientY - el.offsetTop };
-      el.classList.add("trascina"); el.setPointerCapture(e.pointerId);
-    });
-    el.addEventListener("pointermove", function (e) {
-      if (!da) return;
-      var m = innerWidth * .024;
-      imp[chiave] = {
-        x: clamp((e.clientX - da.x - m) / (innerWidth - el.offsetWidth - 2 * m), 0, 1),
-        y: clamp((e.clientY - da.y - m) / (innerHeight - el.offsetHeight - 2 * m), 0, 1)
-      };
-      posiziona();
-    });
-    el.addEventListener("pointerup", function () { da = null; el.classList.remove("trascina"); salvaImpostazioni(); });
-    return { posiziona: posiziona, sposta: sposta };
+    return { posiziona: posiziona };
   }
   var spostabili = { qr: spostabile($("qr"), "qr"), chat: spostabile($("chat"), "chat") };
 
-  function mostraNascondi(id, chiave) {
-    imp[chiave] = !imp[chiave];
-    $(id).hidden = !imp[chiave] || (id === "qr" && !codice);
-    spostabili[id].posiziona();
-    salvaImpostazioni();
-  }
-  function spostaVisibile(id, chiave) {
-    if (!imp[chiave]) mostraNascondi(id, chiave);
-    spostabili[id].sposta();
-  }
-
   /* ============================================================
-     Comandi: pannello col mouse e tasti
+     Invio di prova (dalla regia) e tasti dello schermo: F schermo intero, H pannello audio
      ============================================================ */
-  var tAvviso = 0;
-  function avviso(testo) {
-    $("avviso").textContent = testo; $("avviso").hidden = false;
-    clearTimeout(tAvviso); tAvviso = setTimeout(function () { $("avviso").hidden = true; }, 1800);
-  }
-
   var NOMI = ["luna", "kiko", "sara", "dario", "mimì", "tano", "ale", "vale"];
   var COLORI = ["#f0307f", "#ff3b1c", "#f8893c", "#ffd23f", "#3ddc97", "#22c3ee", "#5b5ff0", "#b04cf0"];
   var PROVE = ["gioia", "libertà", "mare dentro", "desiderio", "pace", "voglia di ballare", "nostalgia", "stupore", "calore", "felice"];
@@ -696,72 +692,11 @@
     else document.documentElement.requestFullscreen().catch(function () {});
   }
 
-  var AZIONI = [
-    { tasto: "a", nome: "Giro automatico", fai: function () { imp.auto = !imp.auto; tipoDal = performance.now(); salvaImpostazioni(); avviso(imp.auto ? "Giro automatico acceso" : "Giro automatico spento"); }, attivo: function () { return imp.auto; } },
-    { tasto: "-", nome: "Più lento", fai: function () { cambiaVelocita(-.25); } },
-    { velocita: true },
-    { tasto: "+", nome: "Più veloce", fai: function () { cambiaVelocita(.25); } },
-    { separatore: true },
-    { tasto: "b", nome: "Bassi −", fai: function () { cambiaBassi(-.25); } },
-    { bassi: true },
-    { tasto: "n", nome: "Bassi +", fai: function () { cambiaBassi(.25); } },
-    { separatore: true },
-    { tasto: "c", nome: "Chat", fai: function () { mostraNascondi("chat", "chatVisibile"); }, attivo: function () { return imp.chatVisibile; } },
-    { tasto: "v", nome: "Sposta chat", fai: function () { spostaVisibile("chat", "chatVisibile"); } },
-    { tasto: "q", nome: "QR", fai: function () { mostraNascondi("qr", "qrVisibile"); }, attivo: function () { return imp.qrVisibile; } },
-    { tasto: "p", nome: "Sposta QR", fai: function () { spostaVisibile("qr", "qrVisibile"); } },
-    { separatore: true },
-    { tasto: "f", nome: "Schermo intero", fai: schermoIntero },
-    { tasto: "i", nome: "Ingresso audio", fai: prossimoIngresso },
-    { tasto: "t", nome: "Invio di prova", fai: invioDiProva },
-    { tasto: "x", nome: "Togli invio", fai: togliParola },
-    { tasto: "h", nome: "Pannello audio", fai: function () { $("hud").hidden = !$("hud").hidden; }, attivo: function () { return !$("hud").hidden; } }
-  ];
-
-  function bottone(tasto, nome, fai) {
-    var b = document.createElement("button");
-    b.type = "button";
-    b.innerHTML = "<kbd>" + tasto + "</kbd>";
-    b.appendChild(document.createTextNode(nome));
-    b.addEventListener("click", function () { fai(); aggiornaComandi(); b.blur(); });
-    return b;
-  }
-
-  function costruisciComandi() {
-    var nav = $("comandi");
-    TIPI.forEach(function (t, i) {
-      var b = bottone(i + 1, t.nome, function () { scegliTipo(i); });
-      b.dataset.tipo = i;
-      nav.appendChild(b);
-    });
-    nav.appendChild(document.createElement("hr"));
-    AZIONI.forEach(function (a) {
-      if (a.separatore) { nav.appendChild(document.createElement("hr")); return; }
-      if (a.velocita || a.bassi) { var o = document.createElement("output"); o.id = a.velocita ? "velocita" : "bassi"; nav.appendChild(o); return; }
-      var b = bottone(a.tasto, a.nome, a.fai);
-      a.el = b;
-      nav.appendChild(b);
-    });
-    nav.hidden = false;
-    aggiornaComandi();
-  }
-
-  function aggiornaComandi() {
-    Array.prototype.forEach.call(document.querySelectorAll("[data-tipo]"), function (b) { b.setAttribute("aria-pressed", String(+b.dataset.tipo === imp.tipo)); });
-    AZIONI.forEach(function (a) { if (a.el && a.attivo) a.el.setAttribute("aria-pressed", String(a.attivo())); });
-    if ($("velocita")) $("velocita").textContent = "×" + imp.velocita;
-    if ($("bassi")) $("bassi").textContent = "×" + imp.bassi;
-  }
-
   document.addEventListener("keydown", function (e) {
     if (!avvioT || e.metaKey || e.ctrlKey || e.altKey) return;
     var k = e.key.toLowerCase();
-    var n = parseInt(k, 10);
-    if (n >= 1 && n <= TIPI.length) { scegliTipo(n - 1); return; }
-    if (k === "=") k = "+";
-    if (k === "_") k = "-";
-    AZIONI.forEach(function (a) { if (a.tasto === k) a.fai(); });
-    aggiornaComandi();
+    if (k === "f") schermoIntero();
+    if (k === "h") $("hud").hidden = !$("hud").hidden;
   });
 
   function barra(v) { return "<b style=\"width:" + Math.round(clamp(v, 0, 1) * 120) + "px\"></b>"; }
@@ -780,54 +715,40 @@
       "rete    " + (L.demo ? "demo" : inLinea ? "ok (" + Math.round((Date.now() - ultimaRisposta) / 1000) + " s fa)" : "NON COLLEGATO");
   }
 
-  // pannello comandi e cursore compaiono quando si muove il mouse, poi spariscono;
-  // intanto chat e QR mostrano un bordo, così si vede dove trascinarli
+  // il cursore sparisce quando il mouse sta fermo
   var tCursore = 0;
-  function mostraComandi() {
+  document.addEventListener("mousemove", function () {
     document.body.style.cursor = "";
-    document.body.classList.add("regia");
-    $("comandi").classList.remove("nascosti");
     clearTimeout(tCursore);
-    tCursore = setTimeout(function () {
-      if ($("comandi").matches(":hover") || document.querySelector(".spostabile.trascina")) { mostraComandi(); return; }
-      document.body.style.cursor = "none";
-      document.body.classList.remove("regia");
-      $("comandi").classList.add("nascosti");
-    }, 3000);
-  }
-  document.addEventListener("mousemove", function () { if (avvioT) mostraComandi(); });
+    tCursore = setTimeout(function () { document.body.style.cursor = "none"; }, 2000);
+  });
 
   /* ============================================================
      Avvio
      ============================================================ */
-  if (L.demo) { $("pin").hidden = true; $("avvioTesto").textContent = "Modalità demo: apri live/?demo in un'altra scheda per mandare cosa provi."; }
-  else $("pin").value = pin;
+  if (L.demo) $("avvioTesto").textContent = "Modalità demo: apri live/?demo e live/regia.html?demo in altre schede.";
+  else if (!accesso) { $("avvioTesto").textContent = "Apri lo schermo dal link segreto visuals. Lo crei dal foglio: menu bolla® → Crea link segreto visuals."; $("avvia").hidden = true; }
 
   $("avvioModulo").addEventListener("submit", function (e) {
     e.preventDefault();
-    pin = $("pin").value.trim();
     $("avvia").disabled = true;
     $("avvioErrore").textContent = "";
-    var verifica = L.demo ? Promise.resolve({ ok: true }) : L.api("live_feed", { pin: pin, dopo: 1e9 });
+    var verifica = L.demo ? Promise.resolve({ ok: true }) : L.api("live_feed", { accesso: accesso, dopo: 1e9 });
     verifica.then(function (r) {
-      if (!r.ok) throw new Error(r.messaggio || "PIN sbagliato.");
-      if (!L.demo) scrivi(CHIAVE_PIN, pin);
+      if (!r.ok) throw new Error(r.messaggio || "Link non valido.");
       if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
       return avviaAudio();
     }).then(function (ok) {
       $("avvio").hidden = true;
-      if (!ok) avviso("Microfono non disponibile: suono simulato");
       if (navigator.wakeLock) navigator.wakeLock.request("screen").catch(function () {});
       // il testo sul muro si disegna nel canvas: il carattere deve essere già caricato
       return (document.fonts ? document.fonts.load("40px Modak").catch(function () {}) : Promise.resolve());
     }).then(function () {
       dimensiona();
       avvioT = prima = tipoDal = performance.now();
-      $("chat").hidden = !imp.chatVisibile;
+      $("chat").hidden = !imp.chat.visibile;
       spostabili.chat.posiziona();
       addEventListener("resize", function () { dimensiona(); spostabili.qr.posiziona(); spostabili.chat.posiziona(); });
-      costruisciComandi();
-      mostraComandi();
       giro();
       requestAnimationFrame(fotogramma);
     }).catch(function (err) {

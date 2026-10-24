@@ -96,7 +96,8 @@ function onOpen() {
     .addItem('Crea link invito…', 'creaInvitoDaMenu')
     .addItem('Esporta newsletter', 'esportaNewsletter')
     .addSeparator()
-    .addItem('Crea PIN staff (app ingresso)', 'creaPinStaffDaMenu')
+    .addItem('Crea link segreto staff (app ingresso)', 'creaLinkStaffDaMenu')
+    .addItem('Crea link segreto visuals (schermo e regia)', 'creaLinkVisualsDaMenu')
     .addItem('Rigenera codice live (QR in sala)', 'rigeneraCodiceLiveDaMenu')
     .addItem('Imposta chiave Brevo…', 'impostaChiaveBrevoDaMenu')
     .addItem('Invia email di prova (Brevo)', 'emailProvaDaMenu')
@@ -168,6 +169,7 @@ function doPost(e) {
       case 'staff_checkin': return json_(azioneStaffCheckin_(d));
       case 'live_invia': return json_(azioneLiveInvia_(d));
       case 'live_feed': return json_(azioneLiveFeed_(d));
+      case 'live_regia': return json_(azioneLiveRegia_(d));
     }
     return json_(errore_('dati', 'Azione sconosciuta.'));
   } catch (err) {
@@ -600,31 +602,52 @@ function reinvia_(db, pass, s) {
 }
 
 /* ============================================================
-   Staff: verifica dei QR all'ingresso (pagina bbbbolla.it/staff.html)
-   Accesso con un PIN di 8 cifre creato dal menu del foglio. Rigenerarlo disattiva il precedente.
+   Link segreti, al posto dei PIN. Si creano dal menu del foglio; crearne uno nuovo disattiva il vecchio.
+   - staff:   bbbbolla.it/staff.html#k=<segreto>            (app ingresso, telefoni alla porta)
+   - visuals: bbbbolla.it/live/schermo.html#k=<segreto>     (computer del proiettore)
+              bbbbolla.it/live/regia.html#k=<segreto>       (chi gestisce le visuals)
+   Il segreto sta dopo il #: il browser non lo manda a nessun server, la pagina lo salva e lo toglie dalla barra.
+   Le pagine lo mandano al backend nel campo "accesso".
    ============================================================ */
 
-function creaPinStaffDaMenu() {
+var LINK_SEGRETI = {
+  staff: { prop: 'LINK_STAFF', nome: 'Link staff (app ingresso)', pagine: [['App ingresso', '/staff.html']], menu: 'Crea link segreto staff' },
+  visuals: { prop: 'LINK_VISUALS', nome: 'Link visuals', pagine: [['Schermo (computer del proiettore)', '/live/schermo.html'], ['Regia (chi gestisce le visuals)', '/live/regia.html']], menu: 'Crea link segreto visuals' }
+};
+
+function creaLinkStaffDaMenu() { creaLinkDaMenu_('staff'); }
+function creaLinkVisualsDaMenu() { creaLinkDaMenu_('visuals'); }
+
+function creaLinkDaMenu_(tipo) {
+  var t = LINK_SEGRETI[tipo];
   var ui = SpreadsheetApp.getUi();
-  var vecchio = PropertiesService.getScriptProperties().getProperty('PIN_STAFF');
-  if (vecchio) {
-    var r = ui.alert('PIN staff', 'Esiste già un PIN. Crearne uno nuovo disattiva quello vecchio su tutti i telefoni. Continuo?', ui.ButtonSet.YES_NO);
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty(t.prop)) {
+    var r = ui.alert(t.nome, 'Esiste già un link. Crearne uno nuovo disattiva quello vecchio su tutti i dispositivi. Continuo?', ui.ButtonSet.YES_NO);
     if (r !== ui.Button.YES) return;
   }
-  var pin = '';
-  var hex = token_(32);
-  for (var i = 0; i < 8; i++) pin += String(parseInt(hex.substr(i * 4, 4), 16) % 10);
-  PropertiesService.getScriptProperties().setProperty('PIN_STAFF', pin);
-  ui.alert('PIN staff', 'Nuovo PIN: ' + pin + '\n\nApri ' + CONFIG.sito + '/staff.html sul telefono di chi sta alla porta e inseriscilo.', ui.ButtonSet.OK);
+  var segreto = token_(32);
+  props.setProperty(t.prop, segreto);
+  // finestra con i link da copiare (il testo di ui.alert non si seleziona bene)
+  var righe = t.pagine.map(function (p) {
+    var url = CONFIG.sito + p[1] + '#k=' + segreto;
+    return '<p style="margin:14px 0 4px;font-weight:600">' + esc_(p[0]) + '</p>' +
+      '<input readonly value="' + esc_(url) + '" onclick="this.select()" style="width:100%;padding:8px;font:13px monospace;box-sizing:border-box">';
+  }).join('');
+  var html = '<div style="font-family:Helvetica,Arial,sans-serif">' + righe +
+    '<p style="margin-top:16px;color:#555;font-size:13px">Clicca un link per selezionarlo e copialo. Mandalo solo a chi deve usarlo: ' +
+    'chi lo ha può entrare. Per disattivarlo crea un link nuovo dal menu.</p></div>';
+  ui.showModalDialog(HtmlService.createHtmlOutput(html).setWidth(560).setHeight(140 + 70 * t.pagine.length), t.nome);
 }
 
-// PIN sbagliato: risposta rallentata, così provarli tutti richiederebbe mesi
-function controllaPin_(pin) {
-  var giusto = PropertiesService.getScriptProperties().getProperty('PIN_STAFF');
-  if (!giusto) return errore_('pin', 'PIN staff non ancora creato: nel foglio usa il menu bolla® → Crea PIN staff.');
-  if (String(pin || '') !== giusto) {
-    Utilities.sleep(1500);
-    return errore_('pin', 'PIN sbagliato.');
+// segreto sbagliato: risposta rallentata, e comunque 32 caratteri casuali non si indovinano
+function controllaAccesso_(tipo, accesso) {
+  var t = LINK_SEGRETI[tipo];
+  var giusto = PropertiesService.getScriptProperties().getProperty(t.prop);
+  if (!giusto) return errore_('accesso', 'Link non ancora creato: nel foglio usa il menu bolla® → ' + t.menu + '.');
+  if (String(accesso || '') !== giusto) {
+    Utilities.sleep(1000);
+    return errore_('accesso', 'Link non valido o sostituito: chiedi il link nuovo.');
   }
   return null;
 }
@@ -632,7 +655,9 @@ function controllaPin_(pin) {
 /* ============================================================
    Live: il pubblico manda nickname, colore ed emozione alle visuals proiettate.
    Telefono: bbbbolla.it/live/?c=<codice> (dal QR proiettato in sala).
-   Schermo: bbbbolla.it/live/schermo.html, accesso con il PIN staff; mostra anche il QR.
+   Schermo (proiettore) e regia (chi gestisce le visuals): pagine live/schermo.html e live/regia.html,
+   aperte dal link segreto visuals. La regia salva le impostazioni, lo schermo le legge insieme agli invii
+   e manda indietro il suo stato (audio, tipo di visuals, coda) che la regia mostra.
    Gli invii stanno in cache (lo schermo li legge ogni secondo e mezzo) e in archivio nel foglio Live.
    Il codice nel QR blocca chi trova il link fuori dalla sala: rigenerarlo invalida i QR vecchi.
    ============================================================ */
@@ -694,19 +719,60 @@ function azioneLiveInvia_(d) {
   return { ok: true, attesa: CONFIG.liveSecondiTraInvii };
 }
 
-// Lo schermo chiede gli invii arrivati dopo l'ultimo che ha già (dopo = id).
+// Lo schermo chiede gli invii arrivati dopo l'ultimo che ha già (dopo = id) e manda il suo stato per la regia.
 // Se la cache si è svuotata gli id ripartono: "ultimo" più basso di "dopo" dice allo schermo di ricominciare.
 function azioneLiveFeed_(d) {
-  var e = controllaPin_(d.pin);
+  var e = controllaAccesso_('visuals', d.accesso);
   if (e) return e;
+  if (d.stato) {
+    var stato = JSON.stringify(d.stato);
+    if (stato.length < 8000) CacheService.getScriptCache().put('live:schermo', JSON.stringify({ t: Date.now(), stato: d.stato }), 120);
+  }
   var feed = leggiFeedLive_();
   var dopo = Number(d.dopo) || 0;
   return {
     ok: true,
     codice: codiceLive_(),
     ultimo: feed.ultimo,
-    voci: feed.voci.filter(function (v) { return v.id > dopo; })
+    voci: feed.voci.filter(function (v) { return v.id > dopo; }),
+    regia: leggiRegia_()
   };
+}
+
+// Regia: legge tutto (impostazioni, stato dello schermo, ultimi invii) e, se manda "regia", la salva.
+// Vince la versione più recente (rev = ora in cui la regia l'ha cambiata).
+function azioneLiveRegia_(d) {
+  var e = controllaAccesso_('visuals', d.accesso);
+  if (e) return e;
+  if (d.regia && typeof d.regia === 'object') {
+    var testo = JSON.stringify(d.regia);
+    if (testo.length > 9000) return errore_('dati', 'Impostazioni troppo grandi.');
+    var lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      var attuale = leggiRegia_();
+      if (!attuale || Number(d.regia.rev) > Number(attuale.rev)) {
+        CacheService.getScriptCache().put('live:regia', testo, 21600);
+        PropertiesService.getScriptProperties().setProperty('LIVE_REGIA', testo);
+      }
+    } finally {
+      lock.releaseLock();
+    }
+  }
+  var schermo = CacheService.getScriptCache().get('live:schermo');
+  return {
+    ok: true,
+    regia: leggiRegia_(),
+    schermo: schermo ? JSON.parse(schermo) : null,
+    ora: Date.now(),
+    codice: codiceLive_(),
+    voci: leggiFeedLive_().voci.slice(-40)
+  };
+}
+
+function leggiRegia_() {
+  var testo = CacheService.getScriptCache().get('live:regia') || PropertiesService.getScriptProperties().getProperty('LIVE_REGIA');
+  return testo ? JSON.parse(testo) : null;
 }
 
 function leggiFeedLive_() {
@@ -743,6 +809,10 @@ function volgare_(testo) {
   });
 }
 
+/* ============================================================
+   Staff: verifica dei QR all'ingresso (pagina bbbbolla.it/staff.html, aperta dal link segreto staff)
+   ============================================================ */
+
 // Un pass fa entrare se: confermato, non annullato e (su invito, oppure gruppo completo)
 function passAttivo_(db, r) {
   if (r.stato !== 'confermato') return false;
@@ -765,7 +835,7 @@ function quandoEntrato_(r) {
 // Lista dei pass attivi della serata. Al posto della chiave c'è il suo hash: il telefono riconosce
 // subito il QR scansionato, ma se lo perdi nessuno può ricavarne i QR.
 function azioneStaffLista_(d) {
-  var no = controllaPin_(d.pin);
+  var no = controllaAccesso_('staff', d.accesso);
   if (no) return no;
   var db = carica_();
   var s = serata_(db, d.serata);
@@ -777,7 +847,7 @@ function azioneStaffLista_(d) {
 }
 
 function azioneStaffCheckin_(d) {
-  var no = controllaPin_(d.pin);
+  var no = controllaAccesso_('staff', d.accesso);
   if (no) return no;
   return conLock_(function () {
     var db = carica_();

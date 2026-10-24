@@ -24,10 +24,12 @@ Le iscrizioni finiscono nel foglio **Attesa**: nessun pass automatico, decidi tu
 ## App ingresso (staff)
 
 Pagina **bbbbolla.it/staff.html**, da aprire sul telefono di chi sta alla porta (meglio: "Aggiungi a schermata Home").
+Si entra solo da un **link segreto**, niente PIN.
 
-1. Nel foglio: menu **bolla® → Crea PIN staff**. Compare un PIN di 8 cifre: dallo solo a chi lavora alla porta.
+1. Nel foglio: menu **bolla® → Crea link segreto staff**. Compare il link (`…/staff.html#k=…`): mandalo solo a chi lavora alla porta.
    Crearne uno nuovo disattiva il vecchio su tutti i telefoni.
-2. Sul telefono: apri la pagina, inserisci il PIN, premi **Avvia fotocamera** e inquadra i QR.
+2. Sul telefono: apri il link (resta salvato, poi basta aprire la pagina), premi **Avvia fotocamera** e inquadra i QR.
+   **Esci** dimentica il link su quel telefono.
 
 - **Verde "Entra"**: pass valido, ingresso registrato. Per i gruppi mostra chi del gruppo è già dentro (ognuno entra col suo QR).
 - **Rosso**: già entrato (con l'ora), pass inesistente, annullato, di un'altra serata, o gruppo mai completato.
@@ -37,7 +39,7 @@ Pagina **bbbbolla.it/staff.html**, da aprire sul telefono di chi sta alla porta 
   la risposta è immediata e, se la rete cade, gli ingressi restano in coda e partono appena torna.
 - Nel foglio Pass: `checkin` = ora di ingresso, `checkin_da` = telefono che l'ha registrato.
 
-Prova senza toccare i dati veri: `staff.html?demo`, PIN `12345678`.
+Prova senza toccare i dati veri: `staff.html?demo` (entra da sola).
 
 ## Live: cosa prova il pubblico, nelle visuals
 
@@ -46,23 +48,25 @@ L'invio scorre nella mini chat sul muro e sparisce dopo 10 secondi; il testo app
 dentro le visuals. Per una ventina di secondi il testo cambia anche il carattere del flusso: parole come gioia, amore,
 calma, euforia, malinconia… hanno un carattere proprio; qualunque altro testo ne riceve uno ricavato dalle sue lettere.
 
-- **Schermo**: sul computer collegato al proiettore apri **bbbbolla.it/live/schermo.html** in Chrome, inserisci il PIN staff
-  (lo stesso dell'app ingresso) e premi **Avvia**. Consenti il microfono: le visuals seguono la musica in sala
-  (meglio ancora un ingresso audio dal mixer, da scegliere con il tasto `I`). Senza microfono gira un suono simulato.
-- **Telefono**: il QR porta a `bbbbolla.it/live/?c=<codice>`. Senza codice valido la pagina non invia nulla.
+- **Link segreto visuals**: nel foglio, menu **bolla® → Crea link segreto visuals**. Dà due link con lo stesso segreto:
+  `…/live/schermo.html#k=…` e `…/live/regia.html#k=…`. Crearne uno nuovo disattiva i vecchi.
+- **Schermo** (computer collegato al proiettore): apri il link dello schermo in Chrome, premi **Avvia** e consenti il microfono
+  (meglio ancora un ingresso audio dal mixer). Sullo schermo non compare nessun pannello: solo `F` schermo intero e
+  `H` pannello audio. Senza microfono gira un suono simulato.
+- **Regia** (laptop o telefono di chi gestisce le visuals, anche lo stesso computer in un'altra finestra): tipo di visuals
+  e giro automatico, velocità, sensibilità ai bassi (da 0 = ignorati a ×4), ingresso audio dello schermo, posizione di QR
+  e chat (si trascinano sulla mappa) e se mostrarli, "Pulisci il campo", "Invio di prova", e la lista degli invii con
+  **Nascondi** per toglierli subito dal muro e dalla chat. Mostra se lo schermo è collegato e i livelli del suono.
+  Dallo stesso computer i cambi arrivano subito; da un altro dispositivo in 2-3 secondi.
+- **Telefono del pubblico**: il QR porta a `bbbbolla.it/live/?c=<codice>`. Senza codice valido la pagina non invia nulla.
   Per invalidare i QR vecchi: menu **bolla® → Rigenera codice live** (lo schermo mostra il nuovo QR da solo).
-- **Comandi**: muovi il mouse e in alto compare il pannello; chat e QR mostrano un bordo e si trascinano dove vuoi.
-  Tasti: `1`–`7` tipo di visuals (Seta, Liquido, Lava, Aurora, Caleidoscopio, Tunnel, Mandala) · `A` giro automatico dei tipi ·
-  `-` / `+` velocità · `B` / `N` sensibilità ai bassi (da 0 = ignorati a ×4) · `C` mostra/nasconde la chat · `V` sposta la chat · `Q` mostra/nasconde il QR · `P` sposta il QR ·
-  `F` schermo intero · `X` toglie subito l'invio sul muro e in chat · `T` invio di prova · `I` cambia ingresso audio ·
-  `H` pannello audio e rete. Le scelte restano salvate nel browser.
 - **Musica**: il movimento è lento; volume, medi, alti e timbro decidono velocità, forma e colore. I bassi toccano appena lo sfondo
-  (con `N` contano di più: lo sfondo si accende e il campo respira sui colpi).
+  (alzando la sensibilità dalla regia contano di più: lo sfondo si accende e il campo respira sui colpi).
 - **Carattere**: testi sul muro e chat usano Modak (Google Fonts), il più vicino al logo; senza internet si torna a Helvetica.
 - **Filtro**: nickname e testi volgari vengono respinti dal server; ogni telefono può mandare un testo ogni 30 secondi
   (`liveSecondiTraInvii` in Code.gs). Tutto finisce anche nel foglio **Live**.
 
-Prova senza toccare i dati veri, nello stesso browser: `live/schermo.html?demo` in una scheda e `live/?demo` in un'altra.
+Prova senza toccare i dati veri, nello stesso browser: `live/schermo.html?demo`, `live/regia.html?demo` e `live/?demo` in tre schede.
 
 ## Protezioni
 

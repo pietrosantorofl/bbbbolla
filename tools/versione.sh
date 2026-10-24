@@ -8,7 +8,7 @@ for f in index.html staff.html privacy.html manifesto.html; do
   sed -i '' -E "s#(href=\"css/style\.css)(\?v=[0-9]+)?\"#\1?v=$V\"#; s#(src=\"js/[a-zA-Z0-9/]+\.js)(\?v=[0-9]+)?\"#\1?v=$V\"#" "$f"
 done
 # pagine live: file nella stessa cartella e in ../
-for f in live/index.html live/schermo.html; do
+for f in live/index.html live/schermo.html live/regia.html; do
   sed -i '' -E "s#((src|href)=\"[a-zA-Z0-9./_-]+\.(js|css))(\?v=[0-9]+)?\"#\1?v=$V\"#g" "$f"
 done
 echo "versione $V"

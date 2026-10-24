@@ -6,7 +6,7 @@
 
   var C = window.BOLLA;
   var DEMO = !C.apiUrl;
-  var CHIAVE_PIN = "bolla-staff-pin";
+  var CHIAVE_ACCESSO = "bolla-staff-accesso";
   var CHIAVE_CODA = "bolla-staff-coda";
   var CHIAVE_DISPOSITIVO = "bolla-staff-dispositivo";
 
@@ -30,7 +30,7 @@
   var serata = C.serate.filter(function (s) { return s.id === richiesta; })[0] || future[0] || C.serate[C.serate.length - 1];
 
   function api(action, dati) {
-    var body = Object.assign({ action: action, serata: serata.id, pin: pin, dispositivo: dispositivo }, dati || {});
+    var body = Object.assign({ action: action, serata: serata.id, accesso: accesso, dispositivo: dispositivo }, dati || {});
     if (DEMO) return window.BOLLA_DEMO.call(body);
     return fetch(C.apiUrl, {
       method: "POST",
@@ -46,7 +46,14 @@
   }
 
   /* ---------- stato ---------- */
-  var pin = leggi(CHIAVE_PIN);
+  // il segreto arriva dal link (#k=...): si salva sul telefono e sparisce dalla barra degli indirizzi
+  var dalLink = (location.hash.match(/[#&]k=([A-Za-z0-9]+)/) || [])[1];
+  if (dalLink) {
+    scrivi(CHIAVE_ACCESSO, dalLink);
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+  scrivi("bolla-staff-pin", null);   // vecchio accesso con PIN, non più usato
+  var accesso = leggi(CHIAVE_ACCESSO) || (DEMO ? "demostaff" : null);
   // identifica questo telefono nei check-in: serve a capire se qualcuno è entrato da un'altra porta
   var dispositivo = leggi(CHIAVE_DISPOSITIVO);
   if (!dispositivo) { dispositivo = "tel-" + crypto.getRandomValues(new Uint32Array(1))[0].toString(36); scrivi(CHIAVE_DISPOSITIVO, dispositivo); }
@@ -61,28 +68,15 @@
   var app = $("#app");
   ruolo("serata").textContent = serata.data.split("-").reverse().join(".") + (DEMO ? " · DEMO" : "");
 
-  login.addEventListener("submit", function (e) {
-    e.preventDefault();
+  function erroreAccesso(msg) {
     var err = $(".errore", login);
-    err.hidden = true;
-    pin = login.pin.value.trim();
-    var btn = $("[type=submit]", login);
-    btn.disabled = true; btn.textContent = "Controllo…";
-    caricaLista().then(function (r) {
-      btn.disabled = false; btn.textContent = "Entra";
-      if (!r.ok) { err.textContent = r.messaggio; err.hidden = false; pin = null; return; }
-      scrivi(CHIAVE_PIN, pin);
-      mostraApp();
-    }).catch(function () {
-      btn.disabled = false; btn.textContent = "Entra";
-      err.textContent = "Connessione non riuscita. Riprova.";
-      err.hidden = false;
-    });
-  });
+    err.textContent = msg;
+    err.hidden = false;
+  }
 
   $('[data-azione="esci"]').addEventListener("click", function () {
     if (coda.length && !confirm("Ci sono " + coda.length + " ingressi non ancora inviati. Uscire comunque?")) return;
-    scrivi(CHIAVE_PIN, null);
+    scrivi(CHIAVE_ACCESSO, null);
     location.reload();
   });
 
@@ -100,8 +94,8 @@
   function caricaLista() {
     return api("staff_lista").then(function (r) {
       if (!r.ok) {
-        // PIN rigenerato dal foglio mentre l'app era aperta: si torna all'accesso
-        if (r.errore === "pin" && login.hidden) { scrivi(CHIAVE_PIN, null); location.reload(); }
+        // link sostituito dal foglio mentre l'app era aperta: si torna all'accesso
+        if (r.errore === "accesso" && login.hidden) { scrivi(CHIAVE_ACCESSO, null); location.reload(); }
         return r;
       }
       // gli ingressi fatti da questo telefono e non ancora confermati restano segnati
@@ -233,7 +227,7 @@
   /* ---------- invio degli ingressi al backend ---------- */
   var invio = false;
   function svuotaCoda() {
-    if (invio || !coda.length || !pin) return;
+    if (invio || !coda.length || !accesso) return;
     invio = true;
     var voce = coda[0];
     api("staff_checkin", voce.chiave ? { chiave: voce.chiave } : { codice: voce.codice }).then(function (r) {
@@ -320,8 +314,11 @@
   if (DEMO) window.BOLLA_STAFF_TEST = scansionato;
 
   /* ---------- avvio ---------- */
-  if (pin) {
-    caricaLista().then(function (r) { if (r.ok) mostraApp(); else { scrivi(CHIAVE_PIN, null); pin = null; } }).catch(function () {
+  if (accesso) {
+    caricaLista().then(function (r) {
+      if (r.ok) mostraApp();
+      else { scrivi(CHIAVE_ACCESSO, null); accesso = null; erroreAccesso(r.messaggio); }
+    }).catch(function () {
       // senza rete ma già entrati in precedenza: lavoro con la coda
       mostraApp();
     });

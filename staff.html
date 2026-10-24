@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="bolla ingresso">
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/style.css?v=202610241733">
+  <link rel="stylesheet" href="css/style.css?v=202610241844">
   <style>
     body { background: var(--ink); color: var(--paper-2); min-height: 100svh; }
     body::after { display: none; }
@@ -24,7 +24,6 @@
     .login { display: grid; gap: 14px; margin-top: 12vh; }
     .login h1 { margin: 0; font-size: 32px; letter-spacing: -.03em; }
     .login p { margin: 0; opacity: .75; }
-    .pin { width: 100%; min-height: 64px; border-radius: 16px; border: 0; padding: 0 18px; font: 600 30px/1 var(--font); letter-spacing: .3em; text-align: center; }
     .btn--light { --bg: var(--paper-2); color: var(--ink); }
 
     .counter { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
@@ -74,14 +73,12 @@
       <div class="staff__meta"><span data-ruolo="serata"></span><br><button type="button" class="link" data-azione="esci" hidden>Esci</button></div>
     </div>
 
-    <!-- accesso -->
-    <form class="login" id="login">
+    <!-- accesso: solo dal link segreto (#k=...) -->
+    <section class="login" id="login">
       <h1>Ingresso</h1>
-      <p>Inserisci il PIN staff. Lo crei dal foglio: menu bolla® → Crea PIN staff.</p>
-      <input class="pin" name="pin" inputmode="numeric" autocomplete="one-time-code" maxlength="12" required aria-label="PIN staff">
+      <p data-ruolo="login-testo">Apri questa pagina dal link segreto staff. Lo crei dal foglio: menu bolla® → Crea link segreto staff.</p>
       <p class="errore" role="alert" hidden></p>
-      <button class="btn btn--light btn--block" type="submit">Entra</button>
-    </form>
+    </section>
 
     <!-- app -->
     <section id="app" hidden>
@@ -111,9 +108,9 @@
 
   <div class="esito" hidden role="alertdialog" aria-live="assertive"></div>
 
-  <script src="js/vendor/jsQR.js?v=202610241733"></script>
-  <script src="js/config.js?v=202610241733"></script>
-  <script src="js/demo.js?v=202610241733"></script>
-  <script src="js/staff.js?v=202610241733"></script>
+  <script src="js/vendor/jsQR.js?v=202610241844"></script>
+  <script src="js/config.js?v=202610241844"></script>
+  <script src="js/demo.js?v=202610241844"></script>
+  <script src="js/staff.js?v=202610241844"></script>
 </body>
 </html>
