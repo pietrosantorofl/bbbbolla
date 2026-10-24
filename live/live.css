@@ -35,7 +35,7 @@ body {
 @keyframes pulsa { 50% { opacity: .25; } }
 
 .chiuso { margin-top: 18vh; text-align: center; }
-.chiuso h1, .modulo__titolo { margin: 0 0 6px; font-size: clamp(30px, 9vw, 40px); line-height: 1.02; letter-spacing: -.035em; }
+.chiuso h1 { margin: 0 0 6px; font-size: clamp(30px, 9vw, 40px); line-height: 1.02; letter-spacing: -.035em; }
 .chiuso p, .modulo__sotto { margin: 0; opacity: .75; }
 
 .modulo { display: grid; gap: 16px; }
