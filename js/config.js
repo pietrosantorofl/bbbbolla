@@ -43,7 +43,8 @@ window.BOLLA = {
       },
       lineup: [
         {
-          // ora: orario in locandina (in ordine di programma); minore: true = food & beverage, colonna a destra
+          // ora: orario in locandina (in ordine di programma); minore: true = food & beverage, colonna a destra;
+          // main: true = main act, più grande nella locandina
           nome: "Ritmi in Colombia", ora: "20:00", tag: "Workshop", link: "https://www.instagram.com/karvpercu/",
           // dettagli: testo breve (massimo 5 righe) che si apre cliccando la voce nella line-up
           dettagli: {
@@ -56,7 +57,7 @@ window.BOLLA = {
           }
         },
         {
-          nome: "Selva Cosmica", ora: "22:00", tag: "Live", link: "https://www.instagram.com/selvacosmica_music/",
+          nome: "Selva Cosmica", ora: "22:00", tag: "Live", main: true, link: "https://www.instagram.com/selvacosmica_music/",
           dettagli: {
             testo: [
               { it: "Un ponte sonoro tra Sicilia e Colombia, nato dal DJ e produttore Dario Aiello con le percussioni di Romina Adorno Pincha e Karen Andrea Ramirez e la voce di La Sol. Ritmi ancestrali del Sud del mondo che si rivestono di elettronica, sfumature mediterranee e dub techno: una preghiera psichedelica per la pista da ballo.",

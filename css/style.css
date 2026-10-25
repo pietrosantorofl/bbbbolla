@@ -221,6 +221,8 @@ a { color: inherit; }
   font-size: clamp(22px, 3vw, 36px); line-height: 1.05; letter-spacing: -.02em;
 }
 .programma__lista li { min-width: 0; }
+/* main act: lo stesso posto nel programma, molto più grande */
+.programma__lista li.is-main { font-size: 1.9em; line-height: .95; letter-spacing: -.035em; margin: .08em 0; }
 .programma__nome { min-width: 0; }
 .programma__fb { font-size: clamp(17px, 1.9vw, 22px); line-height: 1.15; letter-spacing: -.01em; }
 .programma__fb-titolo { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
@@ -528,6 +530,7 @@ a { color: inherit; }
   .hero__stage { gap: 2px; }
   .programma { grid-template-columns: 1fr; gap: 20px; }
   .programma__lista { font-size: 26px; }
+  .programma__lista li.is-main { font-size: 1.6em; }
   .programma .tag { font-size: 11px; }
   .programma .note { font-size: 12px; }
   .programma__fb { padding-top: 14px; border-top: 1px dashed var(--line); }

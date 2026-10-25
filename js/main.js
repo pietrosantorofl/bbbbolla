@@ -84,7 +84,7 @@
   bind("lineupHero", function (n) {
     var lista = $(".programma__lista", n), fb = $(".programma__fb ul", n);
     serata.lineup.forEach(function (a) {
-      var li = el("li");
+      var li = el("li", a.main ? "is-main" : null);
       var nome = el("span", "programma__nome");
       nome.appendChild(nomeArtista(a));
       if (a.tag) nome.appendChild(el("sup", "tag", L(a.tag)));
