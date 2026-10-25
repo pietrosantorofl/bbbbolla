@@ -60,8 +60,8 @@ window.BOLLA = {
           nome: "Selva Cosmica", ora: "22:00", tag: "Live", main: true, link: "https://www.instagram.com/selvacosmica_music/",
           dettagli: {
             testo: [
-              { it: "Un ponte sonoro tra Sicilia e Colombia, nato dal DJ e produttore Dario Aiello con le percussioni di Romina Adorno Pincha e Karen Andrea Ramirez e la voce di La Sol. Ritmi ancestrali del Sud del mondo che si rivestono di elettronica, sfumature mediterranee e dub techno: una preghiera psichedelica per la pista da ballo.",
-                en: "A sonic bridge between Sicily and Colombia, born from DJ and producer Dario Aiello with percussion by Romina Adorno Pincha and Karen Andrea Ramirez and the voice of La Sol. Ancestral rhythms of the Global South dressed in electronics, Mediterranean shades and dub techno: a psychedelic prayer for the dance floor." }
+              { it: "Collettivo aperto e in continua evoluzione, un ponte sonoro tra Sicilia e Colombia nato dal DJ e produttore Dario Aiello. Oggi suona con le percussioni di Romina Adorno Pincha e Karen Andrea Ramirez e la voce di Anami: ritmi ancestrali del Sud del mondo che si rivestono di elettronica e dub techno, una preghiera psichedelica per la pista da ballo.",
+                en: "An open, ever-evolving collective, a sonic bridge between Sicily and Colombia born from DJ and producer Dario Aiello. Today it plays with percussion by Romina Adorno Pincha and Karen Andrea Ramirez and the voice of Anami: ancestral rhythms of the Global South dressed in electronics and dub techno, a psychedelic prayer for the dance floor." }
             ]
           }
         },
