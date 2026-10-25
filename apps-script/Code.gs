@@ -26,7 +26,7 @@ var CONFIG = {
   sito: 'https://bbbbolla.it',
   luogo: 'MONO, Via Gornalunga 12, 95129 Catania CT',   // compare nelle email
   orario: 'dalle 20:00',          // compare nelle email
-  senzaPass: '5€ al botteghino',  // compare nelle email ('' = niente)
+  senzaPass: '5€ al botteghino dopo le 22:30',  // compare nelle email ('' = niente)
   newsletterObbligatoria: true,   // deve coincidere con newsletterObbligatoria in js/config.js
   dimensioneGruppo: 3,
   oreValiditaGruppo: 48,          // dopo, un gruppo incompleto scade e libera i posti
