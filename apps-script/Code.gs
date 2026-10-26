@@ -33,6 +33,7 @@ var CONFIG = {
   chiusuraGruppi: '18:00',        // il giorno della serata: entro quest'ora il gruppo va completato, dopo non se ne creano di nuovi
   oreConferma: 48,                // dopo, un membro che non ha confermato perde il posto nel gruppo
   minutiTraReinvii: 15,           // anti-spam: ogni quanto si può rimandare il link alla stessa persona
+  riservaGmail: 20,               // con Gmail come canale principale: a queste email rimaste oggi si passa a Brevo
 
   /* anti-bot */
   secondiMinimiModulo: 4,         // un modulo inviato prima di N secondi dall'apertura viene respinto
@@ -157,7 +158,8 @@ function doGet() {
     '<p>Fogli: ' + Object.keys(COLONNE).map(function (n) { return ss.getSheetByName(n) ? n + ' ✓' : n + ' ✗'; }).join(' · ') + '</p>' +
     '<p>Email Gmail ancora inviabili oggi: ' + (quotaGmail_() < 0 ? 'non disponibile ora' : quotaGmail_()) + '</p>' +
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
-    '<p>Canale email principale: ' + (chiaveBrevo_() && !gmailPrima_() ? 'Brevo' : 'Gmail') + '</p>' +
+    '<p>Canale email principale: ' + (chiaveBrevo_() && !usaGmail_(quotaGmail_()) ? 'Brevo' : 'Gmail') +
+      (gmailPrima_() ? ' (Gmail finché restano più di ' + CONFIG.riservaGmail + ' email oggi, poi Brevo)' : '') + '</p>' +
     '<p>Pulizia test: ' + esc_(PropertiesService.getScriptProperties().getProperty('PULIZIA_TEST') || 'nessuna') + '</p>' +
     '<p>Pulizia workshop: ' + esc_(PropertiesService.getScriptProperties().getProperty('PULIZIA_WORKSHOP') || 'nessuna') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
@@ -1499,9 +1501,10 @@ function bottone_(href, testo, secondario) {
  *  - Gmail (MailApp, 100 al giorno): solo di riserva, se Brevo non è collegato o rifiuta l'invio. */
 function invia_(a, oggetto, testo, html, immagini) {
   var brevo = chiaveBrevo_();
-  var gmailLibero = quotaGmail_() !== 0;
+  var quota = quotaGmail_();
+  var gmailLibero = quota !== 0;
   // EMAIL_GMAIL_PRIMA (proprietà dello script): Gmail come canale principale, Brevo di riserva (es. Brevo non consegna)
-  var ordine = !brevo ? ['gmail'] : gmailPrima_() ? ['gmail', 'brevo'] : ['brevo', 'gmail'];
+  var ordine = !brevo ? ['gmail'] : usaGmail_(quota) ? ['gmail', 'brevo'] : ['brevo', 'gmail'];
   var ultimoErrore = null;
   for (var i = 0; i < ordine.length; i++) {
     try {
@@ -1573,6 +1576,11 @@ function quotaGmail_() {
 
 function gmailPrima_() {
   return PropertiesService.getScriptProperties().getProperty('EMAIL_GMAIL_PRIMA') === 'si';
+}
+
+// Gmail prima di Brevo finché restano più di CONFIG.riservaGmail email oggi (quota -1 = non leggibile: Gmail resta)
+function usaGmail_(quota) {
+  return gmailPrima_() && (quota < 0 || quota > CONFIG.riservaGmail);
 }
 
 function quotaOk_() {
