@@ -83,6 +83,7 @@ window.BOLLA = {
     id: "cumbia-2026-10-30",
     serata: "2026-10-30",          // serata bolla® di cui fa parte (data, luogo)
     ora: "20:00",
+    durata: 2,                     // ore, per il calendario (fino all'inizio dei live)
     titolo: { it: "La Cumbia tradizionale colombiana", en: "Traditional Colombian Cumbia" },
     sottotitolo: { it: "Laboratorio di percussioni e canto afrocolombiani", en: "An Afro-Colombian percussion and singing workshop" },
     locandina: { it: "assets/workshop-cumbia.jpg", en: "assets/workshop-cumbia-en.jpg" },

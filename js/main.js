@@ -535,7 +535,7 @@
       "UID:" + serata.id + "@bbbbolla.it",
       "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""),
       dt,
-      "SUMMARY:" + C.rassegna.nome + " — " + serata.lineup.map(function (a) { return a.nome; }).join(", "),
+      "SUMMARY:" + C.rassegna.nome + " — " + serata.lineup.filter(function (a) { return !a.minore; }).map(function (a) { return L(a.nome); }).join(", "),
       "DESCRIPTION:Pass " + codice + " — " + location.href,
       luogo ? "LOCATION:" + luogo.replace(/,/g, "\\,") : null,
       "END:VEVENT", "END:VCALENDAR"

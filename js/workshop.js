@@ -162,6 +162,10 @@
     result.appendChild(el("p", "done__name", dati.nome + " " + dati.cognome));
     result.appendChild(el("p", "done__text", T("Ti aspettiamo {data} alle {ora} al {luogo}. Se serve ti chiamiamo al {telefono}.",
       { data: dataLunga, ora: W.ora, luogo: serata.luogo.nome, telefono: dati.telefono })));
+    var cal = el("button", "btn btn--ghost btn--small", T("Aggiungi al calendario"));
+    cal.type = "button";
+    cal.addEventListener("click", scaricaIcs);
+    result.appendChild(cal);
     result.appendChild(el("p", "done__text", T("Dopo il workshop la serata continua: prenota anche il pass gratuito.")));
     var pass = el("a", "btn btn--small", T("Prenota il pass"));
     pass.href = "./#prenota";
@@ -169,6 +173,25 @@
     result.hidden = false;
     result.focus({ preventScroll: true });
     cta.classList.add("is-hidden");
+  }
+
+  /* ---------- calendario (.ics): il workshop dura fino all'inizio dei live (W.durata ore) ---------- */
+  function scaricaIcs() {
+    var ics = [
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//bbbbolla.it//workshop//IT", "BEGIN:VEVENT",
+      "UID:" + W.id + "@bbbbolla.it",
+      "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""),
+      "DTSTART;TZID=Europe/Rome:" + serata.data.replace(/-/g, "") + "T" + W.ora.replace(":", "") + "00",
+      "DURATION:PT" + W.durata + "H",
+      "SUMMARY:Workshop " + C.rassegna.nome + " — " + L(W.titolo),
+      "DESCRIPTION:" + L(W.sottotitolo) + "\\n" + W.conduttori.map(function (c) { return c.nome; }).join("\\, ") + "\\n" + location.origin + location.pathname,
+      "LOCATION:" + [serata.luogo.nome, serata.luogo.indirizzo].join(", ").replace(/,/g, "\\,"),
+      "END:VEVENT", "END:VCALENDAR"
+    ].join("\r\n");
+    var a = el("a");
+    a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+    a.download = "bolla-workshop-" + serata.id + ".ics";
+    document.body.appendChild(a); a.click(); a.remove();
   }
 
   // il bottone fisso in basso (mobile) sparisce quando il modulo è a schermo
