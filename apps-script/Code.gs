@@ -389,6 +389,10 @@ function aggiornamentiUnaTantum_() {
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
+    // la sveglia e la pagina di stato possono partire insieme: un aggiornamento già in corso non si rilancia
+    var cache = CacheService.getScriptCache();
+    if (cache.get('in-corso:' + a.id)) return;
+    cache.put('in-corso:' + a.id, '1', 600);
     try {
       a.fai();
       props.setProperty('fatto:' + a.id, new Date().toISOString());
