@@ -157,7 +157,7 @@ function doGet() {
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
-    erroriAggiornamenti_() + '</div>';
+    erroriAggiornamenti_() + colonneSfasate_(ss) + '</div>';
   return HtmlService.createHtmlOutput(html).setTitle('bolla® backend');
 }
 
@@ -264,6 +264,36 @@ function aggiornamentiUnaTantum_() {
       });
     } },
     // il workshop ha cambiato nome: il titolo della serata compare nelle email e nell'app staff
+    // Una colonna vuota inserita in testa al foglio Pass ha spostato le intestazioni a destra: le righe scritte dopo
+    // (dati da colonna A) vanno spostate di una colonna, poi la colonna A vuota si toglie.
+    { id: 'pass-colonne-riallineate-2026-10-26', fai: function () {
+      var lock = LockService.getScriptLock();
+      if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+      try {
+        var sh = SpreadsheetApp.getActive().getSheetByName('Pass');
+        var values = sh.getDataRange().getValues();
+        var spostamento = values[0].map(String).indexOf('creato');
+        if (spostamento <= 0) return;
+        for (var i = 1; i < values.length; i++) {
+          var riga = values[i];
+          if (riga.slice(0, spostamento).every(function (v) { return v === ''; })) continue; // riga già giusta
+          var giusta = riga.map(function () { return ''; });
+          COLONNE.Pass.forEach(function (c, k) {
+            var v = riga[k];
+            // Sheets può aver trasformato in data un testo finito nella colonna sbagliata (es. la serata)
+            if (v instanceof Date && COLONNE_TESTO.indexOf(c) >= 0) v = Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
+            giusta[k + spostamento] = typeof v === 'string' ? cella_(v) : v;
+          });
+          sh.getRange(i + 1, 1, 1, giusta.length).setValues([giusta]);
+        }
+        SpreadsheetApp.flush();
+        var dopo = sh.getDataRange().getValues();
+        var vuote = dopo.every(function (r) { return r.slice(0, spostamento).every(function (v) { return v === ''; }); });
+        if (vuote) sh.deleteColumns(1, spostamento);
+      } finally {
+        lock.releaseLock();
+      }
+    } },
     { id: 'titolo-serata-2026-10-30-cumbia', fai: function () {
       var s = trova_(db.Serate, 'id', '2026-10-30');
       if (s) aggiorna_(db.Serate, s, { titolo: TITOLO_SERATA_2026_10_30 });
@@ -278,6 +308,19 @@ function aggiornamentiUnaTantum_() {
       props.setProperty('errore:' + a.id, new Date().toISOString() + ' ' + String(err.message).slice(0, 200));
     }
   });
+}
+
+// Le righe nuove si scrivono nell'ordine di COLONNE, ma si leggono per intestazione:
+// se nel foglio una colonna è stata spostata, cancellata o inserita, i dati finiscono sotto l'intestazione sbagliata.
+function colonneSfasate_(ss) {
+  return Object.keys(COLONNE).map(function (nome) {
+    var sh = ss.getSheetByName(nome);
+    if (!sh || sh.getLastColumn() === 0) return '';
+    var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    var ok = COLONNE[nome].every(function (c, i) { return head[i] === c; });
+    return ok ? '' : '<p style="color:#c4231b">Colonne del foglio ' + esc_(nome) + ' fuori ordine: ' + esc_(head.join(' | ')) +
+      '<br>Ordine atteso: ' + esc_(COLONNE[nome].join(' | ')) + '</p>';
+  }).join('');
 }
 
 function erroriAggiornamenti_() {
@@ -1385,9 +1428,16 @@ function carica_() {
   return db;
 }
 
+// Ogni valore va sotto la sua intestazione: il foglio resta giusto anche se qualcuno sposta o inserisce colonne.
 function appendi_(nome, obj) {
   var sh = SpreadsheetApp.getActive().getSheetByName(nome);
-  sh.appendRow(COLONNE[nome].map(function (c) { return cella_(obj[c] == null ? '' : obj[c]); }));
+  var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String);
+  COLONNE[nome].forEach(function (c) {
+    if (head.indexOf(c) < 0) { head.push(c); sh.getRange(1, head.length).setValue(c); }
+  });
+  sh.appendRow(head.map(function (h) {
+    return COLONNE[nome].indexOf(h) < 0 || obj[h] == null ? '' : cella_(obj[h]);
+  }));
 }
 
 function aggiorna_(tabella, r, campi) {

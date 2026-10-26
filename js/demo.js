@@ -17,13 +17,15 @@
     return {
       appendRow: function (r) { rows.push(r.map(function (v) { return typeof v === "string" && v.charAt(0) === "'" ? v.slice(1) : v; })); },
       getLastRow: function () { return rows.length; },
+      getLastColumn: function () { return rows[0] ? rows[0].length : 0; },
       getMaxRows: function () { return 1000; },
       setFrozenRows: function () {},
       clearContents: function () { rows.length = 0; },
       getDataRange: function () { return { getValues: function () { return rows.map(function (r) { return r.map(revive); }); } }; },
-      getRange: function (r, c) {
+      getRange: function (r, c, nr, nc) {
         return {
           setNumberFormat: function () {},
+          getValues: function () { return rows.slice(r - 1, r - 1 + (nr || 1)).map(function (x) { return x.slice(c - 1, c - 1 + (nc || 1)).map(revive); }); },
           setValue: function (v) { rows[r - 1][c - 1] = v; },
           setValues: function (vs) { vs.forEach(function (row, i) { rows[r - 1 + i] = row.slice(); }); }
         };
