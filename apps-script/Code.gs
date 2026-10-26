@@ -159,6 +159,7 @@ function doGet() {
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
     '<p>Canale email principale: ' + (chiaveBrevo_() && !gmailPrima_() ? 'Brevo' : 'Gmail') + '</p>' +
     '<p>Pulizia test: ' + esc_(PropertiesService.getScriptProperties().getProperty('PULIZIA_TEST') || 'nessuna') + '</p>' +
+    '<p>Pulizia workshop: ' + esc_(PropertiesService.getScriptProperties().getProperty('PULIZIA_WORKSHOP') || 'nessuna') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
     '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
@@ -420,6 +421,22 @@ function aggiornamentiUnaTantum_() {
           ' indirizzi di prova: pass eliminati ' + pass.length + ' (' + pass.map(function (r) { return r.codice; }).join(', ') + ')' +
           ' · gruppi eliminati ' + gruppi.length + ' · gruppi misti lasciati ' + misti.length +
           ' · lista d\'attesa ' + attesa.length + ' · newsletter ' + nl);
+      } finally {
+        lock.releaseLock();
+      }
+    } },
+    // prenotazione di prova al workshop (il foglio non ha email: si riconosce dal nome)
+    { id: 'pulizia-workshop-test-2026-10-26', fai: function () {
+      var lock = LockService.getScriptLock();
+      if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+      try {
+        var righe = carica_().Workshop.filter(function (r) {
+          return r.nome.trim().toLowerCase() === 'pietro' && r.cognome.trim().toLowerCase() === 'santoro';
+        });
+        righe.sort(function (x, y) { return y._riga - x._riga; }).forEach(function (r) { r._foglio.deleteRow(r._riga); });
+        PropertiesService.getScriptProperties().setProperty('PULIZIA_WORKSHOP', new Date().toISOString().slice(0, 16) +
+          ' prenotazioni Pietro Santoro eliminate: ' + righe.length +
+          (righe.length ? ' (telefoni che finiscono con ' + righe.map(function (r) { return String(r.telefono_norm).slice(-3); }).join(', ') + ')' : ''));
       } finally {
         lock.releaseLock();
       }
