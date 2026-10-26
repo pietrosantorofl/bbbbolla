@@ -158,6 +158,7 @@ function doGet() {
     '<p>Email Gmail ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p>' +
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
     '<p>Canale email principale: ' + (chiaveBrevo_() && !gmailPrima_() ? 'Brevo' : 'Gmail') + '</p>' +
+    '<p>Pulizia test: ' + esc_(PropertiesService.getScriptProperties().getProperty('PULIZIA_TEST') || 'nessuna') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
     '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
@@ -336,6 +337,27 @@ function aggiornamentiUnaTantum_() {
           emailConferma_(r, serata_(db, r.serata), g, !!g && g.capogruppo === r.chiave);
         });
       });
+    } },
+    // test end-to-end finito: via le righe dei 3 pass di prova e dei gruppi fatti solo di loro
+    { id: 'pulizia-test-2026-10-26', fai: function () {
+      var chiavi = ['3f77716a14ed4ba9aeb72785', '5aeadd100a504721a7b738cc', 'b4080cbccf6e43218e2dedf6'];
+      var lock = LockService.getScriptLock();
+      if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+      try {
+        var db2 = carica_();
+        var pass = db2.Pass.filter(function (r) { return chiavi.indexOf(r.chiave) >= 0; });
+        var gruppi = db2.Gruppi.filter(function (g) {
+          var membri = db2.Pass.filter(function (r) { return r.tipo === 'gruppo' && r.rif === g.id; });
+          return membri.length > 0 && membri.every(function (r) { return chiavi.indexOf(r.chiave) >= 0; });
+        });
+        // dal basso, così i numeri di riga non cambiano mentre si cancella
+        pass.concat(gruppi).sort(function (x, y) { return y._riga - x._riga; }).forEach(function (r) { r._foglio.deleteRow(r._riga); });
+        PropertiesService.getScriptProperties().setProperty('PULIZIA_TEST', new Date().toISOString().slice(0, 16) +
+          ' pass eliminati: ' + (pass.map(function (r) { return r.codice; }).join(', ') || 'nessuno') +
+          ' · gruppi eliminati: ' + (gruppi.map(function (g) { return g.id; }).join(', ') || 'nessuno'));
+      } finally {
+        lock.releaseLock();
+      }
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
