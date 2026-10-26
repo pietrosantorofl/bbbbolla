@@ -92,8 +92,8 @@ window.BOLLA = {
     testo: [
       { it: "Un laboratorio sui ritmi afrocolombiani, dalla cumbia al bullerengue: voce, corpo e tamburo per creare musica insieme, in cerchio.",
         en: "A workshop on Afro-Colombian rhythms, from cumbia to bullerengue: voice, body and drum to make music together, in a circle." },
-      { it: "Nessuna esperienza richiesta: basta la voglia di suonare e cantare.",
-        en: "No experience needed: all it takes is the wish to play and sing." }
+      { it: "Nessuna esperienza richiesta.",
+        en: "No experience needed." }
     ]
   },
 
