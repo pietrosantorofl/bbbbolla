@@ -43,7 +43,7 @@ var CONFIG = {
   workshop: {
     id: 'cumbia-2026-10-30',      // deve coincidere con workshop.id in js/config.js
     inizio: '2026-10-30 20:00',   // dopo quest'ora le prenotazioni si chiudono
-    posti: 0                      // 0 = nessun limite; altrimenti a quota raggiunta la pagina mostra "Esaurito"
+    posti: 40                     // 0 = nessun limite; altrimenti a quota raggiunta la pagina mostra "Esaurito"
   },
 
   /* email temporanee: lista pubblica aggiornata (~10.000 domini) + controllo che il dominio riceva posta */
