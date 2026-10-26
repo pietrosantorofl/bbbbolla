@@ -157,6 +157,7 @@ function doGet() {
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
+    '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
     erroriAggiornamenti_() + colonneSfasate_(ss) + confermeInSospeso_() + '</div>';
   return HtmlService.createHtmlOutput(html).setTitle('bolla® backend');
@@ -302,6 +303,10 @@ function aggiornamentiUnaTantum_() {
     // link di conferma rotti dalle colonne sfasate: per ora riapre e riscrive solo a questo indirizzo (prova)
     { id: 'scuse-conferma-pietrosantoro90', fai: function () {
       scuseConferma_(db, ['pietrosantoro90@gmail.com']);
+    } },
+    // l'email di scuse non è arrivata: cosa dice Brevo di quell'indirizzo (solo tipi di evento e orari)
+    { id: 'eventi-brevo-pietrosantoro90-1', fai: function () {
+      eventiBrevo_('pietrosantoro90@gmail.com');
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -1178,6 +1183,19 @@ function scuseConferma_(db, emails) {
     esiti.push('inviata (' + pass.stato + ', gruppo ' + (g ? statoGruppo_(db, g).stato : '?') + (capo ? ', capogruppo' : '') + ')');
   });
   PropertiesService.getScriptProperties().setProperty('SCUSE_ESITO', new Date().toISOString() + ' ' + esiti.join(' · '));
+}
+
+// Ultimi eventi Brevo (richiesta, consegna, blocco, rimbalzo…) di un indirizzo, salvati senza l'indirizzo per la pagina di stato.
+function eventiBrevo_(email) {
+  var r = UrlFetchApp.fetch('https://api.brevo.com/v3/smtp/statistics/events?limit=20&sort=desc&email=' + encodeURIComponent(email), {
+    headers: { 'api-key': chiaveBrevo_(), accept: 'application/json' }, muteHttpExceptions: true
+  });
+  var testo;
+  if (r.getResponseCode() !== 200) testo = 'errore ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 200);
+  else testo = (JSON.parse(r.getContentText()).events || []).map(function (e) {
+    return String(e.date).slice(0, 16) + ' ' + e.event + (e.reason ? ' (' + String(e.reason).slice(0, 80) + ')' : '') + ' «' + String(e.subject || '').slice(0, 40) + '»';
+  }).join(' · ') || 'nessun evento';
+  PropertiesService.getScriptProperties().setProperty('EVENTI_BREVO', new Date().toISOString().slice(0, 16) + ' ' + testo);
 }
 
 function emailScuseConferma_(pass, s, g, capogruppo) {
