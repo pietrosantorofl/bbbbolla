@@ -30,8 +30,8 @@ var CONFIG = {
   senzaPass: '5€ al botteghino dopo le 22:30',  // compare nelle email ('' = niente)
   newsletterObbligatoria: true,   // deve coincidere con newsletterObbligatoria in js/config.js
   dimensioneGruppo: 3,
-  oreValiditaGruppo: 48,          // dopo, un gruppo incompleto scade e libera i posti
-  oreConferma: 12,                // dopo, un membro che non ha confermato perde il posto nel gruppo
+  chiusuraGruppi: '18:00',        // il giorno della serata: entro quest'ora il gruppo va completato, dopo non se ne creano di nuovi
+  oreConferma: 48,                // dopo, un membro che non ha confermato perde il posto nel gruppo
   minutiTraReinvii: 15,           // anti-spam: ogni quanto si può rimandare il link alla stessa persona
 
   /* anti-bot */
@@ -155,7 +155,7 @@ function doGet() {
     '<h1 style="font-size:40px;margin:0">bolla&reg;</h1>' +
     '<p style="font-size:18px">Backend dei pass attivo.</p>' +
     '<p>Fogli: ' + Object.keys(COLONNE).map(function (n) { return ss.getSheetByName(n) ? n + ' ✓' : n + ' ✗'; }).join(' · ') + '</p>' +
-    '<p>Email Gmail ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p>' +
+    '<p>Email Gmail ancora inviabili oggi: ' + (quotaGmail_() < 0 ? 'non disponibile ora' : quotaGmail_()) + '</p>' +
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
     '<p>Canale email principale: ' + (chiaveBrevo_() && !gmailPrima_() ? 'Brevo' : 'Gmail') + '</p>' +
     '<p>Pulizia test: ' + esc_(PropertiesService.getScriptProperties().getProperty('PULIZIA_TEST') || 'nessuna') + '</p>' +
@@ -373,8 +373,7 @@ function aggiornamentiUnaTantum_() {
           var g = gruppo_(db2, pass.rif);
           if (!g || g.stato !== 'aperto') { esiti.push('saltato (gruppo ' + (g ? g.stato : 'mancante') + ')'); return; }
           aggiorna_(db2.Pass, pass, { creato: now });
-          var scadenza = new Date(Math.min(now.getTime() + CONFIG.oreValiditaGruppo * 36e5, fineSerata_(s).getTime()));
-          if (data_(g.scadenza) < scadenza) aggiorna_(db2.Gruppi, g, { scadenza: scadenza });
+          aggiorna_(db2.Gruppi, g, { scadenza: scadenzaGruppi_(s) });
           var capo = g.capogruppo === pass.chiave;
           try {
             emailScuseConferma_(pass, s, g, capo, true);
@@ -440,6 +439,15 @@ function aggiornamentiUnaTantum_() {
       } finally {
         lock.releaseLock();
       }
+    } },
+    // nuove regole (26.10): conferma entro 48 ore, gruppi da completare entro le 18:00 del giorno della serata.
+    // La scadenza vera si calcola dalla serata; qui si aggiorna solo la colonna, perché nel foglio si legga giusta.
+    { id: 'scadenza-gruppi-ore-18', fai: function () {
+      var db2 = carica_();
+      db2.Gruppi.forEach(function (g) {
+        var s = serata_(db2, g.serata);
+        if (s && g.stato === 'aperto') aggiorna_(db2.Gruppi, g, { scadenza: scadenzaGruppi_(s) });
+      });
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -478,7 +486,7 @@ function confermeInSospeso_() {
     if (r.tipo !== 'gruppo' || r.stato !== 'da_confermare') return;
     var g = gruppo_(db, r.rif);
     var st = g ? statoGruppo_(db, g).stato : 'senza gruppo';
-    var chiave = st + (oreDa_(r.creato) > CONFIG.oreConferma ? ', oltre 12 ore' : ', entro 12 ore');
+    var chiave = st + (oreDa_(r.creato) > CONFIG.oreConferma ? ', oltre ' : ', entro ') + CONFIG.oreConferma + ' ore';
     conta[chiave] = (conta[chiave] || 0) + 1;
   });
   var righe = Object.keys(conta).map(function (k) { return k + ': ' + conta[k]; });
@@ -529,14 +537,14 @@ function azioneCreaGruppo_(d) {
     var s = serata_(db, d.serata);
     var chiusa = controllaSerata_(s);
     if (chiusa) return chiusa;
+    if (new Date() > scadenzaGruppi_(s)) return erroreGruppiChiusi_();
     var dup = duplicato_(db, s, p);
     if (dup) return dup;
     if (disponibili_(db, s) < CONFIG.dimensioneGruppo) return errore_('esaurito', 'Non ci sono più posti per un gruppo da ' + CONFIG.dimensioneGruppo + '.');
     if (!quotaOk_()) return erroreQuota_();
 
     var now = new Date();
-    var scadenza = new Date(Math.min(now.getTime() + CONFIG.oreValiditaGruppo * 36e5, fineSerata_(s).getTime()));
-    var g = { id: token_(10), serata: s.id, creato: now, scadenza: scadenza, capogruppo: '', stato: 'aperto', completato: '' };
+    var g = { id: token_(10), serata: s.id, creato: now, scadenza: scadenzaGruppi_(s), capogruppo: '', stato: 'aperto', completato: '' };
     var pass = nuovoPass_(db, s, p, 'gruppo', g.id, 'da_confermare');
     g.capogruppo = pass.chiave;
     appendi_('Gruppi', g);
@@ -789,10 +797,25 @@ function statoGruppo_(db, g) {
   var capo = membri.filter(function (r) { return r.chiave === g.capogruppo; })[0];
   var stato = g.stato;
   if (stato === 'aperto') {
-    if (new Date() > data_(g.scadenza)) stato = 'scaduto';
+    if (new Date() > scadenzaGruppo_(db, g)) stato = 'scaduto';
     else if (!capo || attivi.indexOf(capo) < 0) stato = 'scaduto';
   }
   return { stato: stato, membri: membri, attivi: attivi, confermati: confermati, capoConfermato: !!capo && capo.stato === 'confermato' };
+}
+
+// I gruppi della serata si chiudono tutti alla stessa ora (CONFIG.chiusuraGruppi del giorno della serata).
+function scadenzaGruppi_(s) {
+  return Utilities.parseDate(s.data + ' ' + CONFIG.chiusuraGruppi, TZ, 'yyyy-MM-dd HH:mm');
+}
+
+function scadenzaGruppo_(db, g) {
+  var s = serata_(db, g.serata);
+  return s ? scadenzaGruppi_(s) : data_(g.scadenza);
+}
+
+function erroreGruppiChiusi_() {
+  return errore_('chiusa', 'I pass di gruppo si potevano chiedere fino alle ' + CONFIG.chiusuraGruppi + ' del giorno della serata.' +
+    (CONFIG.senzaPass ? ' Senza pass: ' + CONFIG.senzaPass + '.' : ''));
 }
 
 function messaggioGruppoChiuso_(stato) {
@@ -847,7 +870,7 @@ function pubblicoGruppo_(db, g, chiaveMia) {
     stato: st.stato,
     dimensione: CONFIG.dimensioneGruppo,
     capogruppo: capo ? capo.nome : '',
-    scadenza: data_(g.scadenza).toISOString(),
+    scadenza: scadenzaGruppo_(db, g).toISOString(),
     confermati: st.confermati.length,
     // solo nome + iniziale: niente email né cognomi completi
     membri: st.attivi.map(function (r) {
@@ -1285,7 +1308,7 @@ function emailConferma_(pass, s, g, capogruppo) {
     riquadro_(
       '<p style="margin:0 0 6px;font-size:15px;font-weight:700">Come funziona il pass di gruppo</p>' +
       '<p style="margin:0;font-size:14px;line-height:1.5">Il pass è per gruppi da ' + dim + '. Si attiva solo quando <strong>tutti e ' + dim + '</strong> hanno confermato la propria email: ' +
-      'allora ognuno riceve il suo QR. Se il gruppo non si completa entro ' + CONFIG.oreValiditaGruppo + ' ore, <strong>nessuno riceve il pass</strong>.</p>') +
+      'allora ognuno riceve il suo QR. Se il gruppo non si completa entro le ' + CONFIG.chiusuraGruppi + ' del ' + data + ', <strong>nessuno riceve il pass</strong>.</p>') +
     (capogruppo && g ?
       '<p style="margin:24px 0 8px;font-size:15px;font-weight:700">Manda questo link ai tuoi ' + (dim - 1) + ' amici</p>' +
       '<p style="margin:0 0 12px;padding:12px 14px;border:1.5px dashed #121212;border-radius:12px;background:#ffffff;font-size:14px;word-break:break-all">' +
@@ -1299,7 +1322,7 @@ function emailConferma_(pass, s, g, capogruppo) {
 }
 
 /* Chi non ha potuto confermare per un guasto: il pass riparte da adesso (di nuovo CONFIG.oreConferma ore),
- * il gruppo ancora "aperto" nel foglio ha altre CONFIG.oreValiditaGruppo ore (non oltre la serata),
+ * il gruppo ancora "aperto" nel foglio resta aperto fino alla chiusura dei gruppi (CONFIG.chiusuraGruppi),
  * e arriva un'email di scuse con lo stesso link personale. Esito (senza indirizzi) nella pagina di stato. */
 function scuseConferma_(db, emails, soloGmail) {
   var norm = emails.map(function (e) { return normEmail_(e.toLowerCase()); });
@@ -1312,8 +1335,7 @@ function scuseConferma_(db, emails, soloGmail) {
     var now = new Date();
     if (pass.stato === 'da_confermare') aggiorna_(db.Pass, pass, { creato: now });
     if (g && g.stato === 'aperto') {
-      var scadenza = new Date(Math.min(now.getTime() + CONFIG.oreValiditaGruppo * 36e5, fineSerata_(s).getTime()));
-      if (data_(g.scadenza) < scadenza) aggiorna_(db.Gruppi, g, { scadenza: scadenza });
+      aggiorna_(db.Gruppi, g, { scadenza: scadenzaGruppi_(s) });
     }
     var capo = !!g && g.capogruppo === pass.chiave;
     emailScuseConferma_(pass, s, g, capo, soloGmail);
@@ -1477,7 +1499,7 @@ function bottone_(href, testo, secondario) {
  *  - Gmail (MailApp, 100 al giorno): solo di riserva, se Brevo non è collegato o rifiuta l'invio. */
 function invia_(a, oggetto, testo, html, immagini) {
   var brevo = chiaveBrevo_();
-  var gmailLibero = MailApp.getRemainingDailyQuota() > 0;
+  var gmailLibero = quotaGmail_() !== 0;
   // EMAIL_GMAIL_PRIMA (proprietà dello script): Gmail come canale principale, Brevo di riserva (es. Brevo non consegna)
   var ordine = !brevo ? ['gmail'] : gmailPrima_() ? ['gmail', 'brevo'] : ['brevo', 'gmail'];
   var ultimoErrore = null;
@@ -1539,12 +1561,22 @@ function chiaveBrevo_() {
   return PropertiesService.getScriptProperties().getProperty('BREVO_API_KEY');
 }
 
+// Email Gmail ancora inviabili oggi; -1 se Google in quel momento non risponde (capita): in quel caso si prova a inviare lo stesso.
+function quotaGmail_() {
+  try {
+    return MailApp.getRemainingDailyQuota();
+  } catch (err) {
+    console.error('Quota Gmail non leggibile: ' + err);
+    return -1;
+  }
+}
+
 function gmailPrima_() {
   return PropertiesService.getScriptProperties().getProperty('EMAIL_GMAIL_PRIMA') === 'si';
 }
 
 function quotaOk_() {
-  return !!chiaveBrevo_() || MailApp.getRemainingDailyQuota() > 0;
+  return !!chiaveBrevo_() || quotaGmail_() !== 0;
 }
 
 function impostaChiaveBrevoDaMenu() {

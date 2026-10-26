@@ -14,8 +14,8 @@ Una persona = un pass = un QR. Due strade:
 | **Gruppo da 3** | `bbbbolla.it` | Il capogruppo si registra e riceve il link del gruppo `?gruppo=<id>` da girare a 2 amici. Ognuno si registra con la propria email e conferma aprendo il link personale. Solo quando tutti e 3 hanno confermato ognuno riceve il suo QR: se il gruppo non si completa, nessuno riceve il pass. |
 
 - I posti del gruppo si bloccano quando il capogruppo conferma la sua email.
-- Un gruppo incompleto scade dopo 48 ore (o a fine serata) e libera i posti.
-- Chi non conferma entro 12 ore può perdere il posto nel gruppo a favore di un altro amico.
+- I gruppi vanno completati entro le 18:00 del giorno della serata (`CONFIG.chiusuraGruppi`): dopo scadono, liberano i posti e non se ne creano di nuovi.
+- Chi non conferma entro 48 ore (`CONFIG.oreConferma`) può perdere il posto nel gruppo a favore di un altro amico.
 - Il link personale `?pass=<chiave>` mostra lo stato del gruppo e, quando attivo, il QR. Il QR contiene la stessa chiave.
 
 **Pass esauriti**: il sito mostra "Esaurito" e il modulo diventa iscrizione alla **lista d'attesa** (nome ed email).

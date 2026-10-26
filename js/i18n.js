@@ -183,7 +183,9 @@
   // messaggi del backend con parti variabili
   var MESSAGGI_EN = [
     [/^Il dominio dell'email \((.+)\) non riceve posta\. Controlla di averla scritta bene\.$/, "The email domain ($1) doesn't receive mail. Check you typed it correctly."],
-    [/^Non ci sono più posti per un gruppo da (\d+)\.$/, "No more spots for a group of $1."]
+    [/^Non ci sono più posti per un gruppo da (\d+)\.$/, "No more spots for a group of $1."],
+    [/^I pass di gruppo si potevano chiedere fino alle (\d\d:\d\d) del giorno della serata\.(?: Senza pass: (.+)\.)?$/,
+      "Group passes could be requested until $1 on the day of the event. Without a pass: €5 at the box office after 10:30 pm."]
   ];
 
   // testi con link (data-i18n-html="id")
