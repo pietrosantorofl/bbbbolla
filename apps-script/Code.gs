@@ -157,7 +157,7 @@ function doGet() {
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
-    erroriAggiornamenti_() + colonneSfasate_(ss) + '</div>';
+    erroriAggiornamenti_() + colonneSfasate_(ss) + confermeInSospeso_() + '</div>';
   return HtmlService.createHtmlOutput(html).setTitle('bolla® backend');
 }
 
@@ -321,6 +321,21 @@ function colonneSfasate_(ss) {
     return ok ? '' : '<p style="color:#c4231b">Colonne del foglio ' + esc_(nome) + ' fuori ordine: ' + esc_(head.join(' | ')) +
       '<br>Ordine atteso: ' + esc_(COLONNE[nome].join(' | ')) + '</p>';
   }).join('');
+}
+
+// Solo numeri (la pagina è pubblica): pass di gruppo non ancora confermati e stato del loro gruppo.
+function confermeInSospeso_() {
+  var db = carica_();
+  var conta = {};
+  db.Pass.forEach(function (r) {
+    if (r.tipo !== 'gruppo' || r.stato !== 'da_confermare') return;
+    var g = gruppo_(db, r.rif);
+    var st = g ? statoGruppo_(db, g).stato : 'senza gruppo';
+    var chiave = st + (oreDa_(r.creato) > CONFIG.oreConferma ? ', oltre 12 ore' : ', entro 12 ore');
+    conta[chiave] = (conta[chiave] || 0) + 1;
+  });
+  var righe = Object.keys(conta).map(function (k) { return k + ': ' + conta[k]; });
+  return '<p>Pass da confermare: ' + (righe.length ? esc_(righe.join(' · ')) : 'nessuno') + '</p>';
 }
 
 function erroriAggiornamenti_() {
