@@ -386,6 +386,43 @@ function aggiornamentiUnaTantum_() {
         lock.releaseLock();
       }
       PropertiesService.getScriptProperties().setProperty('SCUSE_ESITO', now.toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessun pass da confermare'));
+    } },
+    // fine dei test: via tutto quello che riguarda gli indirizzi di prova (pass, gruppi fatti solo di loro, lista d'attesa, newsletter)
+    { id: 'pulizia-email-test-2026-10-26', fai: function () {
+      var prova = ['pietrosantoro90@gmail.com', 'ales.nastasi@gmail.com', 'pietrosantoro.fl@gmail.com'].map(normEmail_);
+      var lock = LockService.getScriptLock();
+      if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+      try {
+        var db2 = carica_();
+        var pass = db2.Pass.filter(function (r) { return prova.indexOf(r.email_norm) >= 0; });
+        var gruppi = db2.Gruppi.filter(function (g) {
+          var membri = db2.Pass.filter(function (r) { return r.tipo === 'gruppo' && r.rif === g.id; });
+          return membri.length > 0 && membri.every(function (r) { return prova.indexOf(r.email_norm) >= 0; });
+        });
+        // gruppi con anche persone vere: restano, ma senza i membri di prova
+        var misti = db2.Gruppi.filter(function (g) {
+          return gruppi.indexOf(g) < 0 && pass.some(function (r) { return r.tipo === 'gruppo' && r.rif === g.id; });
+        });
+        var attesa = db2.Attesa.filter(function (r) { return prova.indexOf(r.email_norm) >= 0; });
+        // per foglio, dal basso: i numeri di riga non cambiano mentre si cancella
+        [pass, gruppi, attesa].forEach(function (righe) {
+          righe.slice().sort(function (x, y) { return y._riga - x._riga; }).forEach(function (r) { r._foglio.deleteRow(r._riga); });
+        });
+        var nl = 0;
+        var foglioNl = SpreadsheetApp.getActive().getSheetByName('Newsletter');
+        if (foglioNl && foglioNl.getLastRow() > 1) {
+          var valori = foglioNl.getDataRange().getValues();
+          for (var i = valori.length - 1; i >= 1; i--) {
+            if (prova.indexOf(normEmail_(String(valori[i][3]).trim().toLowerCase())) >= 0) { foglioNl.deleteRow(i + 1); nl++; }
+          }
+        }
+        PropertiesService.getScriptProperties().setProperty('PULIZIA_TEST', new Date().toISOString().slice(0, 16) +
+          ' indirizzi di prova: pass eliminati ' + pass.length + ' (' + pass.map(function (r) { return r.codice; }).join(', ') + ')' +
+          ' · gruppi eliminati ' + gruppi.length + ' · gruppi misti lasciati ' + misti.length +
+          ' · lista d\'attesa ' + attesa.length + ' · newsletter ' + nl);
+      } finally {
+        lock.releaseLock();
+      }
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
