@@ -48,7 +48,7 @@ window.BOLLA = {
           nome: "Ritmi in Colombia", ora: "20:00", tag: "Workshop", link: "https://www.instagram.com/karvpercu/",
           // dettagli: testo breve (massimo 5 righe) che si apre cliccando la voce nella line-up
           dettagli: {
-            titolo: { it: "Radici in cerchio: voce, tamburo e creazione collettiva", en: "Roots in a circle: voice, drum and collective creation" },
+            titolo: { it: "La Cumbia tradizionale colombiana: laboratorio di percussioni e canto afrocolombiani", en: "Traditional Colombian Cumbia: an Afro-Colombian percussion and singing workshop" },
             testo: [
               { it: "Laboratorio sui ritmi afrocolombiani, dalla cumbia al bullerengue: voce, corpo e tamburo per creare musica insieme, in cerchio. Nessuna esperienza richiesta.",
                 en: "A workshop on Afro-Colombian rhythms, from cumbia to bullerengue: voice, body and drum to make music together, in a circle. No experience needed." },
@@ -68,7 +68,7 @@ window.BOLLA = {
         { nome: "Franzuà", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, note: "downtempo · cumbia · afrobeat", link: "https://www.instagram.com/franzua_imagerie/" },
         { nome: "Dario Aiello", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, note: { it: "elettronica · dub · downtempo", en: "electronic · dub · downtempo" }, link: "https://www.instagram.com/darioaiello77/" },
         // minore: true = più piccolo delle proposte musicali (vino, cibo)
-        { nome: "Cantina controcorrente", tag: { it: "Vino del giorno", en: "Wine of the day" }, minore: true, link: "https://www.instagram.com/controcorrente.etnawines/" },
+        { nome: "Vini CONTROCORRENTE di Nino Cali", note: "Host: Valerio Brunetto", tag: { it: "Vino del giorno", en: "Wine of the day" }, minore: true, link: "https://www.instagram.com/controcorrente.etnawines/" },
         { nome: "SPIZZICO", tag: { it: "Food dalle 20:00", en: "Food from 8 pm" }, minore: true }
       ]
     }
