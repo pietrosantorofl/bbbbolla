@@ -358,6 +358,34 @@ function aggiornamentiUnaTantum_() {
       } finally {
         lock.releaseLock();
       }
+    } },
+    // tutti i pass di gruppo ancora da confermare (link rotti dal guasto del 26.10): riaperti e scuse via Gmail
+    { id: 'scuse-conferma-tutti-gmail-2026-10-26', fai: function () {
+      var lock = LockService.getScriptLock();
+      if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+      var esiti = [];
+      try {
+        var db2 = carica_();
+        var now = new Date();
+        db2.Pass.filter(function (r) { return r.tipo === 'gruppo' && r.stato === 'da_confermare' && r.serata === '2026-10-30'; }).forEach(function (pass) {
+          var s = serata_(db2, pass.serata);
+          var g = gruppo_(db2, pass.rif);
+          if (!g || g.stato !== 'aperto') { esiti.push('saltato (gruppo ' + (g ? g.stato : 'mancante') + ')'); return; }
+          aggiorna_(db2.Pass, pass, { creato: now });
+          var scadenza = new Date(Math.min(now.getTime() + CONFIG.oreValiditaGruppo * 36e5, fineSerata_(s).getTime()));
+          if (data_(g.scadenza) < scadenza) aggiorna_(db2.Gruppi, g, { scadenza: scadenza });
+          var capo = g.capogruppo === pass.chiave;
+          try {
+            emailScuseConferma_(pass, s, g, capo, true);
+            esiti.push(pass.codice + ' inviata' + (capo ? ' (capogruppo)' : '') + ', gruppo ' + statoGruppo_(db2, g).stato);
+          } catch (err) {
+            esiti.push(pass.codice + ' errore: ' + String(err.message).slice(0, 80));
+          }
+        });
+      } finally {
+        lock.releaseLock();
+      }
+      PropertiesService.getScriptProperties().setProperty('SCUSE_ESITO', now.toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessun pass da confermare'));
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
