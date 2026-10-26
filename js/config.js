@@ -85,7 +85,7 @@ window.BOLLA = {
     ora: "20:00",
     titolo: { it: "La Cumbia tradizionale colombiana", en: "Traditional Colombian Cumbia" },
     sottotitolo: { it: "Laboratorio di percussioni e canto afrocolombiani", en: "An Afro-Colombian percussion and singing workshop" },
-    locandina: "assets/workshop-cumbia.jpg",
+    locandina: { it: "assets/workshop-cumbia.jpg", en: "assets/workshop-cumbia-en.jpg" },
     conduttori: [
       { nome: "Karen Andrea Ramirez Viasus", ruolo: { it: "batteria e percussioni", en: "drums and percussion" } },
       { nome: "Ana Milena Lozada Avella", ruolo: { it: "voce", en: "vocals" } }

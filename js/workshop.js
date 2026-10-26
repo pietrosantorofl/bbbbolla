@@ -46,7 +46,7 @@
     });
   });
   bind("testo", function (n) { W.testo.forEach(function (t) { n.appendChild(el("p", null, L(t))); }); });
-  bind("locandina", function (n) { n.src = W.locandina; n.alt = L(W.titolo) + " — " + L(W.sottotitolo); });
+  bind("locandina", function (n) { n.src = L(W.locandina); n.alt = L(W.titolo) + " — " + L(W.sottotitolo); });
   bind("demo", function (n) { n.hidden = !DEMO; });
 
   /* ---------- API (Apps Script, o demo nel browser) ---------- */
