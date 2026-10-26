@@ -146,6 +146,8 @@ function creaInvitoDaMenu() {
 function doGet() {
   setup();
   aggiornamentiUnaTantum_(); // idempotente: ogni aggiornamento gira una volta sola
+  var emailEventi = PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO_EMAIL');
+  if (emailEventi && chiaveBrevo_()) eventiBrevo_(emailEventi);
   var sveglia = installaSveglia_();
   var ss = SpreadsheetApp.getActive();
   var html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
@@ -307,6 +309,13 @@ function aggiornamentiUnaTantum_() {
     // l'email di scuse non è arrivata: cosa dice Brevo di quell'indirizzo (solo tipi di evento e orari)
     { id: 'eventi-brevo-pietrosantoro90-1', fai: function () {
       eventiBrevo_('pietrosantoro90@gmail.com');
+    } },
+    { id: 'eventi-brevo-pietrosantoro90-2', fai: function () {
+      eventiBrevo_('pietrosantoro90@gmail.com');
+    } },
+    // da qui la pagina di stato rilegge gli eventi Brevo di questo indirizzo a ogni apertura
+    { id: 'eventi-brevo-in-diretta', fai: function () {
+      PropertiesService.getScriptProperties().setProperty('EVENTI_BREVO_EMAIL', 'pietrosantoro90@gmail.com');
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
