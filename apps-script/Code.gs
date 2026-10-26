@@ -316,6 +316,10 @@ function aggiornamentiUnaTantum_() {
     // da qui la pagina di stato rilegge gli eventi Brevo di questo indirizzo a ogni apertura
     { id: 'eventi-brevo-in-diretta', fai: function () {
       PropertiesService.getScriptProperties().setProperty('EVENTI_BREVO_EMAIL', 'pietrosantoro90@gmail.com');
+    } },
+    // con Brevo non è arrivata: stessa email dal canale di riserva (Gmail di bollacatania@gmail.com)
+    { id: 'scuse-conferma-pietrosantoro90-gmail', fai: function () {
+      scuseConferma_(db, ['pietrosantoro90@gmail.com'], true);
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -1173,7 +1177,7 @@ function emailConferma_(pass, s, g, capogruppo) {
 /* Chi non ha potuto confermare per un guasto: il pass riparte da adesso (di nuovo CONFIG.oreConferma ore),
  * il gruppo ancora "aperto" nel foglio ha altre CONFIG.oreValiditaGruppo ore (non oltre la serata),
  * e arriva un'email di scuse con lo stesso link personale. Esito (senza indirizzi) nella pagina di stato. */
-function scuseConferma_(db, emails) {
+function scuseConferma_(db, emails, soloGmail) {
   var norm = emails.map(function (e) { return normEmail_(e.toLowerCase()); });
   var esiti = [];
   norm.forEach(function (n) {
@@ -1188,8 +1192,8 @@ function scuseConferma_(db, emails) {
       if (data_(g.scadenza) < scadenza) aggiorna_(db.Gruppi, g, { scadenza: scadenza });
     }
     var capo = !!g && g.capogruppo === pass.chiave;
-    emailScuseConferma_(pass, s, g, capo);
-    esiti.push('inviata (' + pass.stato + ', gruppo ' + (g ? statoGruppo_(db, g).stato : '?') + (capo ? ', capogruppo' : '') + ')');
+    emailScuseConferma_(pass, s, g, capo, soloGmail);
+    esiti.push('inviata' + (soloGmail ? ' con Gmail' : '') + ' (' + pass.stato + ', gruppo ' + (g ? statoGruppo_(db, g).stato : '?') + (capo ? ', capogruppo' : '') + ')');
   });
   PropertiesService.getScriptProperties().setProperty('SCUSE_ESITO', new Date().toISOString() + ' ' + esiti.join(' · '));
 }
@@ -1207,7 +1211,7 @@ function eventiBrevo_(email) {
   PropertiesService.getScriptProperties().setProperty('EVENTI_BREVO', new Date().toISOString().slice(0, 16) + ' ' + testo);
 }
 
-function emailScuseConferma_(pass, s, g, capogruppo) {
+function emailScuseConferma_(pass, s, g, capogruppo, soloGmail) {
   var data = dataBreve_(s);
   var link = linkPass_(pass.chiave);
   var dim = CONFIG.dimensioneGruppo;
@@ -1225,7 +1229,7 @@ function emailScuseConferma_(pass, s, g, capogruppo) {
         '<a href="' + linkGruppo_(g.id) + '" style="color:#121212">' + linkGruppo_(g.id) + '</a></p>' : '') +
     nota_('Il pass si attiva quando tutti e ' + dim + ' i membri del gruppo hanno confermato la propria email' +
       (confermato ? '.' : '. Hai ' + CONFIG.oreConferma + ' ore per confermare.'));
-  invia_(pass.email, 'Scusaci: ora il link funziona — bolla® ' + data,
+  (soloGmail ? inviaGmail_ : invia_)(pass.email, 'Scusaci: ora il link funziona — bolla® ' + data,
     'Ciao ' + pass.nome + ', il link di conferma che ti abbiamo mandato non funzionava per un problema tecnico: ora è risolto. Apri: ' + link,
     layout_({ banner: 'banner-logo.jpg', anteprima: 'Il link di conferma ora funziona', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }));
 }
