@@ -383,6 +383,7 @@
           if (r.gruppo.stato === "aperto") {
             nodi.push(el("p", "done__text", T("Il pass con QR si attiva solo quando tutti e {n} hanno confermato: ti arriva via email e lo trovi anche qui. Se il gruppo non si completa in tempo, nessuno riceve il pass. Manca qualcuno? Rimanda il link del gruppo:", { n: r.gruppo.dimensione })));
             nodi.push(shareBox(linkGruppo(r.gruppo.id)));
+            nodi.push(el("p", "notice", T("Quando arriva, il pass potrebbe finire nello spam o nella scheda Promozioni: controlla anche lì.")));
           } else if (r.gruppo.stato !== "completo") {
             var a = el("a", "btn btn--ghost btn--block", T("Crea un nuovo gruppo"));
             a.href = base;
@@ -509,6 +510,8 @@
       nodi[0].textContent = T("Pass inviato");
       nodi.push(el("p", "done__text", T("Il tuo pass con QR è in arrivo a {email}. Controlla anche lo spam.", dati)));
     }
+    // vale per tutte le email: possono arrivare con qualche minuto di ritardo o finire fuori dalla posta in arrivo
+    nodi.push(el("p", "notice", T("Non trovi l'email? Può volerci qualche minuto: controlla anche lo spam e la scheda Promozioni.")));
     mostraRisultato(nodi);
   }
 

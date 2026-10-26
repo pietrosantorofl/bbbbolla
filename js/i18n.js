@@ -128,6 +128,10 @@
       "We sent an email to {email}. Open the link to confirm your spot in the group (check your spam folder too).",
     "Pass inviato": "Pass sent",
     "Il tuo pass con QR è in arrivo a {email}. Controlla anche lo spam.": "Your pass with QR code is on its way to {email}. Check your spam folder too.",
+    "Non trovi l'email? Può volerci qualche minuto: controlla anche lo spam e la scheda Promozioni.":
+      "Can't find the email? It may take a few minutes: check your spam folder and the Promotions tab too.",
+    "Quando arriva, il pass potrebbe finire nello spam o nella scheda Promozioni: controlla anche lì.":
+      "When it arrives, the pass may end up in spam or in the Promotions tab: check there too.",
     /* footer, pagine */
     "Privacy": "Privacy",
     "Torna alla serata": "Back to the event",
