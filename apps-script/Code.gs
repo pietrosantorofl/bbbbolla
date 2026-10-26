@@ -157,6 +157,7 @@ function doGet() {
     '<p>Fogli: ' + Object.keys(COLONNE).map(function (n) { return ss.getSheetByName(n) ? n + ' ✓' : n + ' ✗'; }).join(' · ') + '</p>' +
     '<p>Email Gmail ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p>' +
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
+    '<p>Canale email principale: ' + (chiaveBrevo_() && !gmailPrima_() ? 'Brevo' : 'Gmail') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
     '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
@@ -323,6 +324,18 @@ function aggiornamentiUnaTantum_() {
     } },
     { id: 'eventi-brevo-tre-indirizzi', fai: function () {
       PropertiesService.getScriptProperties().setProperty('EVENTI_BREVO_EMAIL', 'pietrosantoro90@gmail.com,bollacatania@gmail.com,pietrosantoro.fl@gmail.com');
+    } },
+    // dalle 17:28 del 26.10 Brevo accetta le email ma non le consegna: si passa a Gmail e si rimandano le conferme ferme
+    { id: 'gmail-prima-2026-10-26', fai: function () {
+      PropertiesService.getScriptProperties().setProperty('EMAIL_GMAIL_PRIMA', 'si');
+      ['bollacatania@gmail.com', 'pietrosantoro.fl@gmail.com'].forEach(function (e) {
+        var n = normEmail_(e);
+        db.Pass.forEach(function (r) {
+          if (r.email_norm !== n || r.tipo !== 'gruppo' || r.stato !== 'da_confermare') return;
+          var g = gruppo_(db, r.rif);
+          emailConferma_(r, serata_(db, r.serata), g, !!g && g.capogruppo === r.chiave);
+        });
+      });
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -1357,7 +1370,8 @@ function bottone_(href, testo, secondario) {
 function invia_(a, oggetto, testo, html, immagini) {
   var brevo = chiaveBrevo_();
   var gmailLibero = MailApp.getRemainingDailyQuota() > 0;
-  var ordine = brevo ? ['brevo', 'gmail'] : ['gmail'];
+  // EMAIL_GMAIL_PRIMA (proprietà dello script): Gmail come canale principale, Brevo di riserva (es. Brevo non consegna)
+  var ordine = !brevo ? ['gmail'] : gmailPrima_() ? ['gmail', 'brevo'] : ['brevo', 'gmail'];
   var ultimoErrore = null;
   for (var i = 0; i < ordine.length; i++) {
     try {
@@ -1415,6 +1429,10 @@ function inviaBrevo_(chiave, a, oggetto, testo, html, immagini) {
 
 function chiaveBrevo_() {
   return PropertiesService.getScriptProperties().getProperty('BREVO_API_KEY');
+}
+
+function gmailPrima_() {
+  return PropertiesService.getScriptProperties().getProperty('EMAIL_GMAIL_PRIMA') === 'si';
 }
 
 function quotaOk_() {
