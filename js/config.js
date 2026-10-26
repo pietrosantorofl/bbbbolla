@@ -53,7 +53,9 @@ window.BOLLA = {
               { it: "Laboratorio sui ritmi afrocolombiani, dalla cumbia al bullerengue: voce, corpo e tamburo per creare musica insieme, in cerchio. Nessuna esperienza richiesta.",
                 en: "A workshop on Afro-Colombian rhythms, from cumbia to bullerengue: voice, body and drum to make music together, in a circle. No experience needed." },
               { it: "Con Karen Andrea Ramirez Viasus (percussioni) e Milenaria (voce).", en: "With Karen Andrea Ramirez Viasus (percussion) and Milenaria (vocals)." }
-            ]
+            ],
+            // bottone in fondo ai dettagli
+            prenota: { href: "workshop.html", testo: { it: "Prenota il workshop", en: "Book the workshop" } }
           }
         },
         {
@@ -73,6 +75,27 @@ window.BOLLA = {
       ]
     }
   ],
+
+  /* pagina workshop.html: prenotazione con nome, cognome e telefono (foglio "Workshop").
+     id deve coincidere con CONFIG.workshop.id in apps-script/Code.gs */
+  workshop: {
+    id: "cumbia-2026-10-30",
+    serata: "2026-10-30",          // serata bolla® di cui fa parte (data, luogo)
+    ora: "20:00",
+    titolo: { it: "La Cumbia tradizionale colombiana", en: "Traditional Colombian Cumbia" },
+    sottotitolo: { it: "Laboratorio di percussioni e canto afrocolombiani", en: "An Afro-Colombian percussion and singing workshop" },
+    locandina: "assets/workshop-cumbia.jpg",
+    conduttori: [
+      { nome: "Karen Andrea Ramirez Viasus", ruolo: { it: "batteria e percussioni", en: "drums and percussion" } },
+      { nome: "Ana Milena Lozada Avella", ruolo: { it: "voce", en: "vocals" } }
+    ],
+    testo: [
+      { it: "Un laboratorio sui ritmi afrocolombiani, dalla cumbia al bullerengue: voce, corpo e tamburo per creare musica insieme, in cerchio.",
+        en: "A workshop on Afro-Colombian rhythms, from cumbia to bullerengue: voice, body and drum to make music together, in a circle." },
+      { it: "Nessuna esperienza richiesta: basta la voglia di suonare e cantare.",
+        en: "No experience needed: all it takes is the wish to play and sing." }
+    ]
+  },
 
   /* testo unico sotto la line-up */
   infoUtili: {

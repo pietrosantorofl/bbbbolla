@@ -15,6 +15,7 @@
  *   Gruppi  id | serata | creato | scadenza | capogruppo | stato | completato
  *   Pass    creato | serata | tipo | rif | nome | cognome | email | email_norm | chiave | codice | stato | confermato | checkin | newsletter | checkin_da
  *   Attesa  creato | serata | nome | cognome | email | email_norm | arrivato_da | newsletter | note
+ *   Workshop creato | workshop | nome | cognome | telefono | telefono_norm | note
  *
  * Web App: POST body JSON { action, ... } con action = stato | crea_gruppo | unisciti | invito | pass
  */
@@ -38,6 +39,13 @@ var CONFIG = {
   oreValiditaModulo: 2,           // dopo, il modulo va ricaricato
   maxRegistrazioniAlMinuto: 60,   // tetto globale: oltre, le richieste vengono respinte per un minuto
 
+  /* prenotazioni al workshop (bbbbolla.it/workshop.html): nome, cognome e telefono, foglio "Workshop" */
+  workshop: {
+    id: 'cumbia-2026-10-30',      // deve coincidere con workshop.id in js/config.js
+    inizio: '2026-10-30 20:00',   // dopo quest'ora le prenotazioni si chiudono
+    posti: 0                      // 0 = nessun limite; altrimenti a quota raggiunta la pagina mostra "Esaurito"
+  },
+
   /* email temporanee: lista pubblica aggiornata (~10.000 domini) + controllo che il dominio riceva posta */
   listaUsaEGetta: 'https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/main/disposable_email_blocklist.conf',
   controlloDominio: true,
@@ -55,9 +63,11 @@ var COLONNE = {
   Gruppi: ['id', 'serata', 'creato', 'scadenza', 'capogruppo', 'stato', 'completato'],
   Pass: ['creato', 'serata', 'tipo', 'rif', 'nome', 'cognome', 'email', 'email_norm', 'chiave', 'codice', 'stato', 'confermato', 'checkin', 'newsletter', 'checkin_da'],
   Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note'],
-  Live: ['creato', 'serata', 'nickname', 'colore', 'emozione', 'dispositivo']
+  Live: ['creato', 'serata', 'nickname', 'colore', 'emozione', 'dispositivo'],
+  Workshop: ['creato', 'workshop', 'nome', 'cognome', 'telefono', 'telefono_norm', 'note']
 };
-var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome'];
+var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome',
+  'workshop', 'telefono', 'telefono_norm'];
 // riserva se la lista online non è raggiungibile
 var DOMINI_USA_E_GETTA = ['mailinator.com', 'yopmail.com', 'yopmail.fr', 'guerrillamail.com', 'guerrillamail.info', 'sharklasers.com',
   'grr.la', '10minutemail.com', 'temp-mail.org', 'tempmail.com', 'tempmail.net', 'trashmail.com', 'getnada.com', 'dispostable.com',
@@ -170,6 +180,8 @@ function doPost(e) {
       case 'live_invia': return json_(azioneLiveInvia_(d));
       case 'live_feed': return json_(azioneLiveFeed_(d));
       case 'live_regia': return json_(azioneLiveRegia_(d));
+      case 'workshop_stato': return json_(azioneWorkshopStato_());
+      case 'workshop_prenota': return json_(azioneWorkshopPrenota_(d));
     }
     return json_(errore_('dati', 'Azione sconosciuta.'));
   } catch (err) {
@@ -460,6 +472,60 @@ function azionePass_(d) {
       _email: dopo
     };
   });
+}
+
+/* ---------- workshop ----------
+ * Prenotazione con nome, cognome e telefono (niente email, niente pass): le righe finiscono nel foglio
+ * "Workshop" e lo staff richiama al telefono se serve. Stesso anti-bot dei pass (modulo firmato, honeypot,
+ * tetto al minuto); lo stesso numero non può prenotare due volte. */
+function azioneWorkshopStato_() {
+  var db = carica_();
+  return { ok: true, modulo: tokenModulo_(), workshop: { aperto: workshopAperto_(), posti: postiWorkshop_(db) > 0 } };
+}
+
+function azioneWorkshopPrenota_(d) {
+  var bot = controllaModulo_(d.modulo);
+  if (bot) return bot;
+  if (d.website) return errore_('modulo', 'Richiesta non valida.'); // honeypot compilato
+  var nome = pulisci_(d.nome, 60);
+  var cognome = pulisci_(d.cognome, 60);
+  if (!nome || !cognome) return errore_('dati', 'Inserisci nome e cognome.');
+  var tel = telefono_(d.telefono);
+  if (!tel) return errore_('dati', 'Controlla il numero di telefono.');
+  if (d.privacy !== true) return errore_('dati', 'Serve il consenso privacy.');
+
+  return conLock_(function () {
+    if (tettoRaggiunto_()) return errore_('occupato', 'In questo momento stanno arrivando troppe registrazioni. Riprova tra un minuto.');
+    if (!workshopAperto_()) return errore_('chiusa', 'Le prenotazioni per il workshop sono chiuse.');
+    var db = carica_();
+    var gia = db.Workshop.some(function (r) { return r.workshop === CONFIG.workshop.id && r.telefono_norm === tel.norm; });
+    if (gia) return errore_('duplicato', 'Questo numero ha già una prenotazione per il workshop.');
+    if (postiWorkshop_(db) <= 0) return errore_('esaurito', 'I posti per il workshop sono esauriti.');
+    appendi_('Workshop', { creato: new Date(), workshop: CONFIG.workshop.id, nome: nome, cognome: cognome, telefono: tel.testo, telefono_norm: tel.norm, note: '' });
+    contaRegistrazione_();
+    segnaModuloUsato_(d.modulo);
+    return { ok: true };
+  });
+}
+
+function workshopAperto_() {
+  return new Date() < Utilities.parseDate(CONFIG.workshop.inizio, TZ, 'yyyy-MM-dd HH:mm');
+}
+
+// posti ancora liberi (Infinity se il workshop non ha un limite)
+function postiWorkshop_(db) {
+  if (!CONFIG.workshop.posti) return Infinity;
+  return CONFIG.workshop.posti - db.Workshop.filter(function (r) { return r.workshop === CONFIG.workshop.id; }).length;
+}
+
+// Numero italiano o internazionale: "333 123 4567", "+39 333…", "0039 333…" diventano tutti +393331234567
+function telefono_(v) {
+  var testo = pulisci_(v, 30);
+  var cifre = testo.replace(/[\s.\-\/()]/g, '');
+  if (/^00\d/.test(cifre)) cifre = '+' + cifre.slice(2);
+  if (/^\d/.test(cifre)) cifre = '+39' + cifre;
+  if (!/^\+\d{8,15}$/.test(cifre)) return null;
+  return { testo: testo, norm: cifre };
 }
 
 /* ============================================================

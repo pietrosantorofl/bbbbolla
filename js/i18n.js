@@ -131,6 +131,18 @@
     /* footer, pagine */
     "Privacy": "Privacy",
     "Torna alla serata": "Back to the event",
+    /* pagina workshop */
+    "Prenota il workshop": "Book the workshop",
+    "Prenota il tuo posto": "Book your spot",
+    "Con": "With",
+    "Telefono": "Phone",
+    "Lascia nome, cognome e numero di telefono: ti contattiamo solo per comunicazioni sul workshop.":
+      "Leave your name and phone number: we'll only contact you about the workshop.",
+    "Controlla il numero di telefono.": "Check your phone number.",
+    "Prenotazione ricevuta": "Booking received",
+    "Ti aspettiamo {data} alle {ora} al {luogo}. Se serve ti chiamiamo al {telefono}.":
+      "See you on {data} at {ora} at {luogo}. If needed we'll call you at {telefono}.",
+    "Dopo il workshop la serata continua: prenota anche il pass gratuito.": "After the workshop the night goes on: get your free pass too.",
 
     /* messaggi del backend (arrivano in italiano) */
     "Serata non trovata.": "Event not found.",
@@ -162,7 +174,10 @@
     "La pagina è aperta da troppo tempo. Ricaricala e riprova.": "This page has been open too long. Reload it and try again.",
     "Questo modulo è già stato inviato. Ricarica la pagina per una nuova registrazione.": "This form was already sent. Reload the page for a new registration.",
     "Richiesta non valida.": "Invalid request.",
-    "Sei già in lista d'attesa per questa serata: ti scriviamo noi se si libera un posto.": "You're already on the waiting list for this event: we'll write to you if a spot opens up."
+    "Sei già in lista d'attesa per questa serata: ti scriviamo noi se si libera un posto.": "You're already on the waiting list for this event: we'll write to you if a spot opens up.",
+    "Le prenotazioni per il workshop sono chiuse.": "Workshop bookings are closed.",
+    "Questo numero ha già una prenotazione per il workshop.": "This number already has a workshop booking.",
+    "I posti per il workshop sono esauriti.": "The workshop is fully booked."
   };
 
   // messaggi del backend con parti variabili
@@ -173,7 +188,8 @@
 
   // testi con link (data-i18n-html="id")
   var EN_HTML = {
-    legale: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a> and subscribe to the bolla® newsletter, required for the free pass. Your email will not be shared with third parties and you can unsubscribe at any time."
+    legale: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a> and subscribe to the bolla® newsletter, required for the free pass. Your email will not be shared with third parties and you can unsubscribe at any time.",
+    legaleWorkshop: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a>. We only use your number for messages about the workshop and never share it with third parties."
   };
 
   var GIORNI = { it: ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] };

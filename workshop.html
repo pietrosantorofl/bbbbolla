@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Workshop — bolla®</title>
+  <meta name="description" content="La Cumbia tradizionale colombiana: laboratorio di percussioni e canto afrocolombiani. Prenota il tuo posto.">
+  <meta name="theme-color" content="#e9e7e3">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="La Cumbia tradizionale colombiana — workshop bolla®">
+  <meta property="og:description" content="Laboratorio di percussioni e canto afrocolombiani. Prenota il tuo posto.">
+  <meta property="og:image" content="https://bbbbolla.it/assets/workshop-cumbia.jpg">
+  <meta property="og:image:width" content="1000">
+  <meta property="og:image:height" content="1414">
+  <meta property="og:url" content="https://bbbbolla.it/workshop.html">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css?v=202610261509">
+</head>
+<body>
+  <header class="topbar">
+    <a href="./" class="topbar__logo" aria-label="bolla® home"><img src="assets/bolla-logo.png" alt="bolla®" width="808" height="312"></a>
+    <nav class="topbar__nav">
+      <a href="manifesto.html" class="topbar__link" data-i18n>Manifesto</a>
+      <a href="./#prenota" class="btn btn--small" data-i18n>Prenota pass</a>
+      <button type="button" class="lingua" data-lingua>EN</button>
+    </nav>
+  </header>
+
+  <main class="layout ws">
+    <header class="ws__testa">
+      <p class="eyebrow">Workshop · bolla®</p>
+      <h1 class="details__title ws__titolo"><span data-bind="titolo"></span> <span class="details__date" data-bind="sottotitolo"></span></h1>
+      <dl class="facts">
+        <div><dt data-i18n>Quando</dt><dd data-bind="quando"></dd></div>
+        <div><dt data-i18n>Dove</dt><dd data-bind="dove"></dd></div>
+        <div><dt data-i18n>Con</dt><dd data-bind="conduttori"></dd></div>
+      </dl>
+    </header>
+
+    <aside class="booking" id="prenota" aria-labelledby="booking-title">
+      <div class="card">
+        <div class="card__head">
+          <h2 id="booking-title" class="card__title" data-i18n>Prenota il tuo posto</h2>
+          <span class="badge" data-bind="demo" hidden>Demo</span>
+        </div>
+        <p class="card__date" data-bind="data"></p>
+
+        <p class="status" aria-live="polite"><span class="status__dot"></span><span class="status__label" data-i18n>Controllo disponibilità…</span></p>
+        <p class="card__lead" data-i18n>Lascia nome, cognome e numero di telefono: ti contattiamo solo per comunicazioni sul workshop.</p>
+
+        <form class="form" id="form" novalidate>
+          <div class="field-row">
+            <label class="field">
+              <span data-i18n>Nome</span>
+              <input name="nome" autocomplete="given-name" required maxlength="60">
+            </label>
+            <label class="field">
+              <span data-i18n>Cognome</span>
+              <input name="cognome" autocomplete="family-name" required maxlength="60">
+            </label>
+          </div>
+          <label class="field">
+            <span data-i18n>Telefono</span>
+            <input name="telefono" type="tel" autocomplete="tel" inputmode="tel" required maxlength="30" pattern="[0-9+ ().\/\-]{8,30}" placeholder="+39 333 123 4567">
+          </label>
+
+          <label class="hp" aria-hidden="true">Sito web <input name="website" tabindex="-1" autocomplete="off"></label>
+
+          <p class="form__error" role="alert" hidden></p>
+          <button class="btn btn--block" type="submit" data-i18n>Prenota il workshop</button>
+          <p class="form__legal" data-i18n-html="legaleWorkshop">Cliccando sul bottone accetti l'<a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a>. Usiamo il tuo numero solo per comunicazioni sul workshop e non lo cediamo a terzi.</p>
+        </form>
+
+        <div class="result" hidden tabindex="-1"></div>
+      </div>
+    </aside>
+
+    <section class="ws__corpo">
+      <div class="prose" data-bind="testo"></div>
+      <img class="ws__locandina" data-bind="locandina" alt="" width="1000" height="1414" loading="lazy">
+    </section>
+  </main>
+
+  <footer class="footer">
+    <img src="assets/bolla-logo.png" alt="bolla®" class="footer__logo" width="808" height="312" loading="lazy">
+    <nav class="social" aria-label="Contatti e social">
+      <a href="https://www.instagram.com/bbbbolla/" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" class="pieno"/></svg>
+      </a>
+      <a href="https://www.facebook.com/people/BOLLA/61595612496320/" target="_blank" rel="noopener" aria-label="Facebook">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="pieno" d="M14.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.5V4.4c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.4H9.2v3h2.5V21z"/></svg>
+      </a>
+      <a href="mailto:bollacatania@gmail.com" aria-label="Email: bollacatania@gmail.com">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7l8 6 8-6"/></svg>
+      </a>
+    </nav>
+    <p class="footer__small"><a href="privacy.html" data-i18n>Privacy</a> · © 2026 bolla®</p>
+  </footer>
+
+  <a href="#prenota" class="mobile-cta btn" data-i18n>Prenota il workshop</a>
+
+  <script src="js/i18n.js?v=202610261509"></script>
+  <script src="js/config.js?v=202610261509"></script>
+  <script src="js/demo.js?v=202610261509"></script>
+  <script src="js/workshop.js?v=202610261509"></script>
+</body>
+</html>

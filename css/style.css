@@ -250,7 +250,7 @@ a { color: inherit; }
   align-items: start;
 }
 
-.layout__cta { grid-column: 1 / -1; display: flex; justify-content: center; margin-bottom: clamp(-8px, -2vw, -24px); }
+.layout__cta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: clamp(-8px, -2vw, -24px); }
 
 .eyebrow {
   margin: 0 0 8px;
@@ -337,6 +337,7 @@ a { color: inherit; }
 .lineup__persona { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line); }
 .lineup__persona-nome { font-weight: 600; margin-bottom: .3em !important; }
 .lineup__persona-nome span { font-weight: 400; color: var(--muted); }
+.lineup__prenota { margin-top: 4px; }
 @keyframes apri { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 .lineup__note { display: block; font-size: 14px; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
 .lineup__tag {
@@ -515,9 +516,19 @@ a { color: inherit; }
 }
 .mobile-cta.is-hidden { transform: translateY(140%); opacity: 0; pointer-events: none; }
 
+/* ---------- pagina workshop: titolo e testo a sinistra, modulo a destra (su mobile il modulo sta in mezzo) ---------- */
+.ws { grid-template-areas: "testa card" "corpo card"; grid-template-rows: auto 1fr; row-gap: 0; }
+.ws__testa { grid-area: testa; }
+.ws .booking { grid-area: card; }
+.ws__corpo { grid-area: corpo; }
+.ws__titolo .details__date { margin-top: 10px; font-size: .5em; letter-spacing: -.02em; line-height: 1.1; }
+.ws__locandina { width: min(100%, 520px); height: auto; margin-top: 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); box-shadow: 10px 10px 0 var(--ink); }
+.ws .result .btn { margin-top: 4px; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 960px) {
   .layout { grid-template-columns: 1fr; }
+  .ws { grid-template-areas: "testa" "card" "corpo"; row-gap: clamp(32px, 6vw, 80px); }
   .booking { position: static; }
   .mobile-cta { display: inline-flex; }
   .topbar .btn { display: none; }

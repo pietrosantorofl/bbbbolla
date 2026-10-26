@@ -131,6 +131,11 @@
       if (p.testo) w.appendChild(el("p", null, L(p.testo)));
       box.appendChild(w);
     });
+    if (d.prenota) {
+      var b = el("a", "btn btn--small lineup__prenota", L(d.prenota.testo));
+      b.href = d.prenota.href;
+      box.appendChild(b);
+    }
     return box;
   }
 
