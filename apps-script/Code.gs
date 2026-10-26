@@ -320,6 +320,9 @@ function aggiornamentiUnaTantum_() {
     // con Brevo non è arrivata: stessa email dal canale di riserva (Gmail di bollacatania@gmail.com)
     { id: 'scuse-conferma-pietrosantoro90-gmail', fai: function () {
       scuseConferma_(db, ['pietrosantoro90@gmail.com'], true);
+    } },
+    { id: 'eventi-brevo-tre-indirizzi', fai: function () {
+      PropertiesService.getScriptProperties().setProperty('EVENTI_BREVO_EMAIL', 'pietrosantoro90@gmail.com,bollacatania@gmail.com,pietrosantoro.fl@gmail.com');
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -1198,17 +1201,26 @@ function scuseConferma_(db, emails, soloGmail) {
   PropertiesService.getScriptProperties().setProperty('SCUSE_ESITO', new Date().toISOString() + ' ' + esiti.join(' · '));
 }
 
-// Ultimi eventi Brevo (richiesta, consegna, blocco, rimbalzo…) di un indirizzo, salvati senza l'indirizzo per la pagina di stato.
-function eventiBrevo_(email) {
-  var r = UrlFetchApp.fetch('https://api.brevo.com/v3/smtp/statistics/events?limit=20&sort=desc&email=' + encodeURIComponent(email), {
-    headers: { 'api-key': chiaveBrevo_(), accept: 'application/json' }, muteHttpExceptions: true
+// Stato dell'account Brevo e ultimi eventi (richiesta, consegna, blocco, rimbalzo…) di alcuni indirizzi separati da virgola,
+// salvati senza gli indirizzi (indirizzo 1, 2…) per la pagina di stato.
+function eventiBrevo_(emails) {
+  var opz = { headers: { 'api-key': chiaveBrevo_(), accept: 'application/json' }, muteHttpExceptions: true };
+  var parti = [];
+  var acc = UrlFetchApp.fetch('https://api.brevo.com/v3/account', opz);
+  if (acc.getResponseCode() !== 200) parti.push('account: errore ' + acc.getResponseCode() + ' ' + acc.getContentText().slice(0, 200));
+  else parti.push('account: ' + (JSON.parse(acc.getContentText()).plan || []).map(function (p) {
+    return p.type + ' crediti ' + p.credits + (p.creditsType ? ' ' + p.creditsType : '') + (p.endDate ? ' fino al ' + p.endDate : '');
+  }).join(', '));
+  String(emails).split(',').forEach(function (email, i) {
+    var r = UrlFetchApp.fetch('https://api.brevo.com/v3/smtp/statistics/events?limit=8&sort=desc&email=' + encodeURIComponent(email.trim()), opz);
+    var testo;
+    if (r.getResponseCode() !== 200) testo = 'errore ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 200);
+    else testo = (JSON.parse(r.getContentText()).events || []).map(function (e) {
+      return String(e.date).slice(5, 16) + ' ' + e.event + (e.reason ? ' (' + String(e.reason).slice(0, 80) + ')' : '') + ' «' + String(e.subject || '').slice(0, 25) + '»';
+    }).join(' · ') || 'nessun evento';
+    parti.push('indirizzo ' + (i + 1) + ': ' + testo);
   });
-  var testo;
-  if (r.getResponseCode() !== 200) testo = 'errore ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 200);
-  else testo = (JSON.parse(r.getContentText()).events || []).map(function (e) {
-    return String(e.date).slice(0, 16) + ' ' + e.event + (e.reason ? ' (' + String(e.reason).slice(0, 80) + ')' : '') + ' «' + String(e.subject || '').slice(0, 40) + '»';
-  }).join(' · ') || 'nessun evento';
-  PropertiesService.getScriptProperties().setProperty('EVENTI_BREVO', new Date().toISOString().slice(0, 16) + ' ' + testo);
+  PropertiesService.getScriptProperties().setProperty('EVENTI_BREVO', new Date().toISOString().slice(0, 16) + ' ' + parti.join(' ¦ '));
 }
 
 function emailScuseConferma_(pass, s, g, capogruppo, soloGmail) {
