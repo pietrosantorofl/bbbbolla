@@ -156,6 +156,7 @@ function doGet() {
     '<p>Email Gmail ancora inviabili oggi: ' + MailApp.getRemainingDailyQuota() + '</p>' +
     '<p>Brevo: ' + (chiaveBrevo_() ? 'collegato ✓' : 'non collegato') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
+    '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
     erroriAggiornamenti_() + colonneSfasate_(ss) + confermeInSospeso_() + '</div>';
   return HtmlService.createHtmlOutput(html).setTitle('bolla® backend');
@@ -297,6 +298,10 @@ function aggiornamentiUnaTantum_() {
     { id: 'titolo-serata-2026-10-30-cumbia', fai: function () {
       var s = trova_(db.Serate, 'id', '2026-10-30');
       if (s) aggiorna_(db.Serate, s, { titolo: TITOLO_SERATA_2026_10_30 });
+    } },
+    // link di conferma rotti dalle colonne sfasate: per ora riapre e riscrive solo a questo indirizzo (prova)
+    { id: 'scuse-conferma-pietrosantoro90', fai: function () {
+      scuseConferma_(db, ['pietrosantoro90@gmail.com']);
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -1149,6 +1154,53 @@ function emailConferma_(pass, s, g, capogruppo) {
     'Ciao ' + pass.nome + ', conferma la tua email aprendo questo link: ' + link +
       '. Il pass si attiva solo quando tutti e ' + dim + ' i membri del gruppo hanno confermato.',
     layout_({ banner: 'banner-logo.jpg', anteprima: 'Conferma la tua email per il pass di gruppo', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }), null);
+}
+
+/* Chi non ha potuto confermare per un guasto: il pass riparte da adesso (di nuovo CONFIG.oreConferma ore),
+ * il gruppo ancora "aperto" nel foglio ha altre CONFIG.oreValiditaGruppo ore (non oltre la serata),
+ * e arriva un'email di scuse con lo stesso link personale. Esito (senza indirizzi) nella pagina di stato. */
+function scuseConferma_(db, emails) {
+  var norm = emails.map(function (e) { return normEmail_(e.toLowerCase()); });
+  var esiti = [];
+  norm.forEach(function (n) {
+    var pass = db.Pass.filter(function (r) { return r.email_norm === n && r.tipo === 'gruppo' && r.stato !== 'annullato'; }).pop();
+    if (!pass) { esiti.push('nessun pass di gruppo'); return; }
+    var s = serata_(db, pass.serata);
+    var g = gruppo_(db, pass.rif);
+    var now = new Date();
+    if (pass.stato === 'da_confermare') aggiorna_(db.Pass, pass, { creato: now });
+    if (g && g.stato === 'aperto') {
+      var scadenza = new Date(Math.min(now.getTime() + CONFIG.oreValiditaGruppo * 36e5, fineSerata_(s).getTime()));
+      if (data_(g.scadenza) < scadenza) aggiorna_(db.Gruppi, g, { scadenza: scadenza });
+    }
+    var capo = !!g && g.capogruppo === pass.chiave;
+    emailScuseConferma_(pass, s, g, capo);
+    esiti.push('inviata (' + pass.stato + ', gruppo ' + (g ? statoGruppo_(db, g).stato : '?') + (capo ? ', capogruppo' : '') + ')');
+  });
+  PropertiesService.getScriptProperties().setProperty('SCUSE_ESITO', new Date().toISOString() + ' ' + esiti.join(' · '));
+}
+
+function emailScuseConferma_(pass, s, g, capogruppo) {
+  var data = dataBreve_(s);
+  var link = linkPass_(pass.chiave);
+  var dim = CONFIG.dimensioneGruppo;
+  var confermato = pass.stato === 'confermato';
+  var corpo =
+    kicker_('Scusaci') +
+    titolo_('Ciao ' + esc_(pass.nome) + ', ora il link funziona') +
+    paragrafo_('Il link di conferma che ti abbiamo mandato non funzionava per un problema tecnico: ora è risolto. ' +
+      (confermato ? 'La tua email risulta già confermata: dal link vedi lo stato del tuo gruppo.' :
+        'Il tuo posto nel gruppo è ancora valido: conferma dal bottone qui sotto.')) +
+    bottone_(link, confermato ? 'Apri il mio pass' : 'Conferma la mia email') +
+    (capogruppo && g ?
+      '<p style="margin:24px 0 8px;font-size:15px;font-weight:700">Il link del gruppo da girare ai tuoi ' + (dim - 1) + ' amici</p>' +
+      '<p style="margin:0 0 12px;padding:12px 14px;border:1.5px dashed #121212;border-radius:12px;background:#ffffff;font-size:14px;word-break:break-all">' +
+        '<a href="' + linkGruppo_(g.id) + '" style="color:#121212">' + linkGruppo_(g.id) + '</a></p>' : '') +
+    nota_('Il pass si attiva quando tutti e ' + dim + ' i membri del gruppo hanno confermato la propria email' +
+      (confermato ? '.' : '. Hai ' + CONFIG.oreConferma + ' ore per confermare.'));
+  invia_(pass.email, 'Scusaci: ora il link funziona — bolla® ' + data,
+    'Ciao ' + pass.nome + ', il link di conferma che ti abbiamo mandato non funzionava per un problema tecnico: ora è risolto. Apri: ' + link,
+    layout_({ banner: 'banner-logo.jpg', anteprima: 'Il link di conferma ora funziona', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }));
 }
 
 function emailAttesa_(r, s) {
