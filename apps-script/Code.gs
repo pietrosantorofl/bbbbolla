@@ -444,6 +444,30 @@ function aggiornamentiUnaTantum_() {
     } },
     // nuove regole (26.10): conferma entro 48 ore, gruppi da completare entro le 18:00 del giorno della serata.
     // La scadenza vera si calcola dalla serata; qui si aggiorna solo la colonna, perché nel foglio si legga giusta.
+    // righe di prova a nome "Test Test": pass, gruppi fatti solo di loro, lista d'attesa e workshop
+    { id: 'pulizia-test-test-2026-10-26', fai: function () {
+      var lock = LockService.getScriptLock();
+      if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+      try {
+        var db2 = carica_();
+        var prova = function (r) { return String(r.nome).trim().toLowerCase() === 'test' && String(r.cognome).trim().toLowerCase() === 'test'; };
+        var pass = db2.Pass.filter(prova);
+        var gruppi = db2.Gruppi.filter(function (g) {
+          var membri = db2.Pass.filter(function (r) { return r.tipo === 'gruppo' && r.rif === g.id; });
+          return membri.length > 0 && membri.every(prova);
+        });
+        var attesa = db2.Attesa.filter(prova);
+        var workshop = db2.Workshop.filter(prova);
+        [pass, gruppi, attesa, workshop].forEach(function (righe) {
+          righe.slice().sort(function (x, y) { return y._riga - x._riga; }).forEach(function (r) { r._foglio.deleteRow(r._riga); });
+        });
+        PropertiesService.getScriptProperties().setProperty('PULIZIA_TEST', new Date().toISOString().slice(0, 16) +
+          ' "Test Test": pass eliminati ' + pass.length + (pass.length ? ' (' + pass.map(function (r) { return r.codice; }).join(', ') + ')' : '') +
+          ' · gruppi ' + gruppi.length + ' · lista d\'attesa ' + attesa.length + ' · workshop ' + workshop.length);
+      } finally {
+        lock.releaseLock();
+      }
+    } },
     { id: 'scadenza-gruppi-ore-18', fai: function () {
       var db2 = carica_();
       db2.Gruppi.forEach(function (g) {
