@@ -72,11 +72,12 @@
   bind("presentazione", function (n) { if (C.rassegna.presentazione) n.textContent = L(C.rassegna.presentazione); });
 
 
-  // nome dell'artista: link al profilo (Instagram) se c'è
+  // nome dell'artista: link al profilo (Instagram, nuova scheda) o a una pagina del sito, se c'è
   function nomeArtista(a, cls) {
-    if (!a.link) return el("span", cls, a.nome);
-    var l = el("a", (cls ? cls + " " : "") + "artista", a.nome);
-    l.href = a.link; l.target = "_blank"; l.rel = "noopener";
+    if (!a.link) return el("span", cls, L(a.nome));
+    var l = el("a", (cls ? cls + " " : "") + "artista", L(a.nome));
+    l.href = a.link;
+    if (/^https?:/.test(a.link)) { l.target = "_blank"; l.rel = "noopener"; }
     return l;
   }
 
@@ -150,7 +151,7 @@
       var a = el("a");
       a.href = "?serata=" + encodeURIComponent(s.id);
       a.appendChild(el("span", null, sd.getDate() + " " + MESI[sd.getMonth()]));
-      a.appendChild(el("span", null, s.lineup.map(function (x) { return x.nome; }).slice(0, 2).join(", ") + " →"));
+      a.appendChild(el("span", null, s.lineup.map(function (x) { return L(x.nome); }).slice(0, 2).join(", ") + " →"));
       var li = el("li"); li.appendChild(a); ul.appendChild(li);
     });
     n.hidden = false;

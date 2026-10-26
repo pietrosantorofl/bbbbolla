@@ -57,6 +57,7 @@ var CONFIG = {
 };
 
 var TZ = 'Europe/Rome';
+var TITOLO_SERATA_2026_10_30 = 'bolla® — La Cumbia tradizionale colombiana, Selva Cosmica, Franzuà, Dario Aiello';
 var COLONNE = {
   Serate: ['id', 'titolo', 'data', 'capienza', 'aperta'],
   Inviti: ['token', 'etichetta', 'serata', 'max', 'scadenza', 'attivo', 'creato'],
@@ -97,7 +98,7 @@ function setup() {
   });
   var serate = ss.getSheetByName('Serate');
   if (serate.getLastRow() === 1) {
-    serate.appendRow(['2026-10-30', 'bolla® — Ritmi in Colombia, Selva Cosmica, Franzuà', '2026-10-30', '150', 'TRUE']);
+    serate.appendRow(['2026-10-30', TITOLO_SERATA_2026_10_30, '2026-10-30', '150', 'TRUE']);
   }
 }
 
@@ -261,6 +262,11 @@ function aggiornamentiUnaTantum_() {
       db.Inviti.forEach(function (inv) {
         if (['Pietro', 'Dario', 'Fabrizio', 'Tommaso'].indexOf(inv.etichetta) >= 0) aggiorna_(db.Inviti, inv, { max: '' });
       });
+    } },
+    // il workshop ha cambiato nome: il titolo della serata compare nelle email e nell'app staff
+    { id: 'titolo-serata-2026-10-30-cumbia', fai: function () {
+      var s = trova_(db.Serate, 'id', '2026-10-30');
+      if (s) aggiorna_(db.Serate, s, { titolo: TITOLO_SERATA_2026_10_30 });
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;

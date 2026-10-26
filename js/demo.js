@@ -137,7 +137,7 @@
       api.setup();
       // serate del sito e un invito di prova: ?invito=demoinvito01
       db.sheets.Serate.length = 1;
-      window.BOLLA.serate.forEach(function (s) { db.sheets.Serate.push([s.id, "bolla® — " + s.lineup.map(function (a) { return a.nome; }).join(", "), s.data, "150", "TRUE"]); });
+      window.BOLLA.serate.forEach(function (s) { db.sheets.Serate.push([s.id, "bolla® — " + s.lineup.map(function (a) { return a.nome.it || a.nome; }).join(", "), s.data, "150", "TRUE"]); });
       api.appendi_("Inviti", { token: "demoinvito01", etichetta: "Invito di prova", serata: "", max: 3, scadenza: "", attivo: "TRUE", creato: new Date() });
       db.props = db.props || {};
       save();

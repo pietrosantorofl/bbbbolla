@@ -45,14 +45,15 @@ window.BOLLA = {
         {
           // ora: orario in locandina (in ordine di programma); minore: true = food & beverage, colonna a destra;
           // main: true = main act, più grande nella locandina
-          nome: "Ritmi in Colombia", ora: "20:00", tag: "Workshop", link: "https://www.instagram.com/karvpercu/",
+          // link: profilo Instagram (si apre in una nuova scheda) oppure una pagina del sito
+          nome: { it: "La Cumbia tradizionale colombiana", en: "Traditional Colombian Cumbia" }, ora: "20:00", tag: "Workshop", link: "workshop.html",
           // dettagli: testo breve (massimo 5 righe) che si apre cliccando la voce nella line-up
           dettagli: {
-            titolo: { it: "La Cumbia tradizionale colombiana: laboratorio di percussioni e canto afrocolombiani", en: "Traditional Colombian Cumbia: an Afro-Colombian percussion and singing workshop" },
+            titolo: { it: "Laboratorio di percussioni e canto afrocolombiani", en: "An Afro-Colombian percussion and singing workshop" },
             testo: [
               { it: "Laboratorio sui ritmi afrocolombiani, dalla cumbia al bullerengue: voce, corpo e tamburo per creare musica insieme, in cerchio. Nessuna esperienza richiesta.",
                 en: "A workshop on Afro-Colombian rhythms, from cumbia to bullerengue: voice, body and drum to make music together, in a circle. No experience needed." },
-              { it: "Con Karen Andrea Ramirez Viasus (percussioni) e Milenaria (voce).", en: "With Karen Andrea Ramirez Viasus (percussion) and Milenaria (vocals)." }
+              { it: "Con Karen Andrea Ramirez Viasus (percussioni) e Ana Milena Lozada Avella (voce).", en: "With Karen Andrea Ramirez Viasus (percussion) and Ana Milena Lozada Avella (vocals)." }
             ],
             // bottone in fondo ai dettagli
             prenota: { href: "workshop.html", testo: { it: "Prenota il workshop", en: "Book the workshop" } }
