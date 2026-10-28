@@ -174,6 +174,7 @@ function doGet() {
     '<p>Pulizia workshop: ' + esc_(PropertiesService.getScriptProperties().getProperty('PULIZIA_WORKSHOP') || 'nessuna') + '</p>' +
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
+    '<p>Promemoria di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('PROMEMORIA_ESITO') || 'nessuno') + '</p>' +
     '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
     erroriAggiornamenti_() + colonneSfasate_(ss) + confermeInSospeso_() + '</div>';
@@ -486,6 +487,17 @@ function aggiornamentiUnaTantum_() {
         var s = serata_(db2, g.serata);
         if (s && g.stato === 'aperto') aggiorna_(db2.Gruppi, g, { scadenza: scadenzaGruppi_(s) });
       });
+    } },
+    // promemoria di conferma: prima le due versioni (capogruppo e membro) a te, con dati finti
+    { id: 'prova-promemoria-conferma-2026-10-28', fai: function () {
+      var s = serata_(db, '2026-10-30');
+      var finto = function () { return { nome: 'Pietro', email: 'pietrosantoro90@gmail.com', chiave: token_(24), newsletter: 'TRUE' }; };
+      var entro = new Date(Date.now() + 30 * 36e5);
+      var canali = [
+        emailPromemoriaConferma_(finto(), s, { capogruppo: true, gruppo: { id: 'PROVA' }, confermati: 1, membri: 2, scadenza: entro }, '[Prova capogruppo] '),
+        emailPromemoriaConferma_(finto(), s, { capogruppo: false, gruppo: null, confermati: 2, membri: 3, scadenza: entro }, '[Prova membro] ')
+      ];
+      PropertiesService.getScriptProperties().setProperty('PROMEMORIA_ESITO', new Date().toISOString().slice(0, 16) + ' 2 prove inviate (' + canali.join(', ') + ')');
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -1478,6 +1490,53 @@ function emailScuseConferma_(pass, s, g, capogruppo, soloGmail) {
     layout_({ banner: 'banner-logo.jpg', anteprima: 'Il link di conferma ora funziona', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }));
 }
 
+/* Promemoria a chi ha un pass di gruppo ancora da confermare. La scadenza è la sua: CONFIG.oreConferma ore
+ * dall'iscrizione, ma mai dopo la chiusura dei gruppi. Se non conferma il capogruppo, il gruppo si chiude per tutti. */
+function infoPromemoria_(db, pass) {
+  var s = serata_(db, pass.serata);
+  var g = gruppo_(db, pass.rif);
+  var st = statoGruppo_(db, g);
+  var entro = new Date(data_(pass.creato).getTime() + CONFIG.oreConferma * 36e5);
+  var chiusura = scadenzaGruppi_(s);
+  return {
+    s: s, gruppo: g, stato: st.stato, capogruppo: g.capogruppo === pass.chiave,
+    confermati: st.confermati.length, membri: st.membri.length, scadenza: entro < chiusura ? entro : chiusura
+  };
+}
+
+// prefisso: '' per le email vere, '[Prova …] ' per quelle di prova
+function emailPromemoriaConferma_(pass, s, info, prefisso) {
+  var data = dataBreve_(s);
+  var link = linkPass_(pass.chiave);
+  var dim = CONFIG.dimensioneGruppo;
+  var entro = dataOra_(info.scadenza);
+  var corpo =
+    kicker_('Promemoria') +
+    titolo_('Ciao ' + esc_(pass.nome) + ', il tuo posto ti aspetta') +
+    paragrafo_('Hai chiesto un pass di gruppo per bolla® di ' + giorno_(fineSerata_(s)) + ', ma la tua email non è ancora confermata. ' +
+      'Senza conferma il pass non si attiva, né per te né per il tuo gruppo.') +
+    bottone_(link, 'Conferma la mia email') +
+    riquadro_(
+      '<p style="margin:0 0 6px;font-size:15px;font-weight:700">Il tuo gruppo: ' + info.confermati + ' su ' + dim + ' ' +
+        (info.confermati === 1 ? 'ha' : 'hanno') + ' confermato</p>' +
+      '<p style="margin:0;font-size:14px;line-height:1.5">' + (info.capogruppo
+        ? 'Il gruppo l\'hai creato tu: se non confermi, si chiude anche per gli altri.'
+        : 'Gli altri aspettano te: il pass arriva a tutti solo quando confermate in ' + dim + '.') + '</p>') +
+    (info.capogruppo && info.gruppo && info.membri < dim ?
+      '<p style="margin:24px 0 8px;font-size:15px;font-weight:700">Ti manca ancora qualcuno? Gira questo link</p>' +
+      '<p style="margin:0 0 12px;padding:12px 14px;border:1.5px dashed #121212;border-radius:12px;background:#ffffff;font-size:14px;word-break:break-all">' +
+        '<a href="' + linkGruppo_(info.gruppo.id) + '" style="color:#121212">' + linkGruppo_(info.gruppo.id) + '</a></p>' +
+      bottone_('https://wa.me/?text=' + encodeURIComponent('Entra nel mio gruppo per il pass gratuito di bolla® (' + data + '): ' + linkGruppo_(info.gruppo.id)), 'Invia su WhatsApp', true) : '') +
+    '<div style="height:24px"></div>' +
+    dettagli_(s, data) +
+    nota_('Hai tempo fino a ' + entro + '. Dopo, ' + (info.capogruppo ? 'il gruppo si chiude' : 'il tuo posto può passare a qualcun altro') +
+      '. Se non ti serve più, ignora questa email.');
+  return invia_(pass.email, prefisso + 'Manca solo il tuo clic — bolla® ' + data,
+    'Ciao ' + pass.nome + ', la tua email per il pass di gruppo di bolla® del ' + data + ' non è ancora confermata. ' +
+      'Conferma entro ' + entro + ' aprendo questo link: ' + link,
+    layout_({ banner: 'banner-logo.jpg', anteprima: 'Conferma entro ' + entro + ', poi il pass si attiva', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }));
+}
+
 function emailAttesa_(r, s) {
   var data = dataBreve_(s);
   var corpo =
@@ -1860,6 +1919,19 @@ function fineSerata_(s) {
 
 function dataBreve_(s) {
   return Utilities.formatDate(fineSerata_(s), TZ, 'dd.MM.yyyy');
+}
+
+// "venerdì 30 ottobre"
+function giorno_(d) {
+  var p = Utilities.formatDate(d, TZ, 'yyyy-MM-dd').split('-').map(Number);
+  var giorni = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
+  var mesi = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+  return giorni[new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay()] + ' ' + p[2] + ' ' + mesi[p[1] - 1];
+}
+
+// "venerdì 30 ottobre alle 18:00"
+function dataOra_(d) {
+  return giorno_(d) + ' alle ' + Utilities.formatDate(d, TZ, 'HH:mm');
 }
 
 function data_(v) {
