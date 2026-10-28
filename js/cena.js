@@ -9,8 +9,8 @@
     data: "2026-11-06",
     ora: "20:00",
     durata: 3,                          // ore, per il calendario
-    titolo: "Cena colombiana",
-    sottotitolo: "cucinata da Marina dell’Antojito Colombiano",
+    titolo: "A cena con Marina",
+    sottotitolo: "Marina e la sua cucina dell’Antojito Colombiano",
     luogo: {
       nome: "MONO",
       indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
