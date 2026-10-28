@@ -498,6 +498,10 @@ function aggiornamentiUnaTantum_() {
         emailPromemoriaConferma_(finto(), s, { capogruppo: false, gruppo: null, confermati: 2, membri: 3, scadenza: entro }, '[Prova membro] ')
       ];
       PropertiesService.getScriptProperties().setProperty('PROMEMORIA_ESITO', new Date().toISOString().slice(0, 16) + ' 2 prove inviate (' + canali.join(', ') + ')');
+    } },
+    // promemoria vero: tutti i pass di gruppo ancora da confermare, se il gruppo è aperto e la loro scadenza non è passata
+    { id: 'promemoria-conferma-2026-10-30', fai: function () {
+      promemoriaConferme_('2026-10-30');
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -1502,6 +1506,32 @@ function infoPromemoria_(db, pass) {
     s: s, gruppo: g, stato: st.stato, capogruppo: g.capogruppo === pass.chiave,
     confermati: st.confermati.length, membri: st.membri.length, scadenza: entro < chiusura ? entro : chiusura
   };
+}
+
+// Esito (solo codici, niente indirizzi) nella pagina di stato.
+function promemoriaConferme_(serata) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+  var esiti = [];
+  try {
+    var db = carica_();
+    var now = new Date();
+    db.Pass.filter(function (r) { return r.tipo === 'gruppo' && r.stato === 'da_confermare' && r.serata === serata; }).forEach(function (pass) {
+      if (!gruppo_(db, pass.rif)) { esiti.push(pass.codice + ' saltato (gruppo mancante)'); return; }
+      var info = infoPromemoria_(db, pass);
+      if (info.stato !== 'aperto') { esiti.push(pass.codice + ' saltato (gruppo ' + info.stato + ')'); return; }
+      if (info.scadenza < now) { esiti.push(pass.codice + ' saltato (scaduto)'); return; }
+      try {
+        var canale = emailPromemoriaConferma_(pass, info.s, info, '');
+        esiti.push(pass.codice + ' inviata' + (info.capogruppo ? ' (capogruppo)' : '') + ' con ' + canale);
+      } catch (err) {
+        esiti.push(pass.codice + ' errore: ' + String(err.message).slice(0, 80));
+      }
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  PropertiesService.getScriptProperties().setProperty('PROMEMORIA_ESITO', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessun pass da confermare'));
 }
 
 // prefisso: '' per le email vere, '[Prova …] ' per quelle di prova
