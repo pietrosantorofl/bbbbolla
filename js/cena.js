@@ -9,7 +9,7 @@
     data: "2026-11-06",
     ora: "20:00",
     durata: 3,                          // ore, per il calendario
-    titolo: "A cena con Marina",
+    titolo: "Cena colombiana",
     sottotitolo: "Marina e la sua cucina dell’Antojito Colombiano",
     luogo: {
       nome: "MONO",
