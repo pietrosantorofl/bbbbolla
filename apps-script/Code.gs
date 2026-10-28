@@ -16,6 +16,7 @@
  *   Pass    creato | serata | tipo | rif | nome | cognome | email | email_norm | chiave | codice | stato | confermato | checkin | newsletter | checkin_da
  *   Attesa  creato | serata | nome | cognome | email | email_norm | arrivato_da | newsletter | note
  *   Workshop creato | workshop | nome | cognome | telefono | telefono_norm | note
+ *   Cena    creato | cena | nome | cognome | telefono | telefono_norm | persone | note
  *
  * Web App: POST body JSON { action, ... } con action = stato | crea_gruppo | unisciti | invito | pass
  */
@@ -47,6 +48,14 @@ var CONFIG = {
     posti: 40                     // 0 = nessun limite; altrimenti a quota raggiunta la pagina mostra "Esaurito"
   },
 
+  /* prenotazioni alla cena (pagina nascosta bbbbolla.it/6nov-tavolacunzata/): nome, cognome, telefono e persone, foglio "Cena" */
+  cena: {
+    id: 'tavolacunzata-2026-11-06',   // deve coincidere con CENA.id in js/cena.js
+    inizio: '2026-11-06 20:00',       // dopo quest'ora le prenotazioni si chiudono
+    posti: 0,                         // coperti in tutto; 0 = nessun limite
+    maxPersone: 6                     // persone al massimo in una prenotazione
+  },
+
   /* email temporanee: lista pubblica aggiornata (~10.000 domini) + controllo che il dominio riceva posta */
   listaUsaEGetta: 'https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/main/disposable_email_blocklist.conf',
   controlloDominio: true,
@@ -66,10 +75,11 @@ var COLONNE = {
   Pass: ['creato', 'serata', 'tipo', 'rif', 'nome', 'cognome', 'email', 'email_norm', 'chiave', 'codice', 'stato', 'confermato', 'checkin', 'newsletter', 'checkin_da'],
   Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note'],
   Live: ['creato', 'serata', 'nickname', 'colore', 'emozione', 'dispositivo'],
-  Workshop: ['creato', 'workshop', 'nome', 'cognome', 'telefono', 'telefono_norm', 'note']
+  Workshop: ['creato', 'workshop', 'nome', 'cognome', 'telefono', 'telefono_norm', 'note'],
+  Cena: ['creato', 'cena', 'nome', 'cognome', 'telefono', 'telefono_norm', 'persone', 'note']
 };
 var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome',
-  'workshop', 'telefono', 'telefono_norm'];
+  'workshop', 'telefono', 'telefono_norm', 'cena'];
 // riserva se la lista online non è raggiungibile
 var DOMINI_USA_E_GETTA = ['mailinator.com', 'yopmail.com', 'yopmail.fr', 'guerrillamail.com', 'guerrillamail.info', 'sharklasers.com',
   'grr.la', '10minutemail.com', 'temp-mail.org', 'tempmail.com', 'tempmail.net', 'trashmail.com', 'getnada.com', 'dispostable.com',
@@ -192,6 +202,8 @@ function doPost(e) {
       case 'live_regia': return json_(azioneLiveRegia_(d));
       case 'workshop_stato': return json_(azioneWorkshopStato_());
       case 'workshop_prenota': return json_(azioneWorkshopPrenota_(d));
+      case 'cena_stato': return json_(azioneCenaStato_());
+      case 'cena_prenota': return json_(azioneCenaPrenota_(d));
     }
     return json_(errore_('dati', 'Azione sconosciuta.'));
   } catch (err) {
@@ -771,6 +783,57 @@ function telefono_(v) {
   if (/^\d/.test(cifre)) cifre = '+39' + cifre;
   if (!/^\+\d{8,15}$/.test(cifre)) return null;
   return { testo: testo, norm: cifre };
+}
+
+/* ---------- cena ----------
+ * Pagina nascosta (bbbbolla.it/6nov-tavolacunzata/), non collegata dal resto del sito. Come il workshop:
+ * nome, cognome e telefono, più il numero di persone. Le righe finiscono nel foglio "Cena" e i coperti
+ * si contano sommando le persone. Stesso anti-bot; lo stesso numero non può prenotare due volte. */
+function azioneCenaStato_() {
+  var db = carica_();
+  var liberi = postiCena_(db);
+  return { ok: true, modulo: tokenModulo_(), cena: { aperta: cenaAperta_(), posti: liberi > 0, maxPersone: Math.max(0, Math.min(CONFIG.cena.maxPersone, liberi)) } };
+}
+
+function azioneCenaPrenota_(d) {
+  var bot = controllaModulo_(d.modulo);
+  if (bot) return bot;
+  if (d.website) return errore_('modulo', 'Richiesta non valida.'); // honeypot compilato
+  var nome = pulisci_(d.nome, 60);
+  var cognome = pulisci_(d.cognome, 60);
+  if (!nome || !cognome) return errore_('dati', 'Inserisci nome e cognome.');
+  var tel = telefono_(d.telefono);
+  if (!tel) return errore_('dati', 'Controlla il numero di telefono.');
+  var persone = Number(d.persone);
+  if (!(persone >= 1 && persone <= CONFIG.cena.maxPersone && Math.floor(persone) === persone)) return errore_('dati', 'Scegli per quante persone prenoti.');
+  if (d.privacy !== true) return errore_('dati', 'Serve il consenso privacy.');
+
+  return conLock_(function () {
+    if (tettoRaggiunto_()) return errore_('occupato', 'In questo momento stanno arrivando troppe registrazioni. Riprova tra un minuto.');
+    if (!cenaAperta_()) return errore_('chiusa', 'Le prenotazioni per la cena sono chiuse.');
+    var db = carica_();
+    var gia = db.Cena.some(function (r) { return r.cena === CONFIG.cena.id && r.telefono_norm === tel.norm; });
+    if (gia) return errore_('duplicato', 'Questo numero ha già una prenotazione per la cena.');
+    var liberi = postiCena_(db);
+    if (liberi <= 0) return errore_('esaurito', 'I posti per la cena sono esauriti.');
+    if (persone > liberi) return errore_('posti', liberi === 1 ? 'Resta un solo posto: prenota per 1 persona.' : 'Restano solo ' + liberi + ' posti: prenota per meno persone.');
+    appendi_('Cena', { creato: new Date(), cena: CONFIG.cena.id, nome: nome, cognome: cognome, telefono: tel.testo, telefono_norm: tel.norm, persone: persone, note: '' });
+    contaRegistrazione_();
+    segnaModuloUsato_(d.modulo);
+    return { ok: true };
+  });
+}
+
+function cenaAperta_() {
+  return new Date() < Utilities.parseDate(CONFIG.cena.inizio, TZ, 'yyyy-MM-dd HH:mm');
+}
+
+// coperti ancora liberi (Infinity se la cena non ha un limite)
+function postiCena_(db) {
+  if (!CONFIG.cena.posti) return Infinity;
+  var presi = 0;
+  db.Cena.forEach(function (r) { if (r.cena === CONFIG.cena.id) presi += Number(r.persone) || 1; });
+  return CONFIG.cena.posti - presi;
 }
 
 /* ============================================================
