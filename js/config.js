@@ -60,7 +60,7 @@ window.BOLLA = {
           }
         },
         {
-          nome: "Selva Cosmica", ora: "22:00", tag: "Live", main: true, link: "https://www.instagram.com/selvacosmica_music/",
+          nome: "Selva Cosmica", ora: "21:30", tag: "Live", main: true, link: "https://www.instagram.com/selvacosmica_music/",
           dettagli: {
             testo: [
               { it: "Collettivo aperto e in continua evoluzione, un ponte sonoro tra Sicilia e Colombia nato dal DJ e produttore Dario Aiello. Oggi suona con le percussioni di Romina Adorno Pincha e Karen Andrea Ramirez e la voce di Anami: ritmi ancestrali del Sud del mondo che si rivestono di elettronica e dub techno, una preghiera psichedelica per la pista da ballo.",
