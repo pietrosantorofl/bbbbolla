@@ -175,6 +175,7 @@ function doGet() {
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
     '<p>Promemoria di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('PROMEMORIA_ESITO') || 'nessuno') + '</p>' +
+    '<p>Pass dati lo stesso (gruppi incompleti): ' + esc_(PropertiesService.getScriptProperties().getProperty('REGALO_ESITO') || 'nessuno') + '</p>' +
     '<p>Solleciti: ' + esc_(PropertiesService.getScriptProperties().getProperty('SOLLECITI_ESITO') || 'nessuno') + '</p>' +
     '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
@@ -535,6 +536,12 @@ function aggiornamentiUnaTantum_() {
       } catch (err) {
         props.setProperty('BREVO_ESITO', 'errore ' + new Date().toISOString() + ': ' + String(err.message).slice(0, 300));
       }
+    } },
+    // pass dato lo stesso a chi ha il gruppo incompleto: prima la prova a te, con un pass finto
+    { id: 'prova-pass-regalo-2026-10-30', fai: function () {
+      emailPass_({ nome: 'Pietro', cognome: 'Santoro', email: 'pietrosantoro90@gmail.com', codice: 'BOL-PROVA', chiave: token_(24), tipo: 'gruppo', newsletter: 'TRUE' },
+        serata_(db, '2026-10-30'), { regalo: true, prefisso: '[Prova] ' });
+      PropertiesService.getScriptProperties().setProperty('REGALO_ESITO', new Date().toISOString().slice(0, 16) + ' prova inviata a pietrosantoro90');
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -1649,6 +1656,38 @@ function solleciti_(serata) {
   PropertiesService.getScriptProperties().setProperty('SOLLECITI_ESITO', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuno'));
 }
 
+/* Dopo la chiusura dei gruppi: chi ha confermato in un gruppo rimasto incompleto riceve il pass lo stesso (scelta per la prima serata).
+ * Il gruppo passa a "completo", così i pass confermati diventano validi all'ingresso (passAttivo_) e compaiono nell'app staff;
+ * chi non ha confermato resta senza pass. Esito per codice nella pagina di stato. */
+function passRegalo_(serata) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+  var esiti = [];
+  try {
+    var db = carica_();
+    var s = serata_(db, serata);
+    var now = new Date();
+    if (now < scadenzaGruppi_(s)) throw new Error('i gruppi non sono ancora chiusi');
+    db.Gruppi.forEach(function (g) {
+      if (g.serata !== serata || g.stato !== 'aperto') return;
+      var confermati = statoGruppo_(db, g).confermati;
+      if (!confermati.length) return;
+      aggiorna_(db.Gruppi, g, { stato: 'completo', completato: now });
+      confermati.forEach(function (r) {
+        try {
+          emailPass_(r, s, { regalo: true });
+          esiti.push(r.codice + ' inviato');
+        } catch (err) {
+          esiti.push(r.codice + ' errore: ' + String(err.message).slice(0, 80));
+        }
+      });
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  PropertiesService.getScriptProperties().setProperty('REGALO_ESITO', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuno'));
+}
+
 // prefisso: '' per le email vere, '[Prova …] ' per quelle di prova
 function emailPromemoriaConferma_(pass, s, info, prefisso) {
   var data = dataBreve_(s);
@@ -1736,11 +1775,15 @@ function emailAttesa_(r, s) {
     layout_({ banner: 'banner-logo.jpg', anteprima: 'Sei in lista d\'attesa: ti scriviamo se si libera un posto', corpo: corpo, s: s, newsletter: vero_(r.newsletter) }), null);
 }
 
-function emailPass_(pass, s) {
+// o.regalo: pass dato lo stesso a chi era in un gruppo non completo; o.prefisso: '[Prova] ' per le prove
+function emailPass_(pass, s, o) {
+  o = o || {};
   var data = dataBreve_(s);
   var corpo =
-    kicker_('Il tuo pass è attivo') +
+    kicker_(o.regalo ? 'Il pass è tuo lo stesso' : 'Il tuo pass è attivo') +
     titolo_('Ciao ' + esc_(pass.nome) + ', ci vediamo dentro la bolla') +
+    (o.regalo ? paragrafo_('Il tuo gruppo non si è completato in tempo, ma stasera è la prima di bolla® e siamo felici di averti dentro in ogni caso. ' +
+      'Il pass è attivo: ti aspettiamo.') : '') +
     // biglietto: QR grande, codice, nome
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;border:1.5px solid #121212;border-radius:18px;background:#ffffff">' +
       '<tr><td align="center" style="padding:24px 16px 8px">' +
@@ -1756,7 +1799,7 @@ function emailPass_(pass, s) {
     bottone_(linkPass_(pass.chiave), 'Apri il pass sul sito') +
     nota_('Mostra il QR all\'ingresso, dal telefono va benissimo. Il pass è personale e vale una sola volta: non condividerlo. ' +
       'Non garantisce l\'ingresso dopo il raggiungimento della capienza massima: arriva presto.');
-  invia_(pass.email, 'Il tuo pass bolla® — ' + data + ' · ' + pass.codice,
+  invia_(pass.email, (o.prefisso || '') + (o.regalo ? 'Il pass è tuo lo stesso — bolla® ' : 'Il tuo pass bolla® — ') + data + ' · ' + pass.codice,
     'Pass ' + pass.codice + ' per ' + pass.nome + ' ' + pass.cognome + ' — ' + data + '. Apri: ' + linkPass_(pass.chiave),
     layout_({ banner: 'banner-sfera.jpg', anteprima: 'Pass ' + pass.codice + ': mostra il QR all\'ingresso', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }),
     { qr: qrBlob_(pass.chiave) });
