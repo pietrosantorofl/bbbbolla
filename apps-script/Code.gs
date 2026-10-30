@@ -1601,8 +1601,10 @@ function solleciti_(serata) {
         st = statoGruppo_(db, g);
       }
       if (st.stato !== 'aperto') return;
+      // se il capogruppo non ha confermato, il gruppo vive solo fino alla sua scadenza
+      var entro = capo.stato === 'confermato' ? scadenzaGruppi_(s) : infoPromemoria_(db, capo).scadenza;
       st.membri.forEach(function (r) {
-        if (r.stato === 'confermato') invii.push({ pass: r, fai: emailGruppoIncompleto_, tipo: 'manca qualcuno' });
+        if (r.stato === 'confermato') invii.push({ pass: r, fai: emailGruppoIncompleto_, tipo: 'manca qualcuno', entro: entro });
         // oltre le 48 ore si conferma ancora, se nel gruppo c'è posto (vedi azionePass_)
         else if (st.attivi.indexOf(r) >= 0 || st.attivi.length < CONFIG.dimensioneGruppo) invii.push({ pass: r, fai: emailPromemoriaConferma_, tipo: riaperto ? 'proroga' : 'sollecito' });
         else esiti.push(r.codice + ' saltato (posto preso)');
@@ -1611,7 +1613,9 @@ function solleciti_(serata) {
     invii.forEach(function (x) {
       var info = infoPromemoria_(db, x.pass);
       if (x.tipo !== 'manca qualcuno') info.tipo = x.tipo;
-      if (info.scadenza < now) info.scadenza = scadenzaGruppi_(s);
+      // i membri possono confermare fino alla chiusura (se nel gruppo c'è posto), il capogruppo fino alla sua scadenza
+      if (x.entro) info.scadenza = x.entro;
+      else if (!info.capogruppo || info.scadenza < now) info.scadenza = scadenzaGruppi_(s);
       try {
         var canale = x.fai(x.pass, info.s, info, '');
         esiti.push(x.pass.codice + ' ' + x.tipo + (info.capogruppo ? ' (capogruppo)' : '') + ' con ' + canale);
@@ -1635,7 +1639,7 @@ function emailPromemoriaConferma_(pass, s, info, prefisso) {
   var t = {
     promemoria: { kicker: 'Promemoria', titolo: 'il tuo posto ti aspetta', oggetto: 'Manca solo il tuo clic',
       intro: 'Hai chiesto un pass di gruppo per bolla® di ' + giorno_(fineSerata_(s)) + ', ma la tua email non è ancora confermata. ' },
-    sollecito: { kicker: 'Ultime ore', titolo: 'conferma entro le ' + CONFIG.chiusuraGruppi, oggetto: 'Ultime ore per confermare il pass',
+    sollecito: { kicker: 'Ultime ore', titolo: 'conferma entro le ' + Utilities.formatDate(info.scadenza, TZ, 'HH:mm'), oggetto: 'Ultime ore per confermare il pass',
       intro: 'Stasera c\'è bolla® e la tua email per il pass di gruppo non è ancora confermata. ' },
     proroga: { kicker: 'Buone notizie', titolo: 'abbiamo riaperto il tuo gruppo', oggetto: 'Abbiamo riaperto il tuo gruppo',
       intro: 'Il tempo per confermare il tuo pass di gruppo era finito, ma abbiamo deciso di prorogarlo fino a ' + entro + '. ' }
@@ -1658,7 +1662,7 @@ function emailPromemoriaConferma_(pass, s, info, prefisso) {
       bottone_('https://wa.me/?text=' + encodeURIComponent('Entra nel mio gruppo per il pass gratuito di bolla® (' + data + '): ' + linkGruppo_(info.gruppo.id)), 'Invia su WhatsApp', true) : '') +
     '<div style="height:24px"></div>' +
     dettagli_(s, data) +
-    nota_('Hai tempo fino a ' + entro + '. Dopo, ' + (info.tipo ? 'i gruppi si chiudono e non si può più confermare'
+    nota_('Hai tempo fino a ' + entro + '. Dopo, ' + (+info.scadenza >= +scadenzaGruppi_(s) ? 'i gruppi si chiudono e non si può più confermare'
       : info.capogruppo ? 'il gruppo si chiude' : 'il tuo posto può passare a qualcun altro') +
       '. Se non ti serve più, ignora questa email.');
   return invia_(pass.email, prefisso + t.oggetto + ' — bolla® ' + data,
