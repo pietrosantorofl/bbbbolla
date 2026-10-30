@@ -12,7 +12,7 @@
  * Fogli (creati da setup()):
  *   Serate  id | titolo | data | capienza | aperta
  *   Inviti  token | etichetta | serata | max | scadenza | attivo | creato
- *   Gruppi  id | serata | creato | scadenza | capogruppo | stato | completato
+ *   Gruppi  id | serata | creato | scadenza | capogruppo | stato | completato | confermati
  *   Pass    creato | serata | tipo | rif | nome | cognome | email | email_norm | chiave | codice | stato | confermato | checkin | newsletter | checkin_da
  *   Attesa  creato | serata | nome | cognome | email | email_norm | arrivato_da | newsletter | note
  *   Workshop creato | workshop | nome | cognome | telefono | telefono_norm | note
@@ -72,7 +72,7 @@ var TITOLO_SERATA_2026_10_30 = 'bolla® — La Cumbia tradizionale colombiana, S
 var COLONNE = {
   Serate: ['id', 'titolo', 'data', 'capienza', 'aperta'],
   Inviti: ['token', 'etichetta', 'serata', 'max', 'scadenza', 'attivo', 'creato'],
-  Gruppi: ['id', 'serata', 'creato', 'scadenza', 'capogruppo', 'stato', 'completato'],
+  Gruppi: ['id', 'serata', 'creato', 'scadenza', 'capogruppo', 'stato', 'completato', 'confermati'],
   Pass: ['creato', 'serata', 'tipo', 'rif', 'nome', 'cognome', 'email', 'email_norm', 'chiave', 'codice', 'stato', 'confermato', 'checkin', 'newsletter', 'checkin_da'],
   Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note'],
   Live: ['creato', 'serata', 'nickname', 'colore', 'emozione', 'dispositivo'],
@@ -80,7 +80,7 @@ var COLONNE = {
   Cena: ['creato', 'cena', 'nome', 'cognome', 'telefono', 'telefono_norm', 'persone', 'note']
 };
 var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome',
-  'workshop', 'telefono', 'telefono_norm', 'cena'];
+  'workshop', 'telefono', 'telefono_norm', 'cena', 'confermati'];
 // riserva se la lista online non è raggiungibile
 var DOMINI_USA_E_GETTA = ['mailinator.com', 'yopmail.com', 'yopmail.fr', 'guerrillamail.com', 'guerrillamail.info', 'sharklasers.com',
   'grr.la', '10minutemail.com', 'temp-mail.org', 'tempmail.com', 'tempmail.net', 'trashmail.com', 'getnada.com', 'dispostable.com',
@@ -158,6 +158,7 @@ function creaInvitoDaMenu() {
 function doGet() {
   setup();
   aggiornamentiUnaTantum_(); // idempotente: ogni aggiornamento gira una volta sola
+  aggiornaConfermati_();
   var emailEventi = PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO_EMAIL');
   if (emailEventi && chiaveBrevo_()) eventiBrevo_(emailEventi);
   var sveglia = installaSveglia_();
@@ -230,6 +231,25 @@ function sveglia() {
   if (chiaveBrevo_() && esitoBrevo.indexOf('errore') === 0) provaBrevo_();
   carica_();
   dominiUsaEGetta_();
+  aggiornaConfermati_();
+}
+
+// Colonna "confermati" del foglio Gruppi (es. 2/3), solo da leggere: la riscrive la sveglia ogni 5 minuti.
+// Scrive solo se qualcosa è cambiato; un errore qui non deve fermare la sveglia.
+function aggiornaConfermati_() {
+  try {
+    var db = carica_();
+    if (!db.Gruppi.length) return;
+    var col = db.Gruppi[0]._head.indexOf('confermati') + 1;
+    var nuovi = db.Gruppi.map(function (g) {
+      return g.id ? statoGruppo_(db, g).confermati.length + '/' + CONFIG.dimensioneGruppo : '';
+    });
+    var cambiati = db.Gruppi.some(function (g, i) { return String(g.confermati) !== nuovi[i]; });
+    // l'apostrofo tiene il testo: "1/3" altrimenti diventa una data
+    if (cambiati) db.Gruppi[0]._foglio.getRange(2, col, nuovi.length, 1).setValues(nuovi.map(function (v) { return [v ? "'" + v : '']; }));
+  } catch (err) {
+    console.error('Colonna confermati non aggiornata: ' + err);
+  }
 }
 
 // Modifiche ai dati da fare una volta sola: partono con la sveglia (ogni 5 minuti), ognuna segnata
@@ -575,6 +595,10 @@ function aggiornamentiUnaTantum_() {
     // stessa segnalazione: ci ha scritto da quell'indirizzo, quindi l'email è sua. Conferma a mano e, se il gruppo arriva a 3, pass a tutti
     { id: 'conferma-a-mano-BOL-V3HU4', fai: function () {
       confermaAMano_('BOL-V3HU4', 'agliozzogiulia@gmail.com', 'agliozz');
+    } },
+    // gruppo di Asja: completato subito su richiesta; la riga di Giulia aggiunta a mano resta, ma niente email (ha già BOL-V3HU4)
+    { id: 'completa-gruppo-e3fa4c12da', fai: function () {
+      completaGruppoAMano_('e3fa4c12da', 'agliozzogiulia@gmail.com', 'agliozz');
     } }
   ].concat(['16:00', '17:00', '18:00', '19:00'].map(function (ora) {
     // recap orario per gli organizzatori: se la sveglia arriva con più di 50 minuti di ritardo il recap si salta
@@ -1786,6 +1810,46 @@ function confermaAMano_(codice, email, cognomeParte) {
   }
   var props = PropertiesService.getScriptProperties();
   props.setProperty('CERCA_ESITO', (props.getProperty('CERCA_ESITO') || '') + ' ¦ ' + new Date().toISOString().slice(0, 16) + ' ' + esito);
+}
+
+/* Completa a mano un gruppo ancora aperto e manda il pass ai confermati. Chi ha già un pass confermato altrove
+ * (stessa email o cognome che contiene cognomeDoppione) è un doppione: la riga resta com'è e non riceve niente.
+ * Righe senza chiave o codice (aggiunte a mano) non ricevono email. Esito nella riga "Ricerca segnalazione". */
+function completaGruppoAMano_(id, emailDoppione, cognomeDoppione) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+  var esiti = [];
+  try {
+    var db = carica_();
+    var g = gruppo_(db, id);
+    if (!g) throw new Error('gruppo non trovato');
+    if (g.stato !== 'aperto') throw new Error('gruppo ' + g.stato + ' nel foglio, non tocco niente');
+    var s = serata_(db, g.serata);
+    var n = normEmail_(emailDoppione);
+    var daAvvisare = [];
+    statoGruppo_(db, g).membri.forEach(function (r) {
+      var nome = r.codice || 'riga ' + r._riga;
+      var suo = r.email_norm === n || String(r.cognome).toLowerCase().indexOf(cognomeDoppione) >= 0;
+      var altrove = suo && db.Pass.some(function (x) {
+        return x !== r && x.serata === g.serata && x.stato === 'confermato' && (x.email_norm === n || x.email_norm === r.email_norm);
+      });
+      if (altrove) { esiti.push(nome + ' ha già un pass altrove, lasciato com\'è e niente email'); return; }
+      if (r.stato !== 'confermato') { esiti.push(nome + ' non confermato, niente pass'); return; }
+      if (!/^[a-f0-9]{24}$/.test(String(r.chiave)) || !r.codice) { esiti.push(nome + ' senza chiave o codice, niente email'); return; }
+      daAvvisare.push(r);
+    });
+    if (!daAvvisare.length) throw new Error('nessun confermato da avvisare: ' + esiti.join(', '));
+    aggiorna_(db.Gruppi, g, { stato: 'completo', completato: new Date() });
+    daAvvisare.forEach(function (r) {
+      try { emailPass_(r, s); esiti.push(r.codice + ' pass inviato'); }
+      catch (err) { esiti.push(r.codice + ' errore: ' + String(err.message).slice(0, 80)); }
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('CERCA_ESITO', (props.getProperty('CERCA_ESITO') || '') + ' ¦ ' + new Date().toISOString().slice(0, 16) +
+    ' gruppo completato a mano: ' + esiti.join(', '));
 }
 
 /* Recap per gli organizzatori, solo numeri: pass, gruppi, lista d'attesa e iscritti al workshop della serata.
