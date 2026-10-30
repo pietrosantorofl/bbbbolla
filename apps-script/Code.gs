@@ -179,6 +179,7 @@ function doGet() {
     '<p>Promemoria di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('PROMEMORIA_ESITO') || 'nessuno') + '</p>' +
     '<p>Pass dati lo stesso (gruppi incompleti): ' + esc_(PropertiesService.getScriptProperties().getProperty('REGALO_ESITO') || 'nessuno') + '</p>' +
     '<p>Ricerca segnalazione: ' + esc_(PropertiesService.getScriptProperties().getProperty('CERCA_ESITO') || 'nessuna') + '</p>' +
+    '<p>QR esterni: ' + esc_(PropertiesService.getScriptProperties().getProperty('QR_ESTERNI_ESITO') || 'nessuno') + '</p>' +
     '<p>Recap orari: ' + esc_(PropertiesService.getScriptProperties().getProperty('RECAP_ESITO') || 'nessuno') + '</p>' +
     '<p>Solleciti: ' + esc_(PropertiesService.getScriptProperties().getProperty('SOLLECITI_ESITO') || 'nessuno') + '</p>' +
     '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
@@ -599,6 +600,26 @@ function aggiornamentiUnaTantum_() {
     // gruppo di Asja: completato subito su richiesta; la riga di Giulia aggiunta a mano resta, ma niente email (ha già BOL-V3HU4)
     { id: 'completa-gruppo-e3fa4c12da', fai: function () {
       completaGruppoAMano_('e3fa4c12da', 'agliozzogiulia@gmail.com', 'agliozz');
+    } },
+    // QR di un'altra biglietteria (26 caratteri): diventano pass su invito già confermati, così l'app staff li fa entrare
+    { id: 'qr-esterni-2026-10-30', fai: function () {
+      aggiungiQrEsterni_('2026-10-30', [
+        'GZAVX9X9ZKJTKG5GXAFK12YWP3', 'EQ7N5HCD9NN7JZXX7S1VD39SYS', '6GE8NKD6YPT4EV9B3GV04S7JF6', 'YVH44KG4SD8E5ZNPTMH70XCE83',
+        'H767ZJ9AFCA2BNKC3V10389TTP', '29CTNFHXN5YWDH51J3PF42B20V', 'NFW4YZFMSTW5MD1P3AR2447DWB', '8A0QTSB8D5J6WE2SKFH9BAM10S',
+        '3N0DX50DS2SAK121JW2XQ1Y8XH', '4DZ4B41XPV4ZNFBQ60F45HPF7E', '4Y5Q6CC5XE5FZTBX58FHNTA7JR', '1ASSJYD5F9ZTP5JZD594QQE2T6',
+        'T9935HEEMPDCY2F2NZZAQ7063Y', 'Z3TZT5X5W2FN95ZRD0211BTV65', 'ZF3J38EDZ6EPFQ10QVQM7AFYD0', 'R72VN39M296KBV7ZCRW0WWX02X',
+        '7SPEAB9CRK1CQ4GCJEFKMVWFVF', 'Y7AA4WPY034DPS1R42WSGXD8DW', 'DKDQZXASH3RKSN8HBAX3YNSWZA', 'B62J5TRBX1PXX4TDV4GR1WVPNY',
+        'AG13KSVH77ZAAZDETWERTFXCQF', 'X7KEYEYSZP8V468SZTPBE3HFEJ', '7J589FDHR0BPPVX2JEWVV9KC9E', '1T9CKQ9E3RQE49RMC5W8E2J90J',
+        'AKND25Z0QSG8PSJPV32BE31YPD', 'JP409C6JE0Y2J5FAAXV8PXJ81P', '67KZFTX3FRA81YZ5PABVQQAVVE', 'PEB6MFBWAPA9977E34ACJT2PDW',
+        'QCW6K1N1VH4M73RY913757ZRJC', 'Q2FQYTG5WYMWV9ZYS97TTZCBH1', 'P6BEZSCBZZF116FJ7F5KVNTB86', 'FJW9C897XHRHR3WY9B1RYBCCHT',
+        'C08VKJ4A3GR9T6BAGWAG72TJJK', 'BXJVZATXV64PC9AS7XNWW6DPGH', 'MVZWQ5FBAMSSRWAPPB6BMZSZ7M', 'YGYCCN5VHDVZ8F203VWVCD11KM',
+        'Q8S2P2SYT0ZT1E1AGDG46KYEBN', 'F7PWNKVT74Y13NSWH705N4FPNE', 'ANBER2ZT68TK9YRV1B51EXRG9A', 'MJAPZXEK60ZT0CTQSAGCQRXKGT',
+        'CH6VJYC6PKQ07J9AQCH7EJ6K3Q', 'JSTTM7YYZ94W3GS68VKTYJE35A', 'XWWF05X6B6QZB8SNJCA86T0722', 'FJ69NBQG1WH68X7TNB205ANMKF',
+        'AEHACNABTN2H1HPEGCZC8QCYPS', 'HRBP6M4EA0TH1ZM3AG6B1G6GN6', 'JJ2MXCMACKWYPVGKBSCE3TXT85', 'P1N0JMAYVJPMG3GE3WYNQ69PXR',
+        'B2BT32RGAKDZ6NVPDG1NA1NQDE', 'V7PXQPHC95T4P4RZ385M1BH51F', '0NR1S2WWWEXF0E5DGHXAK9ZGX9', 'FRWEA4MGSX0VAS3GFS5P738B9D',
+        'E1Y1EVT0MSKA4HDZ8B64HCD3KH', 'JJN8QB18ND7Q0ZVAM5KHCZFY0R', 'A16PXWPDRPGV9GAXS8MMADTB7Y', '40EQ2YWFE4JC413DCH4R5F3RN4',
+        'WRPCPEKR7MKCFJ3QDDND80C7MA', 'Y69CAZQY5F1DKZWGE436WMZ99X', '3VNC7HNWT50T2ZDGAX3QN87QMD'
+      ]);
     } }
   ].concat(['16:00', '17:00', '18:00', '19:00'].map(function (ora) {
     // recap orario per gli organizzatori: se la sveglia arriva con più di 50 minuti di ritardo il recap si salta
@@ -1368,6 +1389,28 @@ function passAttivo_(db, r) {
   return !!g && g.stato === 'completo';
 }
 
+// QR di un'altra biglietteria: 26 caratteri in base32 di Crockford, salvati in minuscolo nella colonna "chiave"
+var QR_ESTERNO = /^[0-9a-hjkmnp-tv-z]{26}$/;
+
+// Ogni QR diventa un pass su invito confermato, senza email: conta nella capienza e compare nella lista staff.
+// Nome "QR esterno" e cognome = primi 6 caratteri, per cercarlo a mano nell'app se il QR non si legge.
+function aggiungiQrEsterni_(serata, codici) {
+  var db = carica_();
+  var aggiunti = 0, gia = 0, scartati = 0;
+  codici.forEach(function (q) {
+    var chiave = String(q).trim().toLowerCase();
+    if (!QR_ESTERNO.test(chiave)) { scartati++; return; }
+    if (trova_(db.Pass, 'chiave', chiave)) { gia++; return; }
+    var r = { creato: new Date(), serata: serata, tipo: 'invito', rif: 'qr-esterni', nome: 'QR esterno', cognome: chiave.slice(0, 6).toUpperCase(),
+      email: '', email_norm: '', chiave: chiave, codice: nuovoCodice_(db), stato: 'confermato', confermato: new Date(), checkin: '', newsletter: 'FALSE', checkin_da: '' };
+    appendi_('Pass', r);
+    db.Pass.push(r);
+    aggiunti++;
+  });
+  PropertiesService.getScriptProperties().setProperty('QR_ESTERNI_ESITO', new Date().toISOString().slice(0, 16) + ' aggiunti ' + aggiunti +
+    (gia ? ', già presenti ' + gia : '') + (scartati ? ', scartati ' + scartati : ''));
+}
+
 function hashChiave_(chiave) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, chiave).map(function (b) {
     return ('0' + ((b + 256) % 256).toString(16)).slice(-2);
@@ -1400,7 +1443,7 @@ function azioneStaffCheckin_(d) {
     var db = carica_();
     var chiave = String(d.chiave || '').trim().toLowerCase();
     var codice = String(d.codice || '').trim().toUpperCase();
-    var r = /^[a-f0-9]{24}$/.test(chiave) ? trova_(db.Pass, 'chiave', chiave)
+    var r = /^[a-f0-9]{24}$/.test(chiave) || QR_ESTERNO.test(chiave) ? trova_(db.Pass, 'chiave', chiave)
       : /^BOL-[A-Z0-9]{5}$/.test(codice) ? trova_(db.Pass, 'codice', codice) : null;
     if (!r) return { ok: true, esito: 'sconosciuto' };
     var info = { nome: r.nome, cognome: r.cognome, codice: r.codice, tipo: r.tipo, serata: r.serata };

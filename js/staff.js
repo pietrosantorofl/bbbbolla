@@ -175,7 +175,9 @@
     var t = String(testo || "").trim().toLowerCase();
     if (t === ultimo.testo && Date.now() - ultimo.quando < 4000) return; // stesso QR ancora inquadrato
     ultimo = { testo: t, quando: Date.now() };
-    var m = t.match(/[a-f0-9]{24}/);
+    // QR di un'altra biglietteria: 26 caratteri (base32 di Crockford), da soli o dentro un link
+    var esterno = t.match(/(?:^|[^0-9a-z])([0-9a-hjkmnp-tv-z]{26})(?![0-9a-z])/);
+    var m = esterno ? [esterno[1]] : t.match(/[a-f0-9]{24}/);
     if (!m) return mostraEsito("no", "QR non valido", null, "Non è un pass bolla®.");
     var chiave = m[0];
     sha256(chiave).then(function (h) {
