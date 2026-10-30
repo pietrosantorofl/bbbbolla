@@ -515,6 +515,10 @@ function aggiornamentiUnaTantum_() {
         emailGruppoIncompleto_(finto(), s, { capogruppo: false, gruppo: { id: 'PROVA' }, confermati: 2, membri: 2, scadenza: entro }, '[Prova manca qualcuno] ')
       ];
       PropertiesService.getScriptProperties().setProperty('SOLLECITI_ESITO', new Date().toISOString().slice(0, 16) + ' 3 prove inviate (' + canali.join(', ') + ')');
+    } },
+    // solleciti veri del 30.10 (ok dopo le prove): proroga ai gruppi scaduti, ultime ore, gruppi incompleti
+    { id: 'solleciti-2026-10-30', fai: function () {
+      solleciti_('2026-10-30');
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
