@@ -177,6 +177,7 @@ function doGet() {
     '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
     '<p>Promemoria di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('PROMEMORIA_ESITO') || 'nessuno') + '</p>' +
     '<p>Pass dati lo stesso (gruppi incompleti): ' + esc_(PropertiesService.getScriptProperties().getProperty('REGALO_ESITO') || 'nessuno') + '</p>' +
+    '<p>Ricerca segnalazione: ' + esc_(PropertiesService.getScriptProperties().getProperty('CERCA_ESITO') || 'nessuna') + '</p>' +
     '<p>Recap orari: ' + esc_(PropertiesService.getScriptProperties().getProperty('RECAP_ESITO') || 'nessuno') + '</p>' +
     '<p>Solleciti: ' + esc_(PropertiesService.getScriptProperties().getProperty('SOLLECITI_ESITO') || 'nessuno') + '</p>' +
     '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
@@ -551,6 +552,29 @@ function aggiornamentiUnaTantum_() {
     } },
     { id: 'pass-regalo-2026-10-30-22', dopo: '2026-10-30 22:00', fai: function () {
       passRegalo_('2026-10-30');
+    } },
+    // segnalazione via email "non mi è arrivato il link di conferma": solo lettura, esito (codici, niente indirizzi) nella pagina di stato
+    { id: 'cerca-pass-segnalazione-2026-10-30', fai: function () {
+      var email = 'agliozzogiulia@gmail.com';
+      var n = normEmail_(email);
+      var righe = db.Pass.filter(function (r) {
+        return r.email_norm === n || String(r.cognome).toLowerCase().indexOf('agliozz') >= 0;
+      }).map(function (r) {
+        var g = r.tipo === 'gruppo' ? gruppo_(db, r.rif) : null;
+        var st = g ? statoGruppo_(db, g) : null;
+        return r.codice + ' ' + r.serata + ' ' + r.tipo + ' ' + r.stato + ' creato ' + Utilities.formatDate(data_(r.creato), TZ, 'dd.MM HH:mm') +
+          ' email ' + (r.email_norm === n ? 'uguale' : 'diversa') + (r.chiave === (g && g.capogruppo) ? ' capo' : '') +
+          (st ? ' — gruppo ' + g.stato + '/' + st.stato + ', membri: ' + st.membri.map(function (m) {
+            return m.codice + ' ' + m.stato + (m.chiave === g.capogruppo ? ' capo' : '');
+          }).join(', ') : '');
+      });
+      var esito = new Date().toISOString().slice(0, 16) + ' ' + (righe.join(' | ') || 'nessun pass');
+      if (chiaveBrevo_()) { eventiBrevo_(email); esito += ' ¦ Brevo: ' + (props.getProperty('EVENTI_BREVO') || ''); }
+      props.setProperty('CERCA_ESITO', esito);
+    } },
+    // stessa segnalazione: ci ha scritto da quell'indirizzo, quindi l'email è sua. Conferma a mano e, se il gruppo arriva a 3, pass a tutti
+    { id: 'conferma-a-mano-BOL-V3HU4', fai: function () {
+      confermaAMano_('BOL-V3HU4', 'agliozzogiulia@gmail.com', 'agliozz');
     } }
   ].concat(['16:00', '17:00', '18:00', '19:00'].map(function (ora) {
     // recap orario per gli organizzatori: se la sveglia arriva con più di 50 minuti di ritardo il recap si salta
@@ -1716,6 +1740,52 @@ function passRegalo_(serata) {
   var props = PropertiesService.getScriptProperties();
   var esito = new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuno');
   props.setProperty('REGALO_ESITO', ((props.getProperty('REGALO_ESITO') || '') + ' ¦ ' + esito).replace(/^ ¦ /, ''));
+}
+
+/* Conferma a mano un pass di gruppo per chi ci ha scritto che il link non arriva. Controllo di sicurezza: il cognome
+ * deve contenere cognomeParte. Se l'indirizzo nel foglio è diverso da quello da cui ci ha scritto, si corregge.
+ * Se così il gruppo arriva a CONFIG.dimensioneGruppo confermati, diventa completo e ognuno riceve il pass (come in azionePass_).
+ * Esito, solo codici, nella pagina di stato (riga "Ricerca segnalazione"). */
+function confermaAMano_(codice, email, cognomeParte) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+  var esito;
+  try {
+    var db = carica_();
+    var pass = trova_(db.Pass, 'codice', codice);
+    if (!pass) throw new Error(codice + ' non trovato');
+    if (String(pass.cognome).toLowerCase().indexOf(cognomeParte) < 0) throw new Error(codice + ': il cognome non corrisponde, non tocco niente');
+    if (pass.tipo !== 'gruppo') throw new Error(codice + ' non è un pass di gruppo');
+    var s = serata_(db, pass.serata);
+    var g = gruppo_(db, pass.rif);
+    var st = statoGruppo_(db, g);
+    if (st.stato !== 'aperto') throw new Error(codice + ': gruppo ' + st.stato + ', non tocco niente');
+    var n = normEmail_(email);
+    var cambi = {};
+    if (pass.email_norm !== n) {
+      var altro = db.Pass.filter(function (r) { return r !== pass && r.serata === pass.serata && r.email_norm === n && r.stato !== 'annullato'; })[0];
+      if (altro) throw new Error(codice + ': l\'indirizzo è già su ' + altro.codice + ', non tocco niente');
+      cambi.email = email;
+      cambi.email_norm = n;
+    }
+    if (pass.stato === 'da_confermare') { cambi.stato = 'confermato'; cambi.confermato = new Date(); }
+    aggiorna_(db.Pass, pass, cambi);
+    esito = codice + (cambi.email ? ' email corretta,' : ' email già giusta,') + ' confermato';
+    var st2 = statoGruppo_(db, g);
+    if (st2.stato === 'aperto' && st2.confermati.length >= CONFIG.dimensioneGruppo) {
+      aggiorna_(db.Gruppi, g, { stato: 'completo', completato: new Date() });
+      esito += ', gruppo completo, pass: ' + st2.confermati.map(function (m) {
+        try { emailPass_(m, s); return m.codice + ' inviato'; }
+        catch (err) { return m.codice + ' errore: ' + String(err.message).slice(0, 80); }
+      }).join(', ');
+    } else {
+      esito += ', gruppo ancora ' + st2.stato + ' (' + st2.confermati.length + '/' + st2.membri.length + ')';
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('CERCA_ESITO', (props.getProperty('CERCA_ESITO') || '') + ' ¦ ' + new Date().toISOString().slice(0, 16) + ' ' + esito);
 }
 
 /* Recap per gli organizzatori, solo numeri: pass, gruppi, lista d'attesa e iscritti al workshop della serata.
