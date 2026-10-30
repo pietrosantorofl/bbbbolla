@@ -32,6 +32,7 @@ var CONFIG = {
   newsletterObbligatoria: true,   // deve coincidere con newsletterObbligatoria in js/config.js
   dimensioneGruppo: 3,
   chiusuraGruppi: '18:00',        // il giorno della serata: entro quest'ora il gruppo va completato, dopo non se ne creano di nuovi
+  chiusuraPass: '22:00',          // il giorno della serata: da quest'ora nessun pass nuovo; il modulo resta, all'invio risponde "esauriti"
   oreConferma: 48,                // dopo, un membro che non ha confermato perde il posto nel gruppo
   minutiTraReinvii: 15,           // anti-spam: ogni quanto si può rimandare il link alla stessa persona
   riservaGmail: 20,               // con Gmail come canale principale: a queste email rimaste oggi si passa a Brevo
@@ -669,6 +670,7 @@ function azioneCreaGruppo_(d) {
     var s = serata_(db, d.serata);
     var chiusa = controllaSerata_(s);
     if (chiusa) return chiusa;
+    if (passChiusi_(s)) return errorePassChiusi_();
     if (new Date() > scadenzaGruppi_(s)) return erroreGruppiChiusi_();
     var dup = duplicato_(db, s, p);
     if (dup) return dup;
@@ -691,6 +693,7 @@ function azioneUnisciti_(d) {
     var s = serata_(db, d.serata);
     var chiusa = controllaSerata_(s);
     if (chiusa) return chiusa;
+    if (passChiusi_(s)) return errorePassChiusi_();
     var g = gruppo_(db, d.gruppo);
     if (!g || g.serata !== s.id) return errore_('gruppo', 'Questo link di gruppo non esiste.');
     var st = statoGruppo_(db, g);
@@ -712,6 +715,7 @@ function azioneInvito_(d) {
     var s = serata_(db, d.serata);
     var chiusa = controllaSerata_(s);
     if (chiusa) return chiusa;
+    if (passChiusi_(s)) return errorePassChiusi_();
     var inv = invito_(db, d.invito, s);
     if (inv.errore) return inv;
     var dup = duplicato_(db, s, p);
@@ -1037,6 +1041,15 @@ function controllaSerata_(s) {
   if (!s) return errore_('serata', 'Serata non trovata.');
   if (!serataAperta_(s)) return errore_('chiusa', 'Le prenotazioni per questa serata sono chiuse.');
   return null;
+}
+
+// Dopo CONFIG.chiusuraPass niente pass nuovi. La pagina non lo dice prima: chi invia il modulo legge "esauriti".
+function passChiusi_(s) {
+  return new Date() >= Utilities.parseDate(s.data + ' ' + CONFIG.chiusuraPass, TZ, 'yyyy-MM-dd HH:mm');
+}
+
+function errorePassChiusi_() {
+  return errore_('esaurito', 'Pass esauriti. Seguici per le prossime serate.');
 }
 
 function serataAperta_(s) {
