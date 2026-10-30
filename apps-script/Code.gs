@@ -519,6 +519,22 @@ function aggiornamentiUnaTantum_() {
     // solleciti veri del 30.10 (ok dopo le prove): proroga ai gruppi scaduti, ultime ore, gruppi incompleti
     { id: 'solleciti-2026-10-30', fai: function () {
       solleciti_('2026-10-30');
+    } },
+    // Gmail sotto la riserva: da qui le email partono con Brevo. Prova di consegna a te, come un pass vero (QR in allegato)
+    { id: 'prova-brevo-pietrosantoro90-2026-10-30', fai: function () {
+      var props = PropertiesService.getScriptProperties();
+      var s = serata_(db, '2026-10-30');
+      var data = dataBreve_(s);
+      try {
+        inviaBrevo_(chiaveBrevo_(), 'pietrosantoro90@gmail.com', '[Prova Brevo] Il tuo pass bolla® — ' + data, 'Email di prova inviata con Brevo.',
+          layout_({ banner: 'banner-sfera.jpg', anteprima: 'Prova di consegna con Brevo', corpo: kicker_('Prova') + titolo_('Brevo funziona') +
+            paragrafo_('Questa email è partita da Brevo con mittente ' + CONFIG.mittenteBrevo + ', come i pass di oggi pomeriggio. Sotto trovi il QR come appare nelle email inviate con Brevo.') +
+            '<img src="cid:qr" width="200" height="200" alt="">', s: s, newsletter: false }),
+          { qr: qrBlob_(token_(24)) });
+        props.setProperty('BREVO_ESITO', 'ok ' + new Date().toISOString() + ' (prova a pietrosantoro90)');
+      } catch (err) {
+        props.setProperty('BREVO_ESITO', 'errore ' + new Date().toISOString() + ': ' + String(err.message).slice(0, 300));
+      }
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
