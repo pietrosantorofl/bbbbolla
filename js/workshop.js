@@ -66,7 +66,20 @@
   var lead = $(".card__lead");
   var cta = $(".mobile-cta");
   var errBox = $(".form__error");
-  function errore(msg) { errBox.textContent = M(msg); errBox.hidden = !msg; }
+  // supporto: sotto gli errori del server o della rete, l'email a cui scrivere (link cliccabile)
+  var SUPPORTO = "bollacatania@gmail.com";
+  var errSupporto = el("p", "notice notice--supporto");
+  (function () {
+    var parti = T("Se il problema continua, scrivici a {email}.").split("{email}");
+    var a = el("a", null, SUPPORTO);
+    a.href = "mailto:" + SUPPORTO;
+    errSupporto.appendChild(document.createTextNode(parti[0]));
+    errSupporto.appendChild(a);
+    errSupporto.appendChild(document.createTextNode(parti[1] || ""));
+  })();
+  errSupporto.hidden = true;
+  errBox.parentNode.insertBefore(errSupporto, errBox.nextSibling);
+  function errore(msg, conSupporto) { errBox.textContent = M(msg); errBox.hidden = !msg; errSupporto.hidden = !msg || !conSupporto; }
 
   function renderStato(testo, classe) {
     var box = $(".status");
@@ -86,14 +99,19 @@
 
   // il modulo si compila subito; l'invio aspetta la risposta (serve il modulo firmato)
   var statoPronto = api("workshop_stato").then(function (r) {
-    if (!r || !r.ok) { renderStato(T("Non disponibile"), "esaurito"); return blocca((r && r.messaggio) || T("Qualcosa è andato storto. Riprova tra poco.")); }
+    if (!r || !r.ok) {
+      renderStato(T("Non disponibile"), "esaurito");
+      blocca((r && r.messaggio) || T("Qualcosa è andato storto. Riprova tra poco."));
+      errSupporto.hidden = false;
+      return lead.appendChild(errSupporto);
+    }
     nuovoModulo(r);
     if (!r.workshop.aperto) { renderStato(T("Prenotazioni chiuse"), "esaurito"); return blocca("Le prenotazioni per il workshop sono chiuse."); }
     if (!r.workshop.posti) { renderStato(T("Esaurito"), "esaurito"); return blocca("I posti per il workshop sono esauriti."); }
     renderStato(T("Disponibile"), "ok");
   }, function () {
     renderStato(T("Non verificabile"), "esaurito");
-    errore(T("Connessione non riuscita. Ricarica la pagina tra poco."));
+    errore(T("Connessione non riuscita. Ricarica la pagina tra poco."), true);
   });
 
   /* ---------- invio ---------- */
@@ -137,7 +155,7 @@
       .then(function () { dati.modulo = modulo; return api("workshop_prenota", dati); })
       .then(function (r) {
         if (!r || !r.ok) {
-          errore((r && r.messaggio) || T("Qualcosa è andato storto. Riprova tra poco."));
+          errore((r && r.messaggio) || T("Qualcosa è andato storto. Riprova tra poco."), !r || ["esaurito", "chiusa", "modulo", "duplicato"].indexOf(r.errore) < 0);
           if (r && r.errore === "modulo") {
             return api("workshop_stato").then(function (s) {
               if (s && s.ok) { nuovoModulo(s); errore(T("La sessione era scaduta: abbiamo ricaricato il modulo, premi di nuovo il bottone.")); }
@@ -147,7 +165,7 @@
         }
         fatto(dati);
       })
-      .catch(function () { errore(T("Connessione non riuscita. Controlla la rete e riprova.")); })
+      .catch(function () { errore(T("Connessione non riuscita. Controlla la rete e riprova."), true); })
       .then(function () {
         form.classList.remove("is-loading");
         btn.textContent = testo;

@@ -156,6 +156,11 @@
     "Questa email è già registrata per la serata. Ti abbiamo rimandato il link personale: controlla la posta (anche lo spam).":
       "This email is already registered for the event. We've resent your personal link: check your inbox (and spam).",
     "Pass esauriti. Seguici per le prossime serate.": "Passes sold out. Follow us for the next events.",
+    /* supporto */
+    "Pensi che sia un errore o hai un problema tecnico? Scrivici a {email}.": "Think this is a mistake, or having technical trouble? Email us at {email}.",
+    "Problemi con il pass o con le email? Scrivici a {email}: ti aiutiamo noi.": "Trouble with your pass or the emails? Email us at {email} and we'll help.",
+    "Se il problema continua, scrivici a {email}.": "If the problem persists, email us at {email}.",
+    "Dopo 15 minuti non è ancora arrivata, o hai sbagliato a scrivere l'email? Scrivici a {email}: ti aiutiamo noi.": "Still nothing after 15 minutes, or did you mistype your email? Email us at {email} and we'll help.",
     "Le prenotazioni per questa serata sono chiuse.": "Bookings for this event are closed.",
     "Questa serata è passata.": "This event is over.",
     "Questo link di gruppo non esiste.": "This group link doesn't exist.",

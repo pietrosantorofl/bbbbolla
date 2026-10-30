@@ -32,6 +32,18 @@
   function bind(name, fn) { $$('[data-bind="' + name + '"]').forEach(fn); }
   function setText(name, text) { bind(name, function (n) { n.textContent = text; }); }
   function pending(text) { return el("span", "pending", text); }
+  // supporto: nelle schermate dove può esserci un problema tecnico, l'email a cui scrivere (link cliccabile)
+  var SUPPORTO = "bollacatania@gmail.com";
+  function supporto(testo) {
+    var p = el("p", "notice notice--supporto");
+    var parti = T(testo).split("{email}");
+    p.appendChild(document.createTextNode(parti[0]));
+    var a = el("a", null, SUPPORTO);
+    a.href = "mailto:" + SUPPORTO;
+    p.appendChild(a);
+    if (parti[1]) p.appendChild(document.createTextNode(parti[1]));
+    return p;
+  }
 
   var d = parseData(serata.data);
   var dataBreve = ("0" + d.getDate()).slice(-2) + "." + ("0" + (d.getMonth() + 1)).slice(-2) + "." + d.getFullYear();
@@ -231,7 +243,7 @@
     cta.textContent = T("Lista d'attesa");
   }
 
-  function blocca(messaggio, conLinkNuovoGruppo) {
+  function blocca(messaggio, conLinkNuovoGruppo, senzaSupporto) {
     form.hidden = true;
     var p = el("p", "notice", M(messaggio));
     lead.textContent = "";
@@ -241,6 +253,7 @@
       a.href = base;
       lead.appendChild(a);
     }
+    if (!senzaSupporto) lead.appendChild(supporto("Pensi che sia un errore o hai un problema tecnico? Scrivici a {email}."));
     cta.classList.add("is-hidden");
   }
 
@@ -333,7 +346,7 @@
       nuovoModulo(r);
       if (!r.serata.aperta) {
         renderStato(passata ? T("Serata passata") : T("Prenotazioni chiuse"), "esaurito");
-        return blocca(passata ? "Questa serata è passata." : "Le prenotazioni per questa serata sono chiuse.");
+        return blocca(passata ? "Questa serata è passata." : "Le prenotazioni per questa serata sono chiuse.", false, true);
       }
       var esaurito = modo === "invito" ? !r.serata.postiSingolo : modo === "crea" && !r.serata.postiGruppo;
       renderStato(esaurito ? T("Esaurito") : T("Disponibile"), esaurito ? "esaurito" : "ok");
@@ -384,6 +397,7 @@
             nodi.push(el("p", "done__text", T("Il pass con QR si attiva solo quando tutti e {n} hanno confermato: ti arriva via email e lo trovi anche qui. Se il gruppo non si completa in tempo, nessuno riceve il pass. Manca qualcuno? Rimanda il link del gruppo:", { n: r.gruppo.dimensione })));
             nodi.push(shareBox(linkGruppo(r.gruppo.id)));
             nodi.push(el("p", "notice", T("Quando arriva, il pass potrebbe finire nello spam o nella scheda Promozioni: controlla anche lì.")));
+            nodi.push(supporto("Problemi con il pass o con le email? Scrivici a {email}: ti aiutiamo noi."));
           } else if (r.gruppo.stato !== "completo") {
             var a = el("a", "btn btn--ghost btn--block", T("Crea un nuovo gruppo"));
             a.href = base;
@@ -427,7 +441,11 @@
 
   /* ---------- invio ---------- */
   var errBox = $(".form__error");
-  function errore(msg) { errBox.textContent = M(msg); errBox.hidden = !msg; }
+  var errSupporto = supporto("Se il problema continua, scrivici a {email}.");
+  errSupporto.hidden = true;
+  errBox.parentNode.insertBefore(errSupporto, errBox.nextSibling);
+  // conSupporto: errori del server o della rete (non i campi da correggere, né pass esauriti o serata chiusa)
+  function errore(msg, conSupporto) { errBox.textContent = M(msg); errBox.hidden = !msg; errSupporto.hidden = !msg || !conSupporto; }
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -475,7 +493,7 @@
       .then(function () { dati.modulo = modulo; return api(azione, dati); })
       .then(function (r) {
         if (!r || !r.ok) {
-          errore((r && r.messaggio) || T("Qualcosa è andato storto. Riprova tra poco."));
+          errore((r && r.messaggio) || T("Qualcosa è andato storto. Riprova tra poco."), !r || ["esaurito", "chiusa", "modulo"].indexOf(r.errore) < 0);
           if (r && r.errore === "modulo") {
             return api("stato", {}).then(function (s) {
               if (s && s.ok) { nuovoModulo(s); errore(T("La sessione era scaduta: abbiamo ricaricato il modulo, premi di nuovo il bottone.")); }
@@ -485,7 +503,7 @@
         }
         fatto(azione, dati, r);
       })
-      .catch(function () { errore(T("Connessione non riuscita. Controlla la rete e riprova.")); })
+      .catch(function () { errore(T("Connessione non riuscita. Controlla la rete e riprova."), true); })
       .then(function () {
         form.classList.remove("is-loading");
         btn.textContent = testo;
@@ -512,6 +530,7 @@
     }
     // vale per tutte le email: possono arrivare con qualche minuto di ritardo o finire fuori dalla posta in arrivo
     nodi.push(el("p", "notice", T("Non trovi l'email? Può volerci qualche minuto: controlla anche lo spam e la scheda Promozioni.")));
+    nodi.push(supporto("Dopo 15 minuti non è ancora arrivata, o hai sbagliato a scrivere l'email? Scrivici a {email}: ti aiutiamo noi."));
     mostraRisultato(nodi);
   }
 
