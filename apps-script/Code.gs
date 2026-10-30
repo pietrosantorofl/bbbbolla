@@ -542,9 +542,15 @@ function aggiornamentiUnaTantum_() {
       emailPass_({ nome: 'Pietro', cognome: 'Santoro', email: 'pietrosantoro90@gmail.com', codice: 'BOL-PROVA', chiave: token_(24), tipo: 'gruppo', newsletter: 'TRUE' },
         serata_(db, '2026-10-30'), { regalo: true, prefisso: '[Prova] ' });
       PropertiesService.getScriptProperties().setProperty('REGALO_ESITO', new Date().toISOString().slice(0, 16) + ' prova inviata a pietrosantoro90');
+    } },
+    // invio vero (ok dopo la prova): parte alla prima sveglia dopo la chiusura dei gruppi
+    { id: 'pass-regalo-2026-10-30', dopo: '2026-10-30 18:00', fai: function () {
+      passRegalo_('2026-10-30');
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
+    // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
+    if (a.dopo && new Date() < Utilities.parseDate(a.dopo, TZ, 'yyyy-MM-dd HH:mm')) return;
     // la sveglia e la pagina di stato possono partire insieme: un aggiornamento già in corso non si rilancia
     var cache = CacheService.getScriptCache();
     if (cache.get('in-corso:' + a.id)) return;
