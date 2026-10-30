@@ -175,6 +175,7 @@ function doGet() {
     '<p>Ultima prova Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('BREVO_ESITO') || 'nessuna') + '</p>' +
     '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
     '<p>Promemoria di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('PROMEMORIA_ESITO') || 'nessuno') + '</p>' +
+    '<p>Solleciti: ' + esc_(PropertiesService.getScriptProperties().getProperty('SOLLECITI_ESITO') || 'nessuno') + '</p>' +
     '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
     erroriAggiornamenti_() + colonneSfasate_(ss) + confermeInSospeso_() + '</div>';
@@ -502,6 +503,18 @@ function aggiornamentiUnaTantum_() {
     // promemoria vero: tutti i pass di gruppo ancora da confermare, se il gruppo è aperto e la loro scadenza non è passata
     { id: 'promemoria-conferma-2026-10-30', fai: function () {
       promemoriaConferme_('2026-10-30');
+    } },
+    // solleciti del 30.10: prima le tre email nuove a te, con dati finti
+    { id: 'prova-solleciti-2026-10-30', fai: function () {
+      var s = serata_(db, '2026-10-30');
+      var finto = function () { return { nome: 'Pietro', email: 'pietrosantoro90@gmail.com', chiave: token_(24), newsletter: 'TRUE' }; };
+      var entro = scadenzaGruppi_(s);
+      var canali = [
+        emailPromemoriaConferma_(finto(), s, { tipo: 'sollecito', capogruppo: false, gruppo: null, confermati: 2, membri: 3, scadenza: entro }, '[Prova sollecito] '),
+        emailPromemoriaConferma_(finto(), s, { tipo: 'proroga', capogruppo: true, gruppo: { id: 'PROVA' }, confermati: 1, membri: 2, scadenza: entro }, '[Prova proroga capogruppo] '),
+        emailGruppoIncompleto_(finto(), s, { capogruppo: false, gruppo: { id: 'PROVA' }, confermati: 2, membri: 2, scadenza: entro }, '[Prova manca qualcuno] ')
+      ];
+      PropertiesService.getScriptProperties().setProperty('SOLLECITI_ESITO', new Date().toISOString().slice(0, 16) + ' 3 prove inviate (' + canali.join(', ') + ')');
     } }
   ].forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
@@ -544,7 +557,33 @@ function confermeInSospeso_() {
     conta[chiave] = (conta[chiave] || 0) + 1;
   });
   var righe = Object.keys(conta).map(function (k) { return k + ': ' + conta[k]; });
-  return '<p>Pass da confermare: ' + (righe.length ? esc_(righe.join(' · ')) : 'nessuno') + '</p>';
+  return '<p>Pass da confermare: ' + (righe.length ? esc_(righe.join(' · ')) : 'nessuno') + '</p>' + gruppiInSospeso_('2026-10-30');
+}
+
+// Per decidere i solleciti: un gruppo non completo per riga, con chi manca (solo codici, niente id del gruppo:
+// il link del gruppo fa entrare chiunque). "promemoria" = ha già ricevuto il promemoria di conferma.
+function gruppiInSospeso_(serata) {
+  var db = carica_();
+  var s = serata_(db, serata);
+  if (!s) return '';
+  var avvisati = PropertiesService.getScriptProperties().getProperty('PROMEMORIA_ESITO') || '';
+  var completi = 0;
+  var righe = [];
+  db.Gruppi.forEach(function (g) {
+    if (g.serata !== serata || g.stato === 'annullato') return;
+    var st = statoGruppo_(db, g);
+    if (st.stato === 'completo') { completi++; return; }
+    var capo = st.membri.filter(function (r) { return r.chiave === g.capogruppo; })[0];
+    var mancano = st.membri.filter(function (r) { return r.stato !== 'confermato'; }).map(function (r) {
+      return r.codice + (r.chiave === g.capogruppo ? ' capo' : '') + ' ' + Math.round(oreDa_(r.creato)) + 'h' +
+        (avvisati.indexOf(r.codice) >= 0 ? ' promemoria' : '');
+    });
+    righe.push(st.stato + ', ' + st.confermati.length + '/' + st.membri.length + ' confermati su ' + CONFIG.dimensioneGruppo +
+      ', capo ' + (capo ? capo.codice + (st.capoConfermato ? ' confermato' : ' non confermato') : 'mancante') +
+      ', creato ' + Utilities.formatDate(data_(g.creato), TZ, 'dd.MM HH:mm') + (mancano.length ? ' — mancano: ' + mancano.join(', ') : ''));
+  });
+  return '<p>Gruppi ' + esc_(serata) + ': completi ' + completi + ' · non completi ' + righe.length + '</p>' +
+    (righe.length ? '<ol style="font-size:13px">' + righe.map(function (r) { return '<li>' + esc_(r) + '</li>'; }).join('') + '</ol>' : '');
 }
 
 function erroriAggiornamenti_() {
@@ -1534,17 +1573,77 @@ function promemoriaConferme_(serata) {
   PropertiesService.getScriptProperties().setProperty('PROMEMORIA_ESITO', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessun pass da confermare'));
 }
 
+/* Solleciti del giorno della serata, prima della chiusura dei gruppi:
+ *  - gruppo scaduto perché il capogruppo non ha confermato in tempo: chi non ha confermato riparte da adesso
+ *    (la scadenza diventa la chiusura dei gruppi) e riceve la proroga;
+ *  - gruppo aperto: chi non ha confermato riceve il sollecito;
+ *  - chi ha confermato in un gruppo aperto non completo (anche riaperto qui) riceve "manca qualcuno".
+ * Esito per codice nella pagina di stato. */
+function solleciti_(serata) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('lock occupato, riprovo al prossimo giro');
+  var esiti = [];
+  try {
+    var db = carica_();
+    var s = serata_(db, serata);
+    var now = new Date();
+    if (now >= scadenzaGruppi_(s)) throw new Error('gruppi già chiusi');
+    var invii = [];
+    db.Gruppi.forEach(function (g) {
+      if (g.serata !== serata || g.stato !== 'aperto') return;
+      var st = statoGruppo_(db, g);
+      var capo = st.membri.filter(function (r) { return r.chiave === g.capogruppo; })[0];
+      var riaperto = false;
+      if (st.stato === 'scaduto') {
+        if (!capo || capo.stato !== 'da_confermare') return;
+        st.membri.forEach(function (r) { if (r.stato === 'da_confermare') aggiorna_(db.Pass, r, { creato: now }); });
+        riaperto = true;
+        st = statoGruppo_(db, g);
+      }
+      if (st.stato !== 'aperto') return;
+      st.membri.forEach(function (r) {
+        if (r.stato === 'confermato') invii.push({ pass: r, fai: emailGruppoIncompleto_, tipo: 'manca qualcuno' });
+        // oltre le 48 ore si conferma ancora, se nel gruppo c'è posto (vedi azionePass_)
+        else if (st.attivi.indexOf(r) >= 0 || st.attivi.length < CONFIG.dimensioneGruppo) invii.push({ pass: r, fai: emailPromemoriaConferma_, tipo: riaperto ? 'proroga' : 'sollecito' });
+        else esiti.push(r.codice + ' saltato (posto preso)');
+      });
+    });
+    invii.forEach(function (x) {
+      var info = infoPromemoria_(db, x.pass);
+      if (x.tipo !== 'manca qualcuno') info.tipo = x.tipo;
+      if (info.scadenza < now) info.scadenza = scadenzaGruppi_(s);
+      try {
+        var canale = x.fai(x.pass, info.s, info, '');
+        esiti.push(x.pass.codice + ' ' + x.tipo + (info.capogruppo ? ' (capogruppo)' : '') + ' con ' + canale);
+      } catch (err) {
+        esiti.push(x.pass.codice + ' ' + x.tipo + ' errore: ' + String(err.message).slice(0, 80));
+      }
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  PropertiesService.getScriptProperties().setProperty('SOLLECITI_ESITO', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuno'));
+}
+
 // prefisso: '' per le email vere, '[Prova …] ' per quelle di prova
 function emailPromemoriaConferma_(pass, s, info, prefisso) {
   var data = dataBreve_(s);
   var link = linkPass_(pass.chiave);
   var dim = CONFIG.dimensioneGruppo;
   var entro = dataOra_(info.scadenza);
+  // info.tipo: promemoria (default), sollecito (giorno della serata), proroga (gruppo scaduto e riaperto da noi)
+  var t = {
+    promemoria: { kicker: 'Promemoria', titolo: 'il tuo posto ti aspetta', oggetto: 'Manca solo il tuo clic',
+      intro: 'Hai chiesto un pass di gruppo per bolla® di ' + giorno_(fineSerata_(s)) + ', ma la tua email non è ancora confermata. ' },
+    sollecito: { kicker: 'Ultime ore', titolo: 'conferma entro le ' + CONFIG.chiusuraGruppi, oggetto: 'Ultime ore per confermare il pass',
+      intro: 'Stasera c\'è bolla® e la tua email per il pass di gruppo non è ancora confermata. ' },
+    proroga: { kicker: 'Buone notizie', titolo: 'abbiamo riaperto il tuo gruppo', oggetto: 'Abbiamo riaperto il tuo gruppo',
+      intro: 'Il tempo per confermare il tuo pass di gruppo era finito, ma abbiamo deciso di prorogarlo fino a ' + entro + '. ' }
+  }[info.tipo || 'promemoria'];
   var corpo =
-    kicker_('Promemoria') +
-    titolo_('Ciao ' + esc_(pass.nome) + ', il tuo posto ti aspetta') +
-    paragrafo_('Hai chiesto un pass di gruppo per bolla® di ' + giorno_(fineSerata_(s)) + ', ma la tua email non è ancora confermata. ' +
-      'Senza conferma il pass non si attiva, né per te né per il tuo gruppo.') +
+    kicker_(t.kicker) +
+    titolo_('Ciao ' + esc_(pass.nome) + ', ' + t.titolo) +
+    paragrafo_(t.intro + 'Senza conferma il pass non si attiva, né per te né per il tuo gruppo.') +
     bottone_(link, 'Conferma la mia email') +
     riquadro_(
       '<p style="margin:0 0 6px;font-size:15px;font-weight:700">Il tuo gruppo: ' + info.confermati + ' su ' + dim + ' ' +
@@ -1559,12 +1658,44 @@ function emailPromemoriaConferma_(pass, s, info, prefisso) {
       bottone_('https://wa.me/?text=' + encodeURIComponent('Entra nel mio gruppo per il pass gratuito di bolla® (' + data + '): ' + linkGruppo_(info.gruppo.id)), 'Invia su WhatsApp', true) : '') +
     '<div style="height:24px"></div>' +
     dettagli_(s, data) +
-    nota_('Hai tempo fino a ' + entro + '. Dopo, ' + (info.capogruppo ? 'il gruppo si chiude' : 'il tuo posto può passare a qualcun altro') +
+    nota_('Hai tempo fino a ' + entro + '. Dopo, ' + (info.tipo ? 'i gruppi si chiudono e non si può più confermare'
+      : info.capogruppo ? 'il gruppo si chiude' : 'il tuo posto può passare a qualcun altro') +
       '. Se non ti serve più, ignora questa email.');
-  return invia_(pass.email, prefisso + 'Manca solo il tuo clic — bolla® ' + data,
+  return invia_(pass.email, prefisso + t.oggetto + ' — bolla® ' + data,
     'Ciao ' + pass.nome + ', la tua email per il pass di gruppo di bolla® del ' + data + ' non è ancora confermata. ' +
       'Conferma entro ' + entro + ' aprendo questo link: ' + link,
     layout_({ banner: 'banner-logo.jpg', anteprima: 'Conferma entro ' + entro + ', poi il pass si attiva', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }));
+}
+
+// A chi ha confermato ma è in un gruppo non ancora completo: manca qualcuno, o la conferma di qualcuno.
+function emailGruppoIncompleto_(pass, s, info, prefisso) {
+  var data = dataBreve_(s);
+  var dim = CONFIG.dimensioneGruppo;
+  var entro = dataOra_(info.scadenza);
+  var mancaGente = info.membri < dim;
+  var corpo =
+    kicker_('Ultime ore') +
+    titolo_('Ciao ' + esc_(pass.nome) + ', al tuo gruppo manca ancora qualcuno') +
+    paragrafo_('Tu hai confermato, grazie! Ma il pass arriva a tutti solo quando confermate in ' + dim + ', e oggi alle ' + CONFIG.chiusuraGruppi +
+      ' i gruppi si chiudono: se il tuo non è completo, nessuno riceve il pass.') +
+    riquadro_(
+      '<p style="margin:0 0 6px;font-size:15px;font-weight:700">Il tuo gruppo: ' + info.confermati + ' su ' + dim + ' ' +
+        (info.confermati === 1 ? 'ha' : 'hanno') + ' confermato</p>' +
+      '<p style="margin:0;font-size:14px;line-height:1.5">' + (mancaGente
+        ? 'Nel gruppo ci sono ' + info.membri + ' persone su ' + dim + ': gira il link qui sotto a chi vuoi portare.'
+        : 'Siete in ' + dim + ', ma qualcuno non ha ancora confermato la sua email: scrivigli di controllare la posta (anche lo spam).') + '</p>') +
+    (mancaGente && info.gruppo ?
+      '<p style="margin:24px 0 8px;font-size:15px;font-weight:700">Il link del gruppo</p>' +
+      '<p style="margin:0 0 12px;padding:12px 14px;border:1.5px dashed #121212;border-radius:12px;background:#ffffff;font-size:14px;word-break:break-all">' +
+        '<a href="' + linkGruppo_(info.gruppo.id) + '" style="color:#121212">' + linkGruppo_(info.gruppo.id) + '</a></p>' +
+      bottone_('https://wa.me/?text=' + encodeURIComponent('Entra nel mio gruppo per il pass gratuito di bolla® (' + data + '): ' + linkGruppo_(info.gruppo.id)), 'Invia su WhatsApp', true) : '') +
+    '<div style="height:24px"></div>' +
+    dettagli_(s, data) +
+    nota_('Il gruppo va completato entro ' + entro + '.');
+  return invia_(pass.email, prefisso + 'Al tuo gruppo manca qualcuno — bolla® ' + data,
+    'Ciao ' + pass.nome + ', tu hai confermato ma il tuo gruppo per bolla® del ' + data + ' non è ancora completo (' + info.confermati + ' su ' + dim +
+      '). Va completato entro ' + entro + (mancaGente && info.gruppo ? ': ' + linkGruppo_(info.gruppo.id) : '.'),
+    layout_({ banner: 'banner-logo.jpg', anteprima: 'Il gruppo va completato entro ' + entro, corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }));
 }
 
 function emailAttesa_(r, s) {
