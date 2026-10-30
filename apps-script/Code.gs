@@ -31,7 +31,7 @@ var CONFIG = {
   senzaPass: '5€ al botteghino dopo le 22:30',  // compare nelle email ('' = niente)
   newsletterObbligatoria: true,   // deve coincidere con newsletterObbligatoria in js/config.js
   dimensioneGruppo: 3,
-  chiusuraGruppi: '18:00',        // il giorno della serata: entro quest'ora il gruppo va completato, dopo non se ne creano di nuovi
+  chiusuraGruppi: '22:00',        // il giorno della serata: entro quest'ora il gruppo va completato, dopo non se ne creano di nuovi
   chiusuraPass: '22:00',          // il giorno della serata: da quest'ora nessun pass nuovo; il modulo resta, all'invio risponde "esauriti"
   oreConferma: 48,                // dopo, un membro che non ha confermato perde il posto nel gruppo
   minutiTraReinvii: 15,           // anti-spam: ogni quanto si può rimandare il link alla stessa persona
@@ -545,8 +545,11 @@ function aggiornamentiUnaTantum_() {
         serata_(db, '2026-10-30'), { regalo: true, prefisso: '[Prova] ' });
       PropertiesService.getScriptProperties().setProperty('REGALO_ESITO', new Date().toISOString().slice(0, 16) + ' prova inviata a pietrosantoro90');
     } },
-    // invio vero (ok dopo la prova): parte alla prima sveglia dopo la chiusura dei gruppi
+    // invio vero (ok dopo la prova): alle 18:00, poi di nuovo alla chiusura dei gruppi (22:00) per quelli ancora incompleti
     { id: 'pass-regalo-2026-10-30', dopo: '2026-10-30 18:00', fai: function () {
+      passRegalo_('2026-10-30');
+    } },
+    { id: 'pass-regalo-2026-10-30-22', dopo: '2026-10-30 22:00', fai: function () {
       passRegalo_('2026-10-30');
     } }
   ].concat(['16:00', '17:00', '18:00', '19:00'].map(function (ora) {
@@ -1681,7 +1684,8 @@ function solleciti_(serata) {
   PropertiesService.getScriptProperties().setProperty('SOLLECITI_ESITO', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuno'));
 }
 
-/* Dopo la chiusura dei gruppi: chi ha confermato in un gruppo rimasto incompleto riceve il pass lo stesso (scelta per la prima serata).
+/* Chi ha confermato in un gruppo ancora incompleto riceve il pass lo stesso (scelta per la prima serata): l'ora la decide
+ * la voce una tantum che la chiama (18:00 e 22:00 il 30.10).
  * Il gruppo passa a "completo", così i pass confermati diventano validi all'ingresso (passAttivo_) e compaiono nell'app staff;
  * chi non ha confermato resta senza pass. Esito per codice nella pagina di stato. */
 function passRegalo_(serata) {
@@ -1692,7 +1696,6 @@ function passRegalo_(serata) {
     var db = carica_();
     var s = serata_(db, serata);
     var now = new Date();
-    if (now < scadenzaGruppi_(s)) throw new Error('i gruppi non sono ancora chiusi');
     db.Gruppi.forEach(function (g) {
       if (g.serata !== serata || g.stato !== 'aperto') return;
       var confermati = statoGruppo_(db, g).confermati;
@@ -1710,7 +1713,9 @@ function passRegalo_(serata) {
   } finally {
     lock.releaseLock();
   }
-  PropertiesService.getScriptProperties().setProperty('REGALO_ESITO', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuno'));
+  var props = PropertiesService.getScriptProperties();
+  var esito = new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuno');
+  props.setProperty('REGALO_ESITO', ((props.getProperty('REGALO_ESITO') || '') + ' ¦ ' + esito).replace(/^ ¦ /, ''));
 }
 
 /* Recap per gli organizzatori, solo numeri: pass, gruppi, lista d'attesa e iscritti al workshop della serata.
