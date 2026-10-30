@@ -176,6 +176,7 @@ function doGet() {
     '<p>Email di scuse per i link di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('SCUSE_ESITO') || 'nessuna') + '</p>' +
     '<p>Promemoria di conferma: ' + esc_(PropertiesService.getScriptProperties().getProperty('PROMEMORIA_ESITO') || 'nessuno') + '</p>' +
     '<p>Pass dati lo stesso (gruppi incompleti): ' + esc_(PropertiesService.getScriptProperties().getProperty('REGALO_ESITO') || 'nessuno') + '</p>' +
+    '<p>Recap orari: ' + esc_(PropertiesService.getScriptProperties().getProperty('RECAP_ESITO') || 'nessuno') + '</p>' +
     '<p>Solleciti: ' + esc_(PropertiesService.getScriptProperties().getProperty('SOLLECITI_ESITO') || 'nessuno') + '</p>' +
     '<p>Eventi Brevo: ' + esc_(PropertiesService.getScriptProperties().getProperty('EVENTI_BREVO') || 'nessuna lettura') + '</p>' +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
@@ -547,7 +548,12 @@ function aggiornamentiUnaTantum_() {
     { id: 'pass-regalo-2026-10-30', dopo: '2026-10-30 18:00', fai: function () {
       passRegalo_('2026-10-30');
     } }
-  ].forEach(function (a) {
+  ].concat(['16:00', '17:00', '18:00', '19:00'].map(function (ora) {
+    // recap orario per gli organizzatori: se la sveglia arriva con più di 50 minuti di ritardo il recap si salta
+    return { id: 'recap-2026-10-30-' + ora, dopo: '2026-10-30 ' + ora, fai: function () {
+      recapSerata_('2026-10-30', ora, ['pietrosantoro90@gmail.com', 'tommiferrara@gmail.com']);
+    } };
+  })).forEach(function (a) {
     if (props.getProperty('fatto:' + a.id)) return;
     // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
     if (a.dopo && new Date() < Utilities.parseDate(a.dopo, TZ, 'yyyy-MM-dd HH:mm')) return;
@@ -1692,6 +1698,57 @@ function passRegalo_(serata) {
     lock.releaseLock();
   }
   PropertiesService.getScriptProperties().setProperty('REGALO_ESITO', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuno'));
+}
+
+/* Recap per gli organizzatori, solo numeri: pass, gruppi, lista d'attesa e iscritti al workshop della serata.
+ * ora = 'HH:mm' dell'invio previsto; oltre 50 minuti di ritardo il recap è vecchio e non parte. Esito nella pagina di stato. */
+function recapSerata_(serata, ora, destinatari) {
+  var props = PropertiesService.getScriptProperties();
+  var previsto = Utilities.parseDate(serata + ' ' + ora, TZ, 'yyyy-MM-dd HH:mm');
+  var esito;
+  if (new Date() - previsto > 50 * 60000) {
+    esito = ora + ' saltato (in ritardo)';
+  } else {
+    var db = carica_();
+    var s = serata_(db, serata);
+    var pass = db.Pass.filter(function (r) { return r.serata === serata && r.stato !== 'annullato'; });
+    var validi = pass.filter(function (r) { return passAttivo_(db, r); });
+    var gruppi = { completo: 0, aperto: 0, scaduto: 0 };
+    db.Gruppi.forEach(function (g) {
+      if (g.serata !== serata || g.stato === 'annullato') return;
+      var st = statoGruppo_(db, g).stato;
+      gruppi[st] = (gruppi[st] || 0) + 1;
+    });
+    var conta = function (righe, f) { return righe.filter(f).length; };
+    var iscritti = conta(db.Workshop, function (r) { return r.workshop === CONFIG.workshop.id; });
+    var righe = [
+      ['Pass validi per entrare', validi.length],
+      ['— su invito', conta(validi, function (r) { return r.tipo === 'invito'; })],
+      ['— di gruppo', conta(validi, function (r) { return r.tipo === 'gruppo'; })],
+      ['Confermati in gruppi non completi', conta(pass, function (r) { return r.stato === 'confermato' && !passAttivo_(db, r); })],
+      ['Da confermare', conta(pass, function (r) { return r.stato === 'da_confermare'; })],
+      ['Già entrati', conta(pass, function (r) { return !!r.checkin; })],
+      ['Gruppi completi', gruppi.completo],
+      ['Gruppi aperti', gruppi.aperto],
+      ['Gruppi scaduti', gruppi.scaduto],
+      ['Lista d\'attesa', conta(db.Attesa, function (r) { return r.serata === serata; })],
+      ['Iscritti al workshop', iscritti + (CONFIG.workshop.posti ? ' su ' + CONFIG.workshop.posti : '')]
+    ];
+    var titolo = 'Recap delle ' + ora + ' — ' + dataBreve_(s);
+    var testo = titolo + '\n\n' + righe.map(function (r) { return r[0] + ': ' + r[1]; }).join('\n');
+    var html = '<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px">' +
+      '<h2 style="margin:0 0 12px">bolla&reg; · ' + esc_(titolo) + '</h2>' +
+      '<table style="border-collapse:collapse;font-size:15px">' + righe.map(function (r) {
+        return '<tr><td style="padding:4px 16px 4px 0">' + esc_(r[0]) + '</td><td style="padding:4px 0;font-weight:bold;text-align:right">' + esc_(String(r[1])) + '</td></tr>';
+      }).join('') + '</table>' +
+      '<p style="font-size:12px;color:#777;margin-top:16px">Prossimo recap tra un\'ora (ultimo alle 19:00).</p></div>';
+    var esiti = destinatari.map(function (a) {
+      try { return a.split('@')[0] + ' ' + invia_(a, 'bolla® ' + dataBreve_(s) + ' — recap delle ' + ora, testo, html); }
+      catch (err) { return a.split('@')[0] + ' errore: ' + String(err.message).slice(0, 80); }
+    });
+    esito = ora + ' ' + esiti.join(', ');
+  }
+  props.setProperty('RECAP_ESITO', ((props.getProperty('RECAP_ESITO') || '') + ' · ' + esito).replace(/^ · /, ''));
 }
 
 // prefisso: '' per le email vere, '[Prova …] ' per quelle di prova
