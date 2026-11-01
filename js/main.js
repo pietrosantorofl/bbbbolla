@@ -152,6 +152,16 @@
     return box;
   }
 
+  // accanto a "Prenota pass": un bottone per ogni voce della line-up che si prenota (workshop, cena…)
+  bind("prenotazioni", function (n) {
+    serata.lineup.forEach(function (a) {
+      if (!a.dettagli || !a.dettagli.prenota) return;
+      var b = el("a", "btn btn--ghost", L(a.dettagli.prenota.testo));
+      b.href = a.dettagli.prenota.href;
+      n.appendChild(b);
+    });
+  });
+
   bind("info", function (n) { n.textContent = L(C.infoUtili); });
 
   bind("altreSerate", function (n) {

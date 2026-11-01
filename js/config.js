@@ -74,6 +74,37 @@ window.BOLLA = {
         { nome: "Vini CONTROCORRENTE di Nino Calì", note: "Host: Valerio Brunetto", tag: { it: "Vino del giorno", en: "Wine of the day" }, minore: true, link: "https://www.instagram.com/controcorrente.etnawines/" },
         { nome: "SPIZZICO", tag: { it: "Food dalle 20:00", en: "Food from 8 pm" }, minore: true }
       ]
+    },
+    {
+      id: "2026-11-06",
+      data: "2026-11-06",
+      orario: { inizio: "20:00", fine: null },
+      senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },
+      luogo: {
+        nome: "MONO",
+        indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
+        mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
+      },
+      lineup: [
+        // DA COMPLETARE con la locandina: titolo, conduttori, link alla prenotazione (riga nel foglio Eventi + voce in "eventi")
+        { nome: "Workshop", ora: "20:00", tag: "Workshop", note: { it: "dettagli in arrivo", en: "details coming soon" } },
+        {
+          nome: "Tavola Cunzata", ora: "21:30", tag: { it: "Podcast e cena", en: "Podcast & dinner" }, link: "6nov-tavolacunzata/",
+          dettagli: {
+            titolo: { it: "Cena colombiana", en: "Colombian dinner" },
+            testo: [
+              { it: "Marina e la sua cucina dell’Antojito Colombiano. La cena è su prenotazione.",
+                en: "Marina and her Antojito Colombiano cooking. The dinner is by reservation." }
+            ],
+            prenota: { href: "6nov-tavolacunzata/", testo: { it: "Prenota la cena", en: "Book the dinner" } }
+          }
+        },
+        // DA COMPLETARE: nome del DJ e link Instagram
+        { nome: "DJ set", ora: "23:00", tag: "DJ set", main: true, note: { it: "nome in arrivo", en: "line-up coming soon" } },
+        // DA COMPLETARE: vino del giorno
+        { nome: { it: "Vino in arrivo", en: "Wine to be announced" }, tag: { it: "Vino del giorno", en: "Wine of the day" }, minore: true },
+        { nome: "SPIZZICO", tag: { it: "Food dalle 20:00", en: "Food from 8 pm" }, minore: true }
+      ]
     }
   ],
 
