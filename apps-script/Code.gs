@@ -332,6 +332,18 @@ function aggiornamentiUnaTantum_() {
     { id: 'backup-e-archivio-2026-10-30', fai: function () {
       var s = serata_(carica_(['Serate']), '2026-10-30');
       if (s && !PropertiesService.getScriptProperties().getProperty('archiviata:' + s.id)) archiviaSerata_(s);
+    } },
+    // la riga del 30.10 come esempio di compilazione (richiesta dell'utente): i valori usati davvero quella sera.
+    // Serata passata: serataInCorso_ è falso, quindi le automazioni non ripartono.
+    { id: 'serata-2026-10-30-esempio', fai: function () {
+      var db = carica_(['Serate']);
+      var r = trova_(db.Serate, 'id', '2026-10-30');
+      if (r) aggiorna_(db.Serate, r, { orario: 'dalle 20:00', luogo: 'MONO, Via Gornalunga 12, 95129 Catania CT',
+        senza_pass: '5€ al botteghino dopo le 22:30',
+        // l'apostrofo tiene il testo così com'è: "22:00" non diventa un orario, "-2 14:00" non diventa un numero
+        chiusura_pass: "'22:00", chiusura_gruppi: "'22:00", promemoria: "'-2 14:00", solleciti: "'09:15",
+        regalo: "'18:00, 22:00", recap: "'16:00, 17:00, 18:00, 19:00",
+        recap_a: 'pietrosantoro90@gmail.com, tommiferrara@gmail.com' });
     } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
