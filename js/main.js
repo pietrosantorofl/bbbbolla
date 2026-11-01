@@ -50,7 +50,6 @@
   var dataLunga = GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()] + " " + d.getFullYear();
 
   /* ---------- contenuti ---------- */
-  setText("sottotitolo", L(C.rassegna.sottotitolo));
   setText("dataBreve", dataBreve);
   setText("dataLunga", dataLunga);
   setText("anno", new Date().getFullYear());
