@@ -77,27 +77,50 @@ window.BOLLA = {
     }
   ],
 
-  /* pagina workshop.html: prenotazione con nome, cognome e telefono (foglio "Workshop").
-     id deve coincidere con CONFIG.workshop.id in apps-script/Code.gs */
-  workshop: {
-    id: "cumbia-2026-10-30",
-    serata: "2026-10-30",          // serata bolla® di cui fa parte (data, luogo)
-    ora: "20:00",
-    durata: 2,                     // ore, per il calendario (fino all'inizio dei live)
-    titolo: { it: "La Cumbia tradizionale colombiana", en: "Traditional Colombian Cumbia" },
-    sottotitolo: { it: "Laboratorio di percussioni e canto afrocolombiani", en: "An Afro-Colombian percussion and singing workshop" },
-    locandina: { it: "assets/workshop-cumbia.jpg", en: "assets/workshop-cumbia-en.jpg" },
-    conduttori: [
-      { nome: "Karen Andrea Ramirez Viasus", ruolo: { it: "batteria e percussioni", en: "drums and percussion" } },
-      { nome: "Ana Milena Lozada Avella", ruolo: { it: "voce", en: "vocals" } }
-    ],
-    testo: [
-      { it: "Un laboratorio sui ritmi afrocolombiani, dalla cumbia al bullerengue: voce, corpo e tamburo per creare musica insieme, in cerchio.",
-        en: "A workshop on Afro-Colombian rhythms, from cumbia to bullerengue: voice, body and drum to make music together, in a circle." },
-      { it: "Nessuna esperienza richiesta.",
-        en: "No experience needed." }
-    ]
-  },
+  /* Eventi con prenotazione (workshop, cene…): pagina bbbbolla.it/prenota.html?e=<id>.
+     id deve coincidere con la colonna "id" del foglio Eventi, dove stanno posti, chiusura e persone per prenotazione.
+     data e luogo: quelli della serata indicata, oppure data/luogo scritti qui (evento fuori dalle serate). */
+  eventi: [
+    {
+      id: "cumbia-2026-10-30",
+      tipo: "workshop",                 // come la colonna "tipo" del foglio Eventi
+      etichetta: "Workshop",            // riga piccola sopra il titolo
+      serata: "2026-10-30",             // serata bolla® di cui fa parte (data, luogo, link al pass)
+      ora: "20:00",
+      durata: 2,                        // ore, per il calendario (fino all'inizio dei live)
+      titolo: { it: "La Cumbia tradizionale colombiana", en: "Traditional Colombian Cumbia" },
+      sottotitolo: { it: "Laboratorio di percussioni e canto afrocolombiani", en: "An Afro-Colombian percussion and singing workshop" },
+      bottone: { it: "Prenota il workshop", en: "Book the workshop" },
+      locandina: { it: "assets/workshop-cumbia.jpg", en: "assets/workshop-cumbia-en.jpg" },
+      conduttori: [
+        { nome: "Karen Andrea Ramirez Viasus", ruolo: { it: "batteria e percussioni", en: "drums and percussion" } },
+        { nome: "Ana Milena Lozada Avella", ruolo: { it: "voce", en: "vocals" } }
+      ],
+      testo: [
+        { it: "Un laboratorio sui ritmi afrocolombiani, dalla cumbia al bullerengue: voce, corpo e tamburo per creare musica insieme, in cerchio.",
+          en: "A workshop on Afro-Colombian rhythms, from cumbia to bullerengue: voice, body and drum to make music together, in a circle." },
+        { it: "Nessuna esperienza richiesta.",
+          en: "No experience needed." }
+      ]
+    },
+    {
+      // la pagina della cena resta bbbbolla.it/6nov-tavolacunzata/ (js/cena.js); questa voce serve a prenota.html e alla demo
+      id: "tavolacunzata-2026-11-06",
+      tipo: "cena",
+      etichetta: "Tavola Cunzata",
+      data: "2026-11-06",
+      ora: "20:00",
+      durata: 3,
+      titolo: "Cena colombiana",
+      sottotitolo: "Marina e la sua cucina dell’Antojito Colombiano",
+      bottone: { it: "Prenota la cena", en: "Book the dinner" },
+      luogo: {
+        nome: "MONO",
+        indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
+        mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
+      }
+    }
+  ],
 
   /* testo unico sotto la line-up */
   infoUtili: {

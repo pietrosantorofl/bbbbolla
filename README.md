@@ -96,6 +96,8 @@ Valori regolabili in `CONFIG` in cima a `apps-script/Code.gs`.
 ├── css/style.css          Stili (palette in cima al file)
 ├── js/config.js           ← CONTENUTI: serate, line-up, luogo, orari, testi, URL backend
 ├── js/main.js             Logica della pagina
+├── prenota.html           Prenotazione agli eventi (workshop, cene…): prenota.html?e=<id>
+├── js/prenota.js          Logica della pagina prenota
 ├── staff.html             App ingresso per lo staff (lettura QR)
 ├── js/staff.js            Logica dell'app ingresso
 ├── js/vendor/jsQR.js      Lettore QR (jsQR 1.4.0, Apache-2.0)
@@ -153,10 +155,35 @@ Ricarica il foglio dopo il setup: compare il menu **bolla®**.
 - **Annullare un pass**: foglio **Pass**, colonna `stato` = `annullato`.
 - **Annullare un gruppo**: foglio **Gruppi**, colonna `stato` = `annullato`. I posti tornano liberi.
 - **Ingresso** (finché non c'è l'app di validazione): il QR contiene la `chiave`. Cercala nel foglio Pass e segna `x` in `checkin`.
-- **Nuova serata**: una riga in **Serate** e una voce in `serate` dentro `js/config.js`, con lo stesso `id`.
-- **Newsletter**: menu **bolla® → Esporta newsletter**. Il foglio **Newsletter** contiene solo email confermate, senza doppioni.
-- **Disiscrizione**: `FALSE` nella colonna `newsletter` di tutti i pass di quella email.
-- **Privacy**: 30 giorni dopo la serata esporta la newsletter, poi cancella le righe di quella serata da Pass e Gruppi.
+- **Nuova serata** (ogni venerdì): menu **bolla® → Nuova serata…** (data, titolo, capienza), poi una voce in `serate`
+  dentro `js/config.js` con lo stesso `id` (la line-up). Nient'altro da pubblicare: il backend non cambia.
+- **Impostazioni della serata**, colonne del foglio **Serate** (vuote = valori soliti di `CONFIG` in Code.gs):
+  `orario`, `luogo`, `senza_pass` (`-` = nessun ingresso senza pass), `chiusura_pass`, `chiusura_gruppi` (HH:mm).
+- **Automazioni della serata**, stesse righe; vuote = spente. Una o più ore separate da virgola, ognuna parte una volta sola:
+
+  | Colonna | Cosa fa | Esempio |
+  |---|---|---|
+  | `promemoria` | email a chi non ha ancora confermato il pass di gruppo | `-2 14:00` (due giorni prima) |
+  | `solleciti` | "ultime ore", gruppo riaperto, "manca qualcuno" | `09:30` (il giorno della serata) |
+  | `regalo` | pass dato lo stesso a chi ha confermato in un gruppo incompleto | `18:00, 22:00` |
+  | `recap` | numeri della serata agli indirizzi di `recap_a` | `16:00, 17:00, 18:00, 19:00` |
+
+  Un'ora è `HH:mm` (giorno della serata), `-N HH:mm` (N giorni prima) o `AAAA-MM-GG HH:mm`. Le fa partire la sveglia;
+  con troppo ritardo (sveglia ferma, riga scritta tardi) l'automazione si salta. Esito nella pagina `/exec`.
+  **Nuova serata…** compila già promemoria, solleciti e recap (`CONFIG.nuovaSerata`); il regalo resta spento.
+- **Eventi con prenotazione** (workshop, cene…): una riga nel foglio **Eventi** (`id`, `tipo`, `serata`, `inizio` AAAA-MM-GG HH:mm,
+  `posti`, `max_persone`, `attivo`) e una voce in `eventi` dentro `js/config.js` con lo stesso `id` (testi, locandina).
+  Pagina: `bbbbolla.it/prenota.html?e=<id>`. Le prenotazioni finiscono nel foglio **Prenotazioni** (colonna `evento`).
+  `max_persone` vuoto = una persona, il modulo non chiede quante. Il recap della serata conta le prenotazioni dei suoi eventi.
+- **Archivio**: due giorni dopo la serata, di notte (3-6), la sveglia sposta le sue righe da Pass, Gruppi, Attesa, Live
+  e dai fogli delle prenotazioni nei fogli **Archivio …** dello stesso file. I fogli che il sito legge restano piccoli
+  e veloci anche dopo un anno di serate. Per cercare qualcuno di una serata passata: fogli Archivio.
+- **Contatti**: foglio **Contatti**, una riga per persona (email verificata): prima e ultima serata, quante serate.
+- **Newsletter**: menu **bolla® → Esporta newsletter**. Il foglio **Newsletter** contiene gli iscritti del foglio Contatti.
+- **Disiscrizione**: `FALSE` nella colonna `newsletter` del foglio **Contatti** (una cella sola, vale per sempre).
+  `FALSE` in una riga del foglio Pass vale ancora: l'export la riporta nei Contatti.
+- **Privacy**: 30 giorni dopo la serata (e dopo il workshop o la cena) cancella le sue righe dai fogli **Archivio …**
+  (l'informativa promette la cancellazione entro 30 giorni). Il foglio Contatti resta: serve alla newsletter.
 
 ### Email: Brevo + Gmail
 

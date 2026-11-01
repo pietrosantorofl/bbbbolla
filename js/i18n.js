@@ -147,6 +147,22 @@
     "Ti aspettiamo {data} alle {ora} al {luogo}. Se serve ti chiamiamo al {telefono}.":
       "See you on {data} at {ora} at {luogo}. If needed we'll call you at {telefono}.",
     "Dopo il workshop la serata continua: prenota anche il pass gratuito.": "After the workshop the night goes on: get your free pass too.",
+    /* pagina prenota (eventi) */
+    "Evento": "Event",
+    "Persone": "People",
+    "Per 1 persona.": "For 1 person.",
+    "Per {n} persone.": "For {n} people.",
+    "Lascia nome, cognome e numero di telefono: ti contattiamo solo per comunicazioni su questo evento.":
+      "Leave your name and phone number: we'll only contact you about this event.",
+    "Dopo l'evento la serata continua: prenota anche il pass gratuito.": "After the event the night goes on: get your free pass too.",
+    "Evento non trovato.": "Event not found.",
+    "Le prenotazioni per l'evento sono chiuse.": "Bookings for this event are closed.",
+    "I posti per l'evento sono esauriti.": "This event is fully booked.",
+    "Questo numero ha già una prenotazione per l'evento.": "This number already has a booking for this event.",
+    "Le prenotazioni per la cena sono chiuse.": "Dinner bookings are closed.",
+    "I posti per la cena sono esauriti.": "The dinner is fully booked.",
+    "Questo numero ha già una prenotazione per la cena.": "This number already has a dinner booking.",
+    "Scegli per quante persone prenoti.": "Choose how many people you're booking for.",
 
     /* messaggi del backend (arrivano in italiano) */
     "Serata non trovata.": "Event not found.",
@@ -193,6 +209,7 @@
   var MESSAGGI_EN = [
     [/^Il dominio dell'email \((.+)\) non riceve posta\. Controlla di averla scritta bene\.$/, "The email domain ($1) doesn't receive mail. Check you typed it correctly."],
     [/^Non ci sono più posti per un gruppo da (\d+)\.$/, "No more spots for a group of $1."],
+    [/^Restano solo (\d+) posti: prenota per meno persone\.$/, "Only $1 spots left: book for fewer people."],
     [/^I pass di gruppo si potevano chiedere fino alle (\d\d:\d\d) del giorno della serata\.(?: Senza pass: (.+)\.)?$/,
       "Group passes could be requested until $1 on the day of the event. Without a pass: €5 at the box office after 10:30 pm."]
   ];
@@ -200,7 +217,8 @@
   // testi con link (data-i18n-html="id")
   var EN_HTML = {
     legale: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a> and subscribe to the bolla® newsletter, required for the free pass. Your email will not be shared with third parties and you can unsubscribe at any time.",
-    legaleWorkshop: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a>. We only use your number for messages about the workshop and never share it with third parties."
+    legaleWorkshop: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a>. We only use your number for messages about the workshop and never share it with third parties.",
+    legaleEvento: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a>. We only use your number for messages about this event and never share it with third parties."
   };
 
   var GIORNI = { it: ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] };

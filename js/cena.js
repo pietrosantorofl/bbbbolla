@@ -5,7 +5,7 @@
 
   var C = window.BOLLA;
   var CENA = {
-    id: "tavolacunzata-2026-11-06",     // deve coincidere con CONFIG.cena.id in apps-script/Code.gs
+    id: "tavolacunzata-2026-11-06",     // deve coincidere con la colonna "id" del foglio Eventi
     data: "2026-11-06",
     ora: "20:00",
     durata: 3,                          // ore, per il calendario
@@ -53,7 +53,7 @@
 
   /* ---------- API (Apps Script, o demo nel browser) ---------- */
   function api(action, dati) {
-    var body = Object.assign({ action: action }, dati || {});
+    var body = Object.assign({ action: action, evento: CENA.id }, dati || {});
     if (DEMO) return window.BOLLA_DEMO.call(body);
     // text/plain evita il preflight CORS, che Apps Script non gestisce
     return fetch(C.apiUrl, {

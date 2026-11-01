@@ -15,6 +15,7 @@
   function sheet(name) {
     var rows = db.sheets[name];
     return {
+      getName: function () { return name; },
       appendRow: function (r) { rows.push(r.map(function (v) { return typeof v === "string" && v.charAt(0) === "'" ? v.slice(1) : v; })); },
       getLastRow: function () { return rows.length; },
       getLastColumn: function () { return rows[0] ? rows[0].length : 0; },
@@ -78,6 +79,7 @@
       getActive: function () {
         return {
           getSheetByName: function (n) { return db.sheets[n] ? sheet(n) : null; },
+          getSheets: function () { return Object.keys(db.sheets).map(sheet); },
           insertSheet: function (n) { db.sheets[n] = []; return sheet(n); }
         };
       },
@@ -95,6 +97,8 @@
         return {
           get: function (k) { return db.cache[k] || null; },
           put: function (k, v) { db.cache[k] = v; },
+          remove: function (k) { delete db.cache[k]; },
+          removeAll: function (ks) { ks.forEach(function (k) { delete db.cache[k]; }); },
           getAll: function (ks) { var o = {}; ks.forEach(function (k) { if (k in db.cache) o[k] = db.cache[k]; }); return o; },
           putAll: function (o) { Object.assign(db.cache, o); }
         };
@@ -103,7 +107,10 @@
     PropertiesService: {
       getScriptProperties: function () {
         db.props = db.props || {};
-        return { getProperty: function (k) { return db.props[k] || null; }, setProperty: function (k, v) { db.props[k] = v; } };
+        return {
+          getProperty: function (k) { return db.props[k] || null; }, setProperty: function (k, v) { db.props[k] = v; },
+          getProperties: function () { return Object.assign({}, db.props); }, deleteProperty: function (k) { delete db.props[k]; }
+        };
       }
     },
     // nel browser niente rete sincrona: Code.gs usa la lista di riserva e salta il controllo DNS
@@ -142,6 +149,19 @@
       window.BOLLA.serate.forEach(function (s) { db.sheets.Serate.push([s.id, "bolla® — " + s.lineup.map(function (a) { return a.nome.it || a.nome; }).join(", "), s.data, "150", "TRUE"]); });
       api.appendi_("Inviti", { token: "demoinvito01", etichetta: "Invito di prova", serata: "", max: 3, scadenza: "", attivo: "TRUE", creato: new Date() });
       db.props = db.props || {};
+      save();
+    }
+    // eventi del sito (prenota.html?demo&e=<id>): posti e chiusura di prova, come le righe del foglio Eventi
+    if (!db.sheets.Eventi || db.sheets.Eventi.length <= 1) {
+      api.setup();
+      (window.BOLLA.eventi || []).forEach(function (e) {
+        var serata = window.BOLLA.serate.filter(function (s) { return s.id === e.serata; })[0];
+        var giorno = e.data || (serata && serata.data);
+        // nella demo le prenotazioni restano aperte anche per gli eventi passati
+        var inizio = giorno < new Date().toISOString().slice(0, 10) ? "2099-01-01 20:00" : giorno + " " + e.ora;
+        api.appendi_("Eventi", { id: e.id, tipo: e.tipo || "", titolo: e.id, serata: e.serata || "", inizio: inizio,
+          posti: 10, max_persone: e.tipo === "cena" ? 6 : 0, foglio: "Prenotazioni", attivo: "TRUE" });
+      });
       save();
     }
     // link segreto staff della demo: staff.html?demo entra da solo
