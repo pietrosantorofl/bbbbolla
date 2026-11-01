@@ -17,7 +17,7 @@
  *   Pass    creato | serata | tipo | rif | nome | cognome | email | email_norm | chiave | codice | stato | confermato | checkin | newsletter | checkin_da
  *   Attesa  creato | serata | nome | cognome | email | email_norm | arrivato_da | newsletter | note
  *   Contatti creato | email_norm | email | nome | cognome | newsletter | prima | ultima | serate | aggiornato   (una riga per persona)
- *   Eventi  id | tipo | titolo | serata | inizio | posti | max_persone | foglio | attivo   (workshop, cene… con prenotazione)
+ *   Eventi  id | tipo | titolo | serata | inizio | posti | max_persone | foglio | attivo | avvisa   (workshop, cene… con prenotazione)
  *   Prenotazioni creato | evento | nome | cognome | telefono | telefono_norm | persone | note
  *   Workshop, Cena: prenotazioni dei primi eventi (stesso schema, colonna "workshop" o "cena" al posto di "evento")
  *   Archivio …: le righe delle serate passate, spostate dalla sveglia (vedi "Archivio")
@@ -80,7 +80,7 @@ var COLONNE = {
   Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note'],
   Contatti: ['creato', 'email_norm', 'email', 'nome', 'cognome', 'newsletter', 'prima', 'ultima', 'serate', 'aggiornato'],
   Live: ['creato', 'serata', 'nickname', 'colore', 'emozione', 'dispositivo'],
-  Eventi: ['id', 'tipo', 'titolo', 'serata', 'inizio', 'posti', 'max_persone', 'foglio', 'attivo'],
+  Eventi: ['id', 'tipo', 'titolo', 'serata', 'inizio', 'posti', 'max_persone', 'foglio', 'attivo', 'avvisa'],
   Prenotazioni: ['creato', 'evento', 'nome', 'cognome', 'telefono', 'telefono_norm', 'persone', 'note'],
   Workshop: ['creato', 'workshop', 'nome', 'cognome', 'telefono', 'telefono_norm', 'note'],
   Cena: ['creato', 'cena', 'nome', 'cognome', 'telefono', 'telefono_norm', 'persone', 'note']
@@ -220,6 +220,7 @@ function doGet() {
     riga('Backup nel Drive', 'BACKUP_ESITO') +
     riga('Archivio', 'ARCHIVIO_ESITO') +
     riga('Contatti', 'CONTATTI_ESITO') +
+    riga('Avvisi prenotazioni eventi', 'AVVISI_ESITO') +
     riga('Ricerca segnalazione', 'CERCA_ESITO') +
     riga('QR esterni', 'QR_ESTERNI_ESITO') +
     riga('Eventi Brevo', 'EVENTI_BREVO') +
@@ -335,6 +336,12 @@ function aggiornamentiUnaTantum_() {
     } },
     // la riga del 30.10 come esempio di compilazione (richiesta dell'utente): i valori usati davvero quella sera.
     // Serata passata: serataInCorso_ è falso, quindi le automazioni non ripartono.
+    // cena del 6.11 (richiesta dell'utente): da 1 a 20 persone per prenotazione e avviso a ogni prenotazione
+    { id: 'cena-2026-11-06-persone-20-avvisi', fai: function () {
+      var db = carica_(['Eventi']);
+      var e = trova_(db.Eventi, 'id', 'tavolacunzata-2026-11-06');
+      if (e) aggiorna_(db.Eventi, e, { max_persone: 20, avvisa: 'pietrosantoro90@gmail.com, sipariomarchese@gmail.com' });
+    } },
     { id: 'serata-2026-10-30-esempio', fai: function () {
       var db = carica_(['Serate']);
       var r = trova_(db.Serate, 'id', '2026-10-30');
@@ -638,6 +645,7 @@ function azionePass_(d) {
  *   max_persone  persone al massimo in una prenotazione; vuoto o 0 = una persona, il modulo non chiede quante
  *   foglio       dove finiscono le prenotazioni: Prenotazioni (vuoto) oppure Workshop/Cena per i primi eventi
  *   attivo       FALSE = prenotazioni chiuse
+ *   avvisa       email separate da virgola: a ogni prenotazione arriva un avviso con nome, telefono e persone; vuoto = nessuno
  * Nome, cognome e telefono (niente email, niente pass): lo staff richiama al telefono se serve.
  * Stesso anti-bot dei pass (modulo firmato, honeypot, tetto al minuto); lo stesso numero non può prenotare due volte. */
 // pagine dei primi eventi rimaste in cache nei browser, che non mandano l'id
@@ -649,7 +657,8 @@ function evento_(db, id, tipo) {
   var inizio = e.inizio instanceof Date ? e.inizio : Utilities.parseDate(String(e.inizio).trim(), TZ, 'yyyy-MM-dd HH:mm');
   var foglio = COLONNA_EVENTO[e.foglio] ? e.foglio : 'Prenotazioni';
   return { id: e.id, tipo: e.tipo, titolo: e.titolo, serata: e.serata, inizio: inizio, posti: Number(e.posti) || 0,
-    maxPersone: Number(e.max_persone) || 0, foglio: foglio, colonna: COLONNA_EVENTO[foglio], attivo: e.attivo === '' || vero_(e.attivo) };
+    maxPersone: Number(e.max_persone) || 0, foglio: foglio, colonna: COLONNA_EVENTO[foglio], attivo: e.attivo === '' || vero_(e.attivo),
+    avvisa: String(e.avvisa || '').split(/[\s,;]+/).filter(function (x) { return x.indexOf('@') > 0; }) };
 }
 
 function eventoAperto_(ev) {
@@ -714,8 +723,40 @@ function azioneEventoPrenota_(d, tipo) {
     appendi_(ev.foglio, riga);
     contaRegistrazione_();
     segnaModuloUsato_(d.modulo);
-    return { ok: true };
+    // avviso agli organizzatori (colonna "avvisa"), dopo il lock: con i totali aggiornati
+    var totali = { prenotazioni: 1, persone: persone };
+    db[ev.foglio].forEach(function (r) { if (r[ev.colonna] === ev.id) { totali.prenotazioni++; totali.persone += Number(r.persone) || 1; } });
+    return { ok: true, _email: ev.avvisa.length ? function () { avvisoPrenotazione_(ev, riga, totali); } : null };
   });
+}
+
+// Email agli indirizzi della colonna "avvisa" dell'evento. Esito (senza dati personali) nella pagina di stato.
+function avvisoPrenotazione_(ev, r, totali) {
+  var titolo = ev.titolo || ev.id;
+  var persone = ev.maxPersone ? Number(r.persone) : 1;
+  var righe = [
+    ['Nome', r.nome + ' ' + r.cognome],
+    ['Telefono', r.telefono],
+    ['Persone', persone],
+    ['Quando', Utilities.formatDate(r.creato, TZ, 'dd.MM.yyyy HH:mm')],
+    ['Totale prenotazioni', totali.prenotazioni],
+    ['Totale persone', totali.persone + (ev.posti ? ' su ' + ev.posti : '')]
+  ];
+  var oggetto = 'Nuova prenotazione — ' + titolo + ': ' + r.nome + ' ' + r.cognome + ', ' + (persone === 1 ? '1 persona' : persone + ' persone');
+  var testo = oggetto + '\n\n' + righe.map(function (x) { return x[0] + ': ' + x[1]; }).join('\n');
+  var html = '<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px">' +
+    '<h2 style="margin:0 0 12px">bolla&reg; · ' + esc_(titolo) + '</h2>' +
+    '<p style="margin:0 0 12px">Nuova prenotazione:</p>' +
+    '<table style="border-collapse:collapse;font-size:15px">' + righe.map(function (x) {
+      var v = x[0] === 'Telefono' ? '<a href="tel:' + esc_(r.telefono_norm) + '">' + esc_(String(x[1])) + '</a>' : esc_(String(x[1]));
+      return '<tr><td style="padding:4px 16px 4px 0;color:#5f5b56">' + esc_(x[0]) + '</td><td style="padding:4px 0;font-weight:bold">' + v + '</td></tr>';
+    }).join('') + '</table>' +
+    '<p style="font-size:12px;color:#777;margin-top:16px">Tutte le prenotazioni sono nel foglio ' + esc_(ev.foglio) + ' (colonna ' + esc_(ev.colonna) + ' = ' + esc_(ev.id) + ').</p></div>';
+  var esiti = ev.avvisa.map(function (a) {
+    try { return a.split('@')[0] + ' ' + invia_(a, oggetto, testo, html); }
+    catch (err) { return a.split('@')[0] + ' errore: ' + String(err.message).slice(0, 80); }
+  });
+  accoda_('AVVISI_ESITO', Utilities.formatDate(new Date(), TZ, 'dd.MM HH:mm') + ' ' + ev.id + ' ' + esiti.join(', '));
 }
 
 // Numero italiano o internazionale: "333 123 4567", "+39 333…", "0039 333…" diventano tutti +393331234567

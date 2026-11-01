@@ -70,14 +70,17 @@
   var errBox = $(".form__error");
   function errore(msg) { errBox.textContent = msg || ""; errBox.hidden = !msg; }
 
-  // menu persone: 1..max (il massimo arriva dal backend, che conosce i coperti rimasti)
+  // persone: numero libero da 1 a max (il massimo arriva dal backend: 20, o meno se restano meno coperti)
+  var maxPersone = 20;
   function persone(max) {
-    var sel = form.persone, prima = sel.value || "1";
-    sel.textContent = "";
-    for (var i = 1; i <= max; i++) sel.appendChild(el("option", null, String(i))).value = String(i);
-    sel.value = +prima <= max ? prima : "1";
+    maxPersone = max;
+    form.persone.max = String(max);
   }
-  persone(6);
+  persone(20);
+  function personeValide() {
+    var n = Number(form.persone.value);
+    return n >= 1 && n <= maxPersone && Math.floor(n) === n;
+  }
 
   function renderStato(testo, classe) {
     var box = $(".status");
@@ -123,6 +126,8 @@
       if (!ok && !primoErrato) primoErrato = i;
     });
     if (primoErrato) { errore(primoErrato.name === "telefono" ? "Controlla il numero di telefono." : "Inserisci nome e cognome."); primoErrato.focus(); return; }
+    form.persone.setAttribute("aria-invalid", personeValide() ? "false" : "true");
+    if (!personeValide()) { errore("Scrivi per quante persone prenoti: da 1 a " + maxPersone + "."); form.persone.focus(); return; }
     if (form.website.value) return; // bot
 
     var btn = $("[type=submit]", form);

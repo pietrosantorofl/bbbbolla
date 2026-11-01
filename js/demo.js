@@ -160,7 +160,7 @@
         // nella demo le prenotazioni restano aperte anche per gli eventi passati
         var inizio = giorno < new Date().toISOString().slice(0, 10) ? "2099-01-01 20:00" : giorno + " " + e.ora;
         api.appendi_("Eventi", { id: e.id, tipo: e.tipo || "", titolo: e.id, serata: e.serata || "", inizio: inizio,
-          posti: 10, max_persone: e.tipo === "cena" ? 6 : 0, foglio: "Prenotazioni", attivo: "TRUE" });
+          posti: e.tipo === "cena" ? 0 : 10, max_persone: e.tipo === "cena" ? 20 : 0, foglio: "Prenotazioni", attivo: "TRUE" });
       });
       save();
     }

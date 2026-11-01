@@ -20,21 +20,7 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/style.css?v=202610261838">
-  <style>
-    /* menu a tendina con lo stesso aspetto dei campi di testo (style.css non ha regole per select) */
-    .field select {
-      width: 100%; min-height: 48px; padding: 0 40px 0 14px;
-      border: 1.5px solid var(--line); border-radius: 12px; background: #fff;
-      font: 400 17px var(--font); color: var(--ink);
-      appearance: none; -webkit-appearance: none;
-      background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
-      background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%;
-      background-size: 6px 6px; background-repeat: no-repeat;
-      transition: border-color .15s, box-shadow .15s;
-    }
-    .field select:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(240, 48, 127, .25); }
-  </style>
+  <link rel="stylesheet" href="css/style.css?v=202611011452">
 </head>
 <body>
   <header class="topbar">
@@ -81,7 +67,7 @@
             </label>
             <label class="field">
               <span>Persone</span>
-              <select name="persone" required></select>
+              <input name="persone" type="number" inputmode="numeric" min="1" max="20" step="1" value="1" required>
             </label>
           </div>
 
@@ -123,8 +109,8 @@
 
   <a href="6nov-tavolacunzata/#prenota" class="mobile-cta btn">Prenota la cena</a>
 
-  <script src="js/config.js?v=202611011337"></script>
-  <script src="js/demo.js?v=202611011337"></script>
-  <script src="js/cena.js?v=202611011337"></script>
+  <script src="js/config.js?v=202611011452"></script>
+  <script src="js/demo.js?v=202611011452"></script>
+  <script src="js/cena.js?v=202611011452"></script>
 </body>
 </html>

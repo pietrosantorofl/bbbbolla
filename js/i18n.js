@@ -166,6 +166,7 @@
     "I posti per la cena sono esauriti.": "The dinner is fully booked.",
     "Questo numero ha già una prenotazione per la cena.": "This number already has a dinner booking.",
     "Scegli per quante persone prenoti.": "Choose how many people you're booking for.",
+    "Scrivi per quante persone prenoti: da 1 a {n}.": "Enter how many people you're booking for: 1 to {n}.",
 
     /* messaggi del backend (arrivano in italiano) */
     "Serata non trovata.": "Event not found.",
