@@ -148,7 +148,6 @@
       "See you on {data} at {ora} at {luogo}. If needed we'll call you at {telefono}.",
     "Dopo il workshop la serata continua: prenota anche il pass gratuito.": "After the workshop the night goes on: get your free pass too.",
     /* archivio */
-    "Archivio": "Archive",
     "Eventi passati": "Past events",
     "Ancora nessuna serata: la prima sta per arrivare.": "No nights yet: the first one is coming soon.",
     /* pagina prenota (eventi) */
