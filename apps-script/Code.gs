@@ -217,6 +217,7 @@ function doGet() {
     riga('Solleciti', 'SOLLECITI_ESITO') +
     riga('Pass dati lo stesso (gruppi incompleti)', 'REGALO_ESITO') +
     riga('Recap orari', 'RECAP_ESITO') +
+    riga('Backup nel Drive', 'BACKUP_ESITO') +
     riga('Archivio', 'ARCHIVIO_ESITO') +
     riga('Contatti', 'CONTATTI_ESITO') +
     riga('Ricerca segnalazione', 'CERCA_ESITO') +
@@ -325,6 +326,12 @@ function aggiornamentiUnaTantum_() {
     // di nuovo, con anche i disiscritti che non hanno un pass confermato
     { id: 'contatti-con-disiscritti-2026-11', fai: function () {
       ricostruisciContatti_();
+    } },
+    // richiesta dell'utente (01.11): backup nel Drive e archivio del 30.10 subito, senza aspettare la notte.
+    // L'archivio parte solo con il backup verificato; l'esito è nelle righe Backup e Archivio della pagina di stato.
+    { id: 'backup-e-archivio-2026-10-30', fai: function () {
+      var s = serata_(carica_(['Serate']), '2026-10-30');
+      if (s && !PropertiesService.getScriptProperties().getProperty('archiviata:' + s.id)) archiviaSerata_(s);
     } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
@@ -2145,7 +2152,34 @@ function orariSerata_(s, testo) {
    dei suoi eventi in "Archivio Workshop", "Archivio Prenotazioni"… Così i fogli che il sito legge a ogni richiesta
    restano piccoli. Per cercare qualcuno di una serata passata: fogli Archivio. Il link personale di un pass
    archiviato risponde "Link non valido". Esito nella pagina di stato.
+   Prima di spostare qualcosa fa una copia completa del file nel Drive (backupDrive_) e controlla che la copia
+   abbia le stesse righe: senza un backup verificato l'archivio non parte.
    ============================================================ */
+
+// Copia del file nel Drive del proprietario ("bolla® backup AAAA-MM-GG HH:mm"), con lo stesso numero di righe
+// in ogni foglio. Restituisce true se la copia è verificata; esito e link nella pagina di stato.
+function backupDrive_() {
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('BACKUP_TENTATO', String(Date.now()));
+  var ss = SpreadsheetApp.getActive();
+  var quando = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm');
+  var copia = ss.copy('bolla® backup ' + quando);
+  var esito = quando + ' ' + copia.getUrl();
+  var ok = false;
+  try {
+    var diversi = ss.getSheets().filter(function (sh) {
+      var c = copia.getSheetByName(sh.getName());
+      return !c || c.getLastRow() !== sh.getLastRow() || c.getLastColumn() !== sh.getLastColumn();
+    }).map(function (sh) { return sh.getName(); });
+    ok = !diversi.length;
+    esito += ok ? ' · verificato: ' + ss.getSheets().length + ' fogli, stesse righe' : ' · DIVERSO in: ' + diversi.join(', ');
+  } catch (err) {
+    esito += ' · verifica non riuscita: ' + String(err.message).slice(0, 120);
+  }
+  props.setProperty('BACKUP_ESITO', esito);
+  if (ok) props.setProperty('BACKUP_VERIFICATO', String(Date.now()));
+  return ok;
+}
 
 function archivio_(db) {
   var ora = Number(Utilities.formatDate(new Date(), TZ, 'H'));
@@ -2161,9 +2195,19 @@ function archivio_(db) {
 }
 
 function archiviaSerata_(s) {
-  var lock = LockService.getScriptLock();
-  if (!lock.tryLock(30000)) return; // riprova al prossimo giro
   var props = PropertiesService.getScriptProperties();
+  // backup verificato nell'ultima ora (più serate nella stessa notte: uno basta), altrimenti se ne fa uno adesso
+  var ultimo = Number(props.getProperty('BACKUP_VERIFICATO') || 0);
+  if (Date.now() - ultimo > 36e5) {
+    // dopo un backup non riuscito si riprova il giorno dopo, non a ogni giro della sveglia (una copia ogni 5 minuti)
+    var tentato = Number(props.getProperty('BACKUP_TENTATO') || 0);
+    if (Date.now() - tentato < 20 * 36e5 || !backupDrive_()) {
+      accoda_('ARCHIVIO_ESITO', new Date().toISOString().slice(0, 16) + ' ' + s.id + ': non archiviata, backup non verificato');
+      return false;
+    }
+  }
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) return false; // riprova al prossimo giro
   var conti = [];
   try {
     Object.keys(DA_ARCHIVIARE).forEach(function (nome) {
@@ -2189,6 +2233,7 @@ function archiviaSerata_(s) {
     lock.releaseLock();
   }
   accoda_('ARCHIVIO_ESITO', new Date().toISOString().slice(0, 16) + ' ' + s.id + ': ' + (conti.join(', ') || 'niente da spostare'));
+  return true;
 }
 
 // Sposta nel foglio "Archivio <nome>" le righe per cui sposta(riga) è vero e restituisce quante sono.
