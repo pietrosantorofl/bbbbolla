@@ -34,6 +34,11 @@ window.BOLLA = {
     {
       id: "2026-10-30",
       data: "2026-10-30",          // AAAA-MM-GG
+      // locandine per la pagina Eventi passati (archivio.html), una accanto all'altra; immagini in assets/locandine/
+      locandine: [
+        { src: "assets/locandine/2026-10-30-serata.jpg", alt: { it: "Locandina della serata del 30 ottobre 2026", en: "Poster of the 30 October 2026 night" } },
+        { src: "assets/locandine/2026-10-30-workshop.jpg", alt: { it: "Locandina del workshop La Cumbia tradizionale colombiana", en: "Poster of the Traditional Colombian Cumbia workshop" } }
+      ],
       orario: { inizio: "20:00", fine: null },   // fine: null = "dalle 20:00"
       senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },   // null = nessun ingresso senza pass
       luogo: {

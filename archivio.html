@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Eventi passati — bolla®</title>
+  <meta name="description" content="Le serate passate di bolla®, rassegna di musica live a Catania: locandine e line-up.">
+  <meta name="theme-color" content="#e9e7e3">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Eventi passati — bolla®">
+  <meta property="og:description" content="Le serate passate di bolla®: locandine e line-up.">
+  <meta property="og:image" content="https://bbbbolla.it/assets/locandine/2026-10-30-serata.jpg">
+  <meta property="og:url" content="https://bbbbolla.it/archivio.html">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css?v=202611011402">
+  <style>
+    .archivio { max-width: 1080px; margin: 0 auto; padding: clamp(28px, 5vw, 56px) var(--gutter) 40px; }
+    .archivio__titolo { margin: 0 0 clamp(24px, 4vw, 48px); font-size: clamp(44px, 9vw, 96px); line-height: .92; letter-spacing: -.05em; font-weight: 700; }
+    .archivio__vuoto { font-size: 18px; color: var(--muted); }
+
+    /* una serata: data e line-up, poi le locandine una accanto all'altra */
+    .passata { border-top: 1.5px solid var(--ink); padding: clamp(20px, 3vw, 32px) 0 clamp(36px, 6vw, 72px); }
+    .passata__testa { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; margin-bottom: clamp(16px, 3vw, 28px); }
+    .passata__data { margin: 0; font-size: clamp(28px, 4.5vw, 48px); line-height: 1; letter-spacing: -.03em; font-weight: 700; }
+    .passata__luogo { margin: 0; font-size: 15px; color: var(--muted); }
+    .passata__lineup { margin: 0 0 clamp(18px, 3vw, 28px); font-size: clamp(17px, 2vw, 21px); line-height: 1.4; max-width: 60ch; }
+    .passata__locandine { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: clamp(10px, 2vw, 24px); }
+    .passata__locandine a { display: block; border-radius: 14px; overflow: hidden; border: 1.5px solid var(--ink); background: #fff; }
+    .passata__locandine img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; transition: transform .3s; }
+    .passata__locandine a:hover img { transform: scale(1.02); }
+    .passata__locandine a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="./" class="topbar__logo" aria-label="bolla® home"><img src="assets/bolla-logo.png" alt="bolla®" width="808" height="312"></a>
+    <nav class="topbar__nav">
+      <a href="manifesto.html" class="topbar__link" data-i18n>Manifesto</a>
+      <a href="archivio.html" class="topbar__link" aria-current="page" data-i18n>Archivio</a>
+      <a href="./#prenota" class="btn btn--small" data-i18n>Prenota pass</a>
+      <button type="button" class="lingua" data-lingua>EN</button>
+    </nav>
+  </header>
+
+  <main class="archivio">
+    <h1 class="archivio__titolo" data-i18n>Eventi passati</h1>
+    <div data-bind="passate"></div>
+  </main>
+
+  <footer class="footer">
+    <img src="assets/bolla-logo.png" alt="bolla®" class="footer__logo" width="808" height="312" loading="lazy">
+    <nav class="social" aria-label="Contatti e social">
+      <a href="https://www.instagram.com/bbbbolla/" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" class="pieno"/></svg>
+      </a>
+      <a href="https://www.facebook.com/people/BOLLA/61595612496320/" target="_blank" rel="noopener" aria-label="Facebook">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="pieno" d="M14.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.5V4.4c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.4H9.2v3h2.5V21z"/></svg>
+      </a>
+      <a href="mailto:bollacatania@gmail.com" aria-label="Email: bollacatania@gmail.com">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7l8 6 8-6"/></svg>
+      </a>
+    </nav>
+    <p class="footer__small"><a href="privacy.html" data-i18n>Privacy</a> · <a href="archivio.html" data-i18n>Eventi passati</a> · © 2026 bolla®</p>
+  </footer>
+
+  <script src="js/i18n.js?v=202611011402"></script>
+  <script src="js/config.js?v=202611011402"></script>
+  <script src="js/archivio.js?v=202611011402"></script>
+</body>
+</html>
