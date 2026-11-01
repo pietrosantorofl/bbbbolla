@@ -321,6 +321,10 @@ function aggiornamentiUnaTantum_() {
     // una riga per persona nel foglio Contatti, dai pass confermati (newsletter: vale l'ultima disiscrizione)
     { id: 'contatti-da-pass-2026-11', fai: function () {
       ricostruisciContatti_();
+    } },
+    // di nuovo, con anche i disiscritti che non hanno un pass confermato
+    { id: 'contatti-con-disiscritti-2026-11', fai: function () {
+      ricostruisciContatti_();
     } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
@@ -2004,6 +2008,17 @@ function ricostruisciContatti_() {
       c.serate[r.serata] = true;
       if (String(r.serata) < String(c.prima)) c.prima = r.serata;
       if (String(r.serata) > String(c.ultima)) c.ultima = r.serata;
+    });
+    // disiscritti senza un pass confermato: restano come FALSE, così un pass futuro non li riscrive alla newsletter
+    leggiArchivio_('Pass').concat(db.Pass).forEach(function (r) {
+      if (!r.email_norm || per[r.email_norm] || !no[r.email_norm]) return;
+      per[r.email_norm] = { creato: r.creato, email_norm: r.email_norm, email: r.email, nome: r.nome, cognome: r.cognome, prima: '', ultima: '', serate: {} };
+      ordine.push(per[r.email_norm]);
+    });
+    db.Contatti.forEach(function (c) {
+      if (!c.email_norm || per[c.email_norm] || !no[c.email_norm]) return;
+      per[c.email_norm] = { creato: c.creato, email_norm: c.email_norm, email: c.email, nome: c.nome, cognome: c.cognome, prima: c.prima, ultima: c.ultima, serate: {} };
+      ordine.push(per[c.email_norm]);
     });
     var now = new Date();
     var sh = SpreadsheetApp.getActive().getSheetByName('Contatti');
