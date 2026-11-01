@@ -1,4 +1,4 @@
-/* bolla® — eventi passati: le serate di config.js già concluse, dalla più recente, con le locandine una accanto all'altra.
+/* bolla® — eventi passati: le serate di config.js già concluse, dalla più recente: data e locandine una accanto all'altra.
    Le locandine sono nella voce "locandine" di ogni serata (config.js), immagini in assets/locandine/. */
 (function () {
   "use strict";
@@ -27,14 +27,8 @@
     var sez = el("section", "passata");
     sez.setAttribute("aria-label", d.getDate() + " " + I18N.mesi[d.getMonth()] + " " + d.getFullYear());
 
-    var testa = el("div", "passata__testa");
-    testa.appendChild(el("h2", "passata__data", d.getDate() + " " + I18N.mesi[d.getMonth()] + " " + d.getFullYear()));
-    if (s.luogo && s.luogo.nome) testa.appendChild(el("p", "passata__luogo", s.luogo.nome));
-    sez.appendChild(testa);
-
-    // solo le proposte musicali e i workshop, senza food & beverage
-    var nomi = (s.lineup || []).filter(function (a) { return !a.minore; }).map(function (a) { return L(a.nome); });
-    if (nomi.length) sez.appendChild(el("p", "passata__lineup", nomi.join(" · ")));
+    // solo la data: il resto lo raccontano le locandine
+    sez.appendChild(el("h2", "passata__data", d.getDate() + " " + I18N.mesi[d.getMonth()] + " " + d.getFullYear()));
 
     var locandine = s.locandine || [];
     if (locandine.length) {
