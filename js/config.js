@@ -43,12 +43,12 @@ window.BOLLA = {
       // tipo: "foto" o "video"; src: null = segnaposto "in arrivo" finché non arriva il file
       // formato: larghezza:altezza ("9:16" video verticale dal telefono, "4:5", "3:2"…); poster: anteprima del video
       vibes: [
-        { tipo: "video", src: null, poster: null, formato: "9:16", alt: { it: "Video della serata", en: "Video of the night" } },
-        { tipo: "foto", src: null, formato: "4:5", alt: { it: "Foto della serata", en: "Photo of the night" } },
-        { tipo: "foto", src: null, formato: "3:2", alt: { it: "Foto della serata", en: "Photo of the night" } },
-        { tipo: "video", src: null, poster: null, formato: "9:16", alt: { it: "Video della serata", en: "Video of the night" } },
-        { tipo: "foto", src: null, formato: "4:5", alt: { it: "Foto della serata", en: "Photo of the night" } },
-        { tipo: "video", src: null, poster: null, formato: "9:16", alt: { it: "Video della serata", en: "Video of the night" } }
+        { tipo: "foto", src: "assets/vibes/2026-10-30/bolle.webp", formato: "941:1672",
+          alt: { it: "Una bolla di sapone durante il workshop di cumbia, con i tamburi sullo sfondo", en: "A soap bubble during the cumbia workshop, with the drums in the background" } },
+        { tipo: "video", src: "assets/vibes/2026-10-30/selva-cosmica-live.mp4", poster: "assets/vibes/2026-10-30/selva-cosmica-live.jpg", formato: "9:16",
+          alt: { it: "Il live di Selva Cosmica", en: "Selva Cosmica live" } },
+        { tipo: "video", src: "assets/vibes/2026-10-30/dj-set.mp4", poster: "assets/vibes/2026-10-30/dj-set.jpg", formato: "9:16",
+          alt: { it: "Il DJ set a fine serata, tra le bolle", en: "The late-night DJ set, among the bubbles" } }
       ],
       orario: { inizio: "20:00", fine: null },   // fine: null = "dalle 20:00"
       senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },   // null = nessun ingresso senza pass
