@@ -96,7 +96,7 @@ window.BOLLA = {
       data: "2026-11-06",
       // locandina della home: sfera ricolorata con i colori di Tavola Cunzata, solo date e sfera (niente programma sotto)
       sfera: { src: "assets/sfera-tavola-cunzata.webp", ombra: "rgba(3, 195, 241, .35)" },
-      // programmaPubblico: false = programma nascosto nella home (locandina e sezione Line-up) finché non esce la locandina
+      // programmaPubblico: false = finché non esce la locandina: nella locandina solo sfera e date, nella Line-up "TO BE ANNOUNCED"
       programmaPubblico: false,
       orario: { inizio: "20:00", fine: null },
       senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },

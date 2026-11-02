@@ -118,10 +118,12 @@
 
   // voci con "dettagli": si aprono e chiudono con un clic (details/summary, accessibile da tastiera)
   bind("lineup", function (n) {
-    // programmaPubblico: false = sezione Line-up nascosta (titolo compreso) finché non esce la locandina
+    // programmaPubblico: false = al posto dei nomi una sola riga "TO BE ANNOUNCED", finché non esce la locandina
     if (serata.programmaPubblico === false) {
-      n.hidden = true;
-      document.querySelectorAll("[data-lineup-titolo]").forEach(function (t) { t.hidden = true; });
+      var tba = el("li");
+      tba.setAttribute("data-ora", "");
+      tba.appendChild(el("span", "lineup__name", "TO BE ANNOUNCED"));
+      n.appendChild(tba);
       return;
     }
     serata.lineup.forEach(function (a) {
