@@ -359,6 +359,8 @@ function aggiornamentiUnaTantum_() {
     { id: 'vibes-2026-10-30-prova-2', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
     // terza prova: tolta la frase "Grazie a chi c'era…" (richiesta dell'utente, 02.11)
     { id: 'vibes-2026-10-30-prova-3', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
+    // quarta prova: tolta anche "Aiutaci a raccogliere foto e video della serata!" (richiesta dell'utente, 02.11)
+    { id: 'vibes-2026-10-30-prova-4', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
     { id: 'vibes-2026-10-30', dopo: '2026-11-03 17:00', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.tutti()); } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
@@ -2231,7 +2233,7 @@ function oggettoVibes_() {
 
 function testoVibes_(nome, s) {
   return 'Ciao ' + nome + ', grazie per la serata di bolla® del ' + dataBreve_(s) + '. ' +
-    'Aiutaci a raccogliere foto e video della serata! Sono sul sito, nella sezione Vibes: ' + linkVibes_(s) + ' — ' +
+    'Foto e video della serata sono sul sito, nella sezione Vibes: ' + linkVibes_(s) + ' — ' +
     'Ti riconosci in una foto e preferisci che non ci sia? Rispondi a questa email e la togliamo.';
 }
 
@@ -2245,7 +2247,6 @@ function emailVibes_(nome, s, o) {
     titolo_('Grazie per esserci stati') +
     paragrafo_('Ciao ' + esc_(nome) + ',') +
     paragrafo_(o.racconto) +
-    paragrafo_('Aiutaci a raccogliere foto e video della serata!') +
     bottone_(linkVibes_(s), 'Guarda le Vibes') +
     (dopo ? riquadro_(
       '<p style="margin:0 0 6px;font-size:15px;font-weight:700">Prossima serata: ' + esc_(giorno_(fineSerata_(dopo))) + '</p>' +
