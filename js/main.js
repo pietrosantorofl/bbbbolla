@@ -101,8 +101,8 @@
 
   // locandina: a sinistra il programma in ordine di orario (gli orari sono nella line-up), a destra food & beverage
   bind("lineupHero", function (n) {
-    // programmaInLocandina: false = nella locandina solo sfera e date (la line-up resta più sotto)
-    if (serata.programmaInLocandina === false) { n.hidden = true; return; }
+    // programmaPubblico: false = nella locandina solo sfera e date
+    if (serata.programmaPubblico === false) { n.hidden = true; return; }
     var lista = $(".programma__lista", n), fb = $(".programma__fb ul", n);
     serata.lineup.forEach(function (a) {
       var li = el("li", a.main ? "is-main" : null);
@@ -118,6 +118,12 @@
 
   // voci con "dettagli": si aprono e chiudono con un clic (details/summary, accessibile da tastiera)
   bind("lineup", function (n) {
+    // programmaPubblico: false = sezione Line-up nascosta (titolo compreso) finché non esce la locandina
+    if (serata.programmaPubblico === false) {
+      n.hidden = true;
+      document.querySelectorAll("[data-lineup-titolo]").forEach(function (t) { t.hidden = true; });
+      return;
+    }
     serata.lineup.forEach(function (a) {
       var li = el("li", [a.minore ? "is-minore" : "", a.dettagli ? "ha-dettagli" : ""].join(" ").trim() || null);
       li.setAttribute("data-ora", a.ora || "");
