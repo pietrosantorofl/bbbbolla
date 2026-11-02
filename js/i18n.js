@@ -152,8 +152,6 @@
     "Ancora nessuna serata: la prima sta per arrivare.": "No nights yet: the first one is coming soon.",
     "Vibes della serata": "Vibes of the night",
     /* vibes */
-    "Foto e video delle serate di bolla®. Ti riconosci e preferisci non esserci? Scrivici e togliamo la foto.":
-      "Photos and videos from bolla® nights. Spot yourself and would rather not be there? Write to us and we'll take it down.",
     "Foto e video in arrivo dopo la prossima serata.": "Photos and videos coming after the next night.",
     "Video in arrivo": "Video coming soon",
     "Foto in arrivo": "Photo coming soon",

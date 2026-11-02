@@ -355,6 +355,8 @@ function aggiornamentiUnaTantum_() {
     } },
     // mail Vibes del 30.10 (richiesta dell'utente, 02.11): prima una prova a Pietro, poi a tutti gli iscritti il 03.11 alle 17:00
     { id: 'vibes-2026-10-30-prova', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
+    // seconda prova con i testi nuovi e senza il titolo della serata in fondo (richiesta dell'utente, 02.11)
+    { id: 'vibes-2026-10-30-prova-2', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
     { id: 'vibes-2026-10-30', dopo: '2026-11-03 17:00', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.tutti()); } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
@@ -1821,8 +1823,9 @@ function layout_(o) {
         '<tr><td style="padding:0;line-height:0"><a href="' + CONFIG.sito + '"><img src="' + img + '" width="520" alt="bolla®" style="display:block;width:100%;max-width:520px;height:auto;border:0"></a></td></tr>' +
         '<tr><td style="padding:28px 24px 8px">' + o.corpo + '</td></tr>' +
         '<tr><td style="padding:8px 24px 28px">' +
-          '<p style="margin:16px 0 0;padding-top:16px;border-top:1px solid #d6d3ce;font-size:13px;color:#5f5b56">' + esc_(o.s.titolo) + '</p>' +
-          (o.newsletter ? '<p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#5f5b56">Sei iscritto alla newsletter di bolla®: ti scriveremo solo per le prossime serate e non cederemo la tua email a terzi. Per disiscriverti rispondi con "cancellami".</p>' : '') +
+          // s.titolo vuoto (mail Vibes): niente riga col titolo, la linea passa sopra il testo della newsletter
+          (o.s.titolo ? '<p style="margin:16px 0 0;padding-top:16px;border-top:1px solid #d6d3ce;font-size:13px;color:#5f5b56">' + esc_(o.s.titolo) + '</p>' : '') +
+          (o.newsletter ? '<p style="' + (o.s.titolo ? 'margin:8px 0 0;' : 'margin:16px 0 0;padding-top:16px;border-top:1px solid #d6d3ce;') + 'font-size:12px;line-height:1.5;color:#5f5b56">Sei iscritto alla newsletter di bolla®: ti scriveremo solo per le prossime serate e non cederemo la tua email a terzi. Per disiscriverti rispondi con "cancellami".</p>' : '') +
         '</td></tr>' +
       '</table>' +
       '<p style="margin:16px 0 0;font-size:12px;color:#5f5b56;font-family:Helvetica,Arial,sans-serif"><a href="' + CONFIG.sito + '" style="color:#5f5b56">bbbbolla.it</a></p>' +
@@ -2210,7 +2213,7 @@ function mailVibes_(serata, o) {
 var VIBES_30_10 = {
   base: function () {
     return {
-      racconto: 'Venerdì 30 ottobre al MONO è partita la prima serata di bolla®: il workshop di cumbia colombiana, ' +
+      racconto: 'Venerdì 30 ottobre abbiamo iniziato con la prima serata di bolla®: il workshop di cumbia colombiana, ' +
         'il live di Selva Cosmica e le selezioni di Franzuà e Dario Aiello fino a tardi.',
       prossima: '2026-11-06',
       prossimaTesto: 'con un workshop, la cena colombiana di Tavola Cunzata e un DJ set fino a tardi'
@@ -2226,7 +2229,7 @@ function oggettoVibes_() {
 
 function testoVibes_(nome, s) {
   return 'Ciao ' + nome + ', grazie per la serata di bolla® del ' + dataBreve_(s) + '. ' +
-    'Foto e video della serata sono sul sito, nella sezione Vibes: ' + linkVibes_(s) + ' — ' +
+    'Aiutaci a raccogliere foto e video della serata! Sono sul sito, nella sezione Vibes: ' + linkVibes_(s) + ' — ' +
     'Ti riconosci in una foto e preferisci che non ci sia? Rispondi a questa email e la togliamo.';
 }
 
@@ -2240,7 +2243,7 @@ function emailVibes_(nome, s, o) {
     titolo_('Grazie per esserci stati') +
     paragrafo_('Ciao ' + esc_(nome) + ',') +
     paragrafo_(o.racconto + ' Grazie a chi c\'era e ha riempito la bolla di energia. E se non ce l\'hai fatta, ecco cosa ti sei perso.') +
-    paragrafo_('Abbiamo raccolto foto e video della serata nella nuova sezione <b>Vibes</b> del sito.') +
+    paragrafo_('Aiutaci a raccogliere foto e video della serata!') +
     bottone_(linkVibes_(s), 'Guarda le Vibes') +
     (dopo ? riquadro_(
       '<p style="margin:0 0 6px;font-size:15px;font-weight:700">Prossima serata: ' + esc_(giorno_(fineSerata_(dopo))) + '</p>' +
@@ -2249,7 +2252,7 @@ function emailVibes_(nome, s, o) {
       bottone_(CONFIG.sito + '/#prenota', 'Prenota il pass', true)) : '') +
     nota_('Ti riconosci in una foto e preferisci che non ci sia? Rispondi a questa email e la togliamo.');
   return layout_({ banner: 'banner-sfera.jpg', anteprima: 'Foto e video del ' + giorno_(fineSerata_(s)).replace(/^\S+ /, '') + ' sono sul sito',
-    corpo: corpo, s: s, newsletter: true });
+    corpo: corpo, s: { titolo: '' }, newsletter: true });   // niente titolo della serata in fondo (richiesta dell'utente)
 }
 
 /* ============================================================
