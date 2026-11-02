@@ -45,6 +45,14 @@
       });
       sez.appendChild(griglia);
     }
+    // foto e video della serata, se ci sono: pagina Vibes
+    if (s.vibes && s.vibes.length) {
+      var p = el("p", "passata__vibes");
+      var a = el("a", null, T("Vibes della serata") + " →");
+      a.href = "vibes.html#" + s.id;
+      p.appendChild(a);
+      sez.appendChild(p);
+    }
     box.appendChild(sez);
   });
 })();

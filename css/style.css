@@ -534,7 +534,7 @@ a { color: inherit; }
   .mobile-cta { display: inline-flex; }
   .topbar .btn { display: none; }
 }
-/* telefoni stretti: logo, Manifesto, Eventi passati e lingua sulla stessa riga */
+/* telefoni stretti: logo, Manifesto, Eventi passati, Vibes e lingua sulla stessa riga */
 @media (max-width: 420px) {
   .topbar__nav { gap: 10px; }
   .topbar__link { font-size: 14px; }
@@ -543,6 +543,13 @@ a { color: inherit; }
 @media (max-width: 360px) {
   .topbar__nav { gap: 8px; }
   .topbar__link { font-size: 13px; }
+}
+@media (max-width: 340px) {
+  .topbar__nav { gap: 6px; }
+  .topbar__link { font-size: 12px; }
+  .topbar__logo { margin-right: 6px; }
+  .topbar__logo img { height: 22px; }
+  .lingua { min-width: 36px; height: 36px; padding: 0 8px; }
 }
 @media (max-width: 600px) {
   body { font-size: 16px; }

@@ -223,6 +223,7 @@ function doGet() {
     riga('Avvisi prenotazioni eventi', 'AVVISI_ESITO') +
     riga('Ricerca segnalazione', 'CERCA_ESITO') +
     riga('QR esterni', 'QR_ESTERNI_ESITO') +
+    riga('Mail Vibes', 'VIBES_ESITO') +
     riga('Eventi Brevo', 'EVENTI_BREVO') +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
     erroriAggiornamenti_() + colonneSfasate_(ss) + confermeInSospeso_(db) + (s ? gruppiInSospeso_(db, s.id) : '') + '</div>';
@@ -351,7 +352,10 @@ function aggiornamentiUnaTantum_() {
         chiusura_pass: "'22:00", chiusura_gruppi: "'22:00", promemoria: "'-2 14:00", solleciti: "'09:15",
         regalo: "'18:00, 22:00", recap: "'16:00, 17:00, 18:00, 19:00",
         recap_a: 'pietrosantoro90@gmail.com, tommiferrara@gmail.com' });
-    } }
+    } },
+    // mail Vibes del 30.10 (richiesta dell'utente, 02.11): prima una prova a Pietro, poi a tutti gli iscritti il 03.11 alle 17:00
+    { id: 'vibes-2026-10-30-prova', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
+    { id: 'vibes-2026-10-30', dopo: '2026-11-03 17:00', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.tutti()); } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
     // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
@@ -1786,7 +1790,7 @@ function emailPass_(pass, s, o) {
     // biglietto: QR grande, codice, nome
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;border:1.5px solid #121212;border-radius:18px;background:#ffffff">' +
       '<tr><td align="center" style="padding:24px 16px 8px">' +
-        '<img src="cid:qr" width="200" height="200" alt="QR ' + pass.codice + '" style="display:block;width:200px;height:200px">' +
+        qrTabella_(pass.chiave, 200) +
       '</td></tr>' +
       '<tr><td align="center" style="padding:4px 16px 0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#5f5b56">Codice pass</td></tr>' +
       '<tr><td align="center" style="padding:2px 16px 0;font-size:32px;font-weight:700;letter-spacing:3px;color:#121212">' + pass.codice + '</td></tr>' +
@@ -1800,14 +1804,15 @@ function emailPass_(pass, s, o) {
       'Non garantisce l\'ingresso dopo il raggiungimento della capienza massima: arriva presto.');
   invia_(pass.email, (o.prefisso || '') + (o.regalo ? 'Il pass è tuo lo stesso — bolla® ' : 'Il tuo pass bolla® — ') + data + ' · ' + pass.codice,
     'Pass ' + pass.codice + ' per ' + pass.nome + ' ' + pass.cognome + ' — ' + data + '. Apri: ' + linkPass_(pass.chiave),
-    layout_({ banner: 'banner-sfera.jpg', anteprima: 'Pass ' + pass.codice + ': mostra il QR all\'ingresso', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }),
-    { qr: qrBlob_(pass.chiave) });
+    layout_({ banner: 'banner-sfera.jpg', anteprima: 'Pass ' + pass.codice + ': mostra il QR all\'ingresso', corpo: corpo, s: s, newsletter: vero_(pass.newsletter) }));
 }
 
 // Struttura a tabelle: è quella che i client email (Gmail, Outlook, Apple Mail) mostrano meglio.
 function layout_(o) {
   var img = CONFIG.sito + '/assets/' + o.banner;
-  return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+  // modalità scura: chiede ai client di non invertire i colori, così il QR resta nero su bianco
+  '<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"></head>' +
   '<body style="margin:0;padding:0;background:#e9e7e3">' +
   '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + esc_(o.anteprima) + '</div>' +
   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e9e7e3;font-family:Helvetica,Arial,sans-serif;color:#121212">' +
@@ -1869,10 +1874,10 @@ function bottone_(href, testo, secondario) {
 
 /* Due canali di invio:
  *  - Brevo (chiave API nelle proprietà dello script, menu bolla® → Imposta chiave Brevo): canale principale per tutte
- *    le email. Mittente sul dominio autenticato bbbbolla.it, molto meno spam. Il QR va in allegato
- *    (Brevo non supporta immagini dentro il testo); il bottone "Apri il pass sul sito" lo mostra comunque.
+ *    le email. Mittente sul dominio autenticato bbbbolla.it, molto meno spam. Brevo non supporta immagini
+ *    dentro il testo: il QR è disegnato con una tabella HTML (qrTabella_), niente allegati.
  *  - Gmail (MailApp, 100 al giorno): solo di riserva, se Brevo non è collegato o rifiuta l'invio. */
-function invia_(a, oggetto, testo, html, immagini) {
+function invia_(a, oggetto, testo, html) {
   var brevo = chiaveBrevo_();
   var quota = quotaGmail_();
   var gmailLibero = quota !== 0;
@@ -1883,10 +1888,10 @@ function invia_(a, oggetto, testo, html, immagini) {
     try {
       if (ordine[i] === 'brevo') {
         if (!brevo) continue;
-        inviaBrevo_(brevo, a, oggetto, testo, html, immagini);
+        inviaBrevo_(brevo, a, oggetto, testo, html);
       } else {
         if (!gmailLibero) continue;
-        inviaGmail_(a, oggetto, testo, html, immagini);
+        inviaGmail_(a, oggetto, testo, html);
       }
       return ordine[i];
     } catch (err) {
@@ -1897,14 +1902,13 @@ function invia_(a, oggetto, testo, html, immagini) {
   throw ultimoErrore || new Error('Nessun canale email disponibile');
 }
 
-function inviaGmail_(a, oggetto, testo, html, immagini) {
+function inviaGmail_(a, oggetto, testo, html) {
   var opzioni = { name: CONFIG.nomeMittente, htmlBody: html };
-  if (immagini) opzioni.inlineImages = immagini;
   if (CONFIG.replyTo) opzioni.replyTo = CONFIG.replyTo;
   MailApp.sendEmail(a, oggetto, testo, opzioni);
 }
 
-function inviaBrevo_(chiave, a, oggetto, testo, html, immagini) {
+function inviaBrevo_(chiave, a, oggetto, testo, html) {
   var corpo = {
     sender: { name: CONFIG.nomeMittente, email: CONFIG.mittenteBrevo },
     to: [{ email: a }],
@@ -1916,13 +1920,6 @@ function inviaBrevo_(chiave, a, oggetto, testo, html, immagini) {
     headers: { 'List-Unsubscribe': '<mailto:' + CONFIG.replyTo + '?subject=cancellami>' }
   };
   if (CONFIG.replyTo) corpo.replyTo = { email: CONFIG.replyTo };
-  if (immagini && immagini.qr) {
-    // niente immagini inline su Brevo: il QR va in allegato e nel testo c'è il bottone per aprire il pass
-    corpo.htmlContent = html.replace(/<img src="cid:qr"[^>]*>/,
-      '<div style="width:200px;padding:24px 12px;border:1.5px dashed #121212;border-radius:14px;font-size:14px;line-height:1.45;color:#121212">' +
-      'Il tuo QR è <strong>allegato</strong> a questa email.<br>Lo trovi anche toccando <strong>Apri il pass sul sito</strong> qui sotto.</div>');
-    corpo.attachment = [{ name: 'pass-bolla-qr.gif', content: Utilities.base64Encode(immagini.qr.getBytes()) }];
-  }
   var r = UrlFetchApp.fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'post',
     contentType: 'application/json',
@@ -1997,9 +1994,8 @@ function emailProvaDaMenu() {
     var data = dataBreve_(s);
     inviaBrevo_(chiave, CONFIG.replyTo, '[Prova] Il tuo pass bolla® — ' + data, 'Email di prova inviata con Brevo.',
       layout_({ banner: 'banner-sfera.jpg', anteprima: 'Email di prova', corpo: kicker_('Prova') + titolo_('Brevo funziona') +
-        paragrafo_('Questa email è partita da Brevo con mittente ' + CONFIG.mittenteBrevo + '. Sotto trovi il QR come appare nelle email inviate con Brevo.') +
-        '<img src="cid:qr" width="200" height="200" alt="">', s: s, newsletter: false }),
-      { qr: qrBlob_(finto.chiave) });
+        paragrafo_('Questa email è partita da Brevo con mittente ' + CONFIG.mittenteBrevo + '. Sotto trovi il QR come appare nei pass.') +
+        qrTabella_(finto.chiave, 200), s: s, newsletter: false }));
     ui.alert('Email di prova inviata a ' + CONFIG.replyTo + '. Controlla la posta (anche lo spam).');
   } catch (err) {
     ui.alert('Invio con Brevo non riuscito:\n\n' + err.message);
@@ -2010,13 +2006,33 @@ function erroreQuota_() {
   return errore_('email', 'Oggi abbiamo raggiunto il limite di email inviabili. Riprova domani.');
 }
 
-// QR della chiave del pass come GIF inline (Gmail blocca le immagini data:)
-function qrBlob_(chiave) {
+// QR della chiave del pass disegnato con una tabella HTML: si vede dentro l'email senza immagini né allegati
+// (Gmail blocca le immagini data:, Brevo non manda immagini inline). Le celle vicine dello stesso colore
+// si uniscono (colspan) per tenere l'email leggera; la prima riga, alta 0, fissa la larghezza delle colonne.
+function qrTabella_(chiave, lato) {
   var qr = qrcode(0, 'M');
   qr.addData(chiave);
   qr.make();
-  var base64 = qr.createDataURL(8, 2).split(',')[1];
-  return Utilities.newBlob(Utilities.base64Decode(base64), 'image/gif', 'qr.gif');
+  var n = qr.getModuleCount(), bordo = 2, tot = n + 2 * bordo;
+  var cella = Math.max(4, Math.round(lato / tot));
+  var scuro = function (r, c) { return r >= 0 && c >= 0 && r < n && c < n && qr.isDark(r, c); };
+  var td = 'style="padding:0;font-size:0;line-height:0;mso-line-height-rule:exactly"';
+  var colonne = '';
+  for (var i = 0; i < tot; i++) colonne += '<td width="' + cella + '" height="0" ' + td + '></td>';
+  var righe = '<tr>' + colonne + '</tr>';
+  for (var r = -bordo; r < n + bordo; r++) {
+    var riga = '';
+    for (var c = -bordo; c < n + bordo;) {
+      var nero = scuro(r, c), lung = 1;
+      while (c + lung < n + bordo && scuro(r, c + lung) === nero) lung++;
+      riga += '<td' + (lung > 1 ? ' colspan="' + lung + '"' : '') + ' width="' + (cella * lung) + '" height="' + cella + '" bgcolor="' +
+        (nero ? '#000000' : '#ffffff') + '" ' + td + '></td>';
+      c += lung;
+    }
+    righe += '<tr>' + riga + '</tr>';
+  }
+  return '<table role="presentation" class="qr" cellpadding="0" cellspacing="0" border="0" width="' + (cella * tot) + '" bgcolor="#ffffff" ' +
+    'style="border-collapse:collapse;table-layout:fixed;width:' + (cella * tot) + 'px;margin:0 auto;background:#ffffff">' + righe + '</table>';
 }
 
 /* ============================================================
@@ -2115,6 +2131,125 @@ function esportaNewsletter() {
   sh.appendRow(['iscritto il', 'nome', 'cognome', 'email']);
   if (righe.length) sh.getRange(2, 1, righe.length, 4).setValues(righe);
   sh.setFrozenRows(1);
+}
+
+/* ============================================================
+   Mail Vibes: grazie per la serata e link a foto e video (bbbbolla.it/vibes.html#<serata>)
+   A tutti gli iscritti alla newsletter del foglio Contatti (FALSE in Contatti o nel foglio Pass = escluso).
+   Parte da una voce una tantum con "dopo". Solo Brevo: Gmail (100 al giorno) resta per i pass della serata dopo.
+   Chi l'ha già ricevuta non la riceve di nuovo: gli indirizzi fatti sono nella proprietà VIBES_FATTI:<serata>,
+   così un giro interrotto (tempo massimo di Apps Script, Brevo che rifiuta) riparte dagli altri al giro dopo.
+   Esito, solo numeri, nella pagina di stato (riga "Mail Vibes").
+   ============================================================ */
+
+// o.racconto: frase sulla serata (HTML già sicuro); o.prossima e o.prossimaTesto: id e due righe sulla serata dopo,
+// per il riquadro con il bottone del pass (facoltativi);
+// o.prova: un solo indirizzo, con [Prova] nell'oggetto e senza segnare niente.
+function mailVibes_(serata, o) {
+  var brevo = chiaveBrevo_();
+  if (!brevo) throw new Error('Brevo non collegato');
+  var db = carica_(['Serate', 'Pass', 'Contatti']);
+  var s = serata_(db, serata);
+  if (!s) throw new Error('serata ' + serata + ' non trovata');
+  o.dopo = o.prossima ? serata_(db, o.prossima) : null;
+  var props = PropertiesService.getScriptProperties();
+
+  if (o.prova) {
+    inviaBrevo_(brevo, o.prova, '[Prova] ' + oggettoVibes_(), testoVibes_('Pietro', s), emailVibes_('Pietro', s, o));
+    accoda_('VIBES_ESITO', new Date().toISOString().slice(0, 16) + ' ' + serata + ' prova inviata');
+    return;
+  }
+
+  var chiave = 'VIBES_FATTI:' + serata;
+  var fatti = {};
+  (props.getProperty(chiave) || '').split('\n').forEach(function (e) { if (e) fatti[e.replace(/^!/, '')] = e; });
+  var noPass = {};
+  db.Pass.forEach(function (r) { if (r.email_norm && !vero_(r.newsletter)) noPass[r.email_norm] = true; });
+  var lista = db.Contatti.filter(function (c) {
+    return c.email_norm && c.email && vero_(c.newsletter) && !noPass[c.email_norm] && !fatti[c.email_norm];
+  });
+
+  var inizio = Date.now();
+  var inviate = 0, errori = 0, diFila = [];
+  var salva = function () { props.setProperty(chiave, Object.keys(fatti).map(function (k) { return fatti[k]; }).join('\n')); };
+  try {
+    for (var i = 0; i < lista.length; i++) {
+      // Apps Script si ferma a 6 minuti: oltre i 4 si riprende al giro dopo
+      if (Date.now() - inizio > 4 * 60 * 1000) throw new Error('tempo finito, continuo al prossimo giro');
+      var c = lista[i];
+      try {
+        inviaBrevo_(brevo, c.email, oggettoVibes_(), testoVibes_(c.nome, s), emailVibes_(c.nome, s, o));
+        fatti[c.email_norm] = c.email_norm;
+        inviate++;
+        diFila = [];
+      } catch (err) {
+        console.error('Mail Vibes non inviata a ' + c.email + ': ' + err);
+        // "!" = provata e non riuscita: non si riprova
+        fatti[c.email_norm] = '!' + c.email_norm;
+        errori++;
+        diFila.push(c.email_norm);
+        // tre errori di fila: Brevo non risponde, non l'indirizzo. Quei tre si riprovano al giro dopo
+        if (diFila.length >= 3) {
+          diFila.forEach(function (e) { delete fatti[e]; });
+          errori -= diFila.length;
+          throw new Error('Brevo rifiuta: ' + String(err.message).slice(0, 120));
+        }
+      }
+      if (inviate % 20 === 0) salva();
+    }
+  } finally {
+    salva();
+    var tutti = Object.keys(fatti);
+    accoda_('VIBES_ESITO', new Date().toISOString().slice(0, 16) + ' ' + serata + ': ' + inviate + ' inviate in questo giro, ' +
+      errori + ' non riuscite; in tutto ' + tutti.filter(function (k) { return fatti[k] === k; }).length + ' inviate, ' +
+      (lista.length - inviate - errori) + ' ancora da inviare');
+  }
+}
+
+// testi della mail Vibes del 30.10
+var VIBES_30_10 = {
+  base: function () {
+    return {
+      racconto: 'Venerdì 30 ottobre al MONO è partita la prima serata di bolla®: il workshop di cumbia colombiana, ' +
+        'il live di Selva Cosmica e le selezioni di Franzuà e Dario Aiello fino a tardi.',
+      prossima: '2026-11-06',
+      prossimaTesto: 'con un workshop, la cena colombiana di Tavola Cunzata e un DJ set fino a tardi'
+    };
+  },
+  prova: function (a) { var o = VIBES_30_10.base(); o.prova = a; return o; },
+  tutti: function () { return VIBES_30_10.base(); }
+};
+
+function oggettoVibes_() {
+  return 'Grazie per essere entrati nella bolla®';
+}
+
+function testoVibes_(nome, s) {
+  return 'Ciao ' + nome + ', grazie per la serata di bolla® del ' + dataBreve_(s) + '. ' +
+    'Foto e video della serata sono sul sito, nella sezione Vibes: ' + linkVibes_(s) + ' — ' +
+    'Ti riconosci in una foto e preferisci che non ci sia? Rispondi a questa email e la togliamo.';
+}
+
+function linkVibes_(s) { return CONFIG.sito + '/vibes.html#' + s.id; }
+
+function emailVibes_(nome, s, o) {
+  var dopo = o.dopo;
+  var luogo = String(s.luogo).split(',')[0];
+  var corpo =
+    kicker_(Utilities.formatDate(fineSerata_(s), TZ, 'dd.MM') + ' · ' + esc_(luogo)) +
+    titolo_('Grazie per esserci stati') +
+    paragrafo_('Ciao ' + esc_(nome) + ',') +
+    paragrafo_(o.racconto + ' Grazie a chi c\'era e ha riempito la bolla di energia. E se non ce l\'hai fatta, ecco cosa ti sei perso.') +
+    paragrafo_('Abbiamo raccolto foto e video della serata nella nuova sezione <b>Vibes</b> del sito.') +
+    bottone_(linkVibes_(s), 'Guarda le Vibes') +
+    (dopo ? riquadro_(
+      '<p style="margin:0 0 6px;font-size:15px;font-weight:700">Prossima serata: ' + esc_(giorno_(fineSerata_(dopo))) + '</p>' +
+      '<p style="margin:0 0 14px;font-size:14px;line-height:1.5">Al ' + esc_(String(dopo.luogo).split(',')[0]) + ', ' + esc_(dopo.orario) +
+        (o.prossimaTesto ? ', ' + o.prossimaTesto : '') + '. Il pass è gratuito: prenotalo sul sito.</p>' +
+      bottone_(CONFIG.sito + '/#prenota', 'Prenota il pass', true)) : '') +
+    nota_('Ti riconosci in una foto e preferisci che non ci sia? Rispondi a questa email e la togliamo.');
+  return layout_({ banner: 'banner-sfera.jpg', anteprima: 'Foto e video del ' + giorno_(fineSerata_(s)).replace(/^\S+ /, '') + ' sono sul sito',
+    corpo: corpo, s: s, newsletter: true });
 }
 
 /* ============================================================

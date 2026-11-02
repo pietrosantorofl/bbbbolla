@@ -14,7 +14,7 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/style.css?v=202611011452">
+  <link rel="stylesheet" href="css/style.css?v=202611021145">
   <style>
     .archivio { max-width: 1080px; margin: 0 auto; padding: clamp(28px, 5vw, 56px) var(--gutter) 40px; }
     .archivio__titolo { margin: 0 0 clamp(24px, 4vw, 48px); font-size: clamp(44px, 9vw, 96px); line-height: .92; letter-spacing: -.05em; font-weight: 700; }
@@ -28,6 +28,8 @@
     .passata__locandine img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; transition: transform .3s; }
     .passata__locandine a:hover img { transform: scale(1.02); }
     .passata__locandine a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+    .passata__vibes { margin: clamp(14px, 2vw, 20px) 0 0; font-size: 17px; font-weight: 600; }
+    .passata__vibes a { text-underline-offset: 4px; }
   </style>
 </head>
 <body>
@@ -36,6 +38,7 @@
     <nav class="topbar__nav">
       <a href="manifesto.html" class="topbar__link" data-i18n>Manifesto</a>
       <a href="archivio.html" class="topbar__link" aria-current="page" data-i18n>Eventi passati</a>
+      <a href="vibes.html" class="topbar__link">Vibes</a>
       <a href="./#prenota" class="btn btn--small" data-i18n>Prenota pass</a>
       <button type="button" class="lingua" data-lingua>EN</button>
     </nav>
@@ -59,11 +62,11 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7l8 6 8-6"/></svg>
       </a>
     </nav>
-    <p class="footer__small"><a href="privacy.html" data-i18n>Privacy</a> · <a href="archivio.html" data-i18n>Eventi passati</a> · © 2026 bolla®</p>
+    <p class="footer__small"><a href="privacy.html" data-i18n>Privacy</a> · <a href="archivio.html" data-i18n>Eventi passati</a> · <a href="vibes.html">Vibes</a> · © 2026 bolla®</p>
   </footer>
 
-  <script src="js/i18n.js?v=202611011452"></script>
-  <script src="js/config.js?v=202611011452"></script>
-  <script src="js/archivio.js?v=202611011452"></script>
+  <script src="js/i18n.js?v=202611021145"></script>
+  <script src="js/config.js?v=202611021145"></script>
+  <script src="js/archivio.js?v=202611021145"></script>
 </body>
 </html>

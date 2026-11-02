@@ -39,6 +39,17 @@ window.BOLLA = {
         { src: "assets/locandine/2026-10-30-serata.jpg", alt: { it: "Locandina della serata del 30 ottobre 2026", en: "Poster of the 30 October 2026 night" } },
         { src: "assets/locandine/2026-10-30-workshop.jpg", alt: { it: "Locandina del workshop La Cumbia tradizionale colombiana", en: "Poster of the Traditional Colombian Cumbia workshop" } }
       ],
+      // foto e video per la pagina Vibes (vibes.html#2026-10-30), file in assets/vibes/2026-10-30/
+      // tipo: "foto" o "video"; src: null = segnaposto "in arrivo" finché non arriva il file
+      // formato: larghezza:altezza ("9:16" video verticale dal telefono, "4:5", "3:2"…); poster: anteprima del video
+      vibes: [
+        { tipo: "video", src: null, poster: null, formato: "9:16", alt: { it: "Video della serata", en: "Video of the night" } },
+        { tipo: "foto", src: null, formato: "4:5", alt: { it: "Foto della serata", en: "Photo of the night" } },
+        { tipo: "foto", src: null, formato: "3:2", alt: { it: "Foto della serata", en: "Photo of the night" } },
+        { tipo: "video", src: null, poster: null, formato: "9:16", alt: { it: "Video della serata", en: "Video of the night" } },
+        { tipo: "foto", src: null, formato: "4:5", alt: { it: "Foto della serata", en: "Photo of the night" } },
+        { tipo: "video", src: null, poster: null, formato: "9:16", alt: { it: "Video della serata", en: "Video of the night" } }
+      ],
       orario: { inizio: "20:00", fine: null },   // fine: null = "dalle 20:00"
       senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },   // null = nessun ingresso senza pass
       luogo: {

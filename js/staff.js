@@ -280,7 +280,8 @@
     var w = 480, h = Math.round(video.videoHeight / video.videoWidth * w) || w;
     canvas.width = w; canvas.height = h;
     ctx.drawImage(video, 0, 0, w, h);
-    var codice = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "dontInvert" });
+    // anche invertito: un'email in modalità scura può mostrare il QR bianco su nero
+    var codice = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "attemptBoth" });
     if (codice && codice.data) scansionato(codice.data);
   }
 

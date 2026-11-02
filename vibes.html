@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Vibes — bolla®</title>
+  <meta name="description" content="Foto e video delle serate di bolla®, rassegna di musica live a Catania.">
+  <meta name="theme-color" content="#e9e7e3">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Vibes — bolla®">
+  <meta property="og:description" content="Foto e video delle serate di bolla®.">
+  <meta property="og:image" content="https://bbbbolla.it/assets/locandine/2026-10-30-serata.jpg">
+  <meta property="og:url" content="https://bbbbolla.it/vibes.html">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css?v=202611021145">
+  <style>
+    .vibes { max-width: 1080px; margin: 0 auto; padding: clamp(28px, 5vw, 56px) var(--gutter) 40px; }
+    .vibes__titolo { margin: 0 0 12px; font-size: clamp(44px, 9vw, 96px); line-height: .92; letter-spacing: -.05em; font-weight: 700; }
+    .vibes__intro { margin: 0 0 clamp(24px, 4vw, 48px); max-width: 560px; font-size: 18px; color: var(--muted); }
+    .vibes__vuoto { font-size: 18px; color: var(--muted); }
+
+    /* una serata: data e luogo, poi foto e video in colonne (ognuno con le sue proporzioni) */
+    .serata-vibes { border-top: 1.5px solid var(--ink); padding: clamp(20px, 3vw, 32px) 0 clamp(36px, 6vw, 72px); scroll-margin-top: 72px; }
+    .serata-vibes__data { margin: 0 0 4px; font-size: clamp(28px, 4.5vw, 48px); line-height: 1; letter-spacing: -.03em; font-weight: 700; }
+    .serata-vibes__luogo { margin: 0 0 clamp(16px, 3vw, 28px); font-size: 15px; color: var(--muted); }
+    .serata-vibes__griglia { columns: 3; column-gap: clamp(10px, 2vw, 20px); }
+    @media (max-width: 720px) { .serata-vibes__griglia { columns: 2; } }
+
+    .vibe { position: relative; display: block; width: 100%; margin: 0 0 clamp(10px, 2vw, 20px); padding: 0; break-inside: avoid;
+      border: 1.5px solid var(--ink); border-radius: 4px; overflow: hidden; background: #fff; cursor: zoom-in; font: inherit; color: inherit; }
+    .vibe img, .vibe video { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .vibe:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+    /* video: tastino play in basso a destra, si apre con l'audio */
+    .vibe__play { position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 50%;
+      background: var(--ink); display: grid; place-items: center; pointer-events: none; }
+    .vibe__play svg { width: 14px; height: 14px; fill: var(--paper-2); margin-left: 2px; }
+    /* segnaposto: foto o video non ancora arrivati */
+    .vibe--attesa { cursor: default; border-style: dashed; background: var(--paper-2); display: grid; place-items: center; }
+    .vibe--attesa span { font-size: 14px; font-weight: 600; color: var(--muted); text-align: center; padding: 12px; }
+
+    /* vista grande */
+    .vista { width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgba(18, 18, 18, .94); color: var(--paper-2); }
+    .vista::backdrop { background: rgba(18, 18, 18, .94); }
+    .vista__media { position: absolute; inset: 56px 12px 56px; display: grid; place-items: center; }
+    .vista__media img, .vista__media video { max-width: 100%; max-height: 100%; width: auto; height: auto; border-radius: 4px; }
+    .vista__btn { position: absolute; width: 44px; height: 44px; border: 1.5px solid var(--paper-2); border-radius: 50%; background: transparent;
+      color: var(--paper-2); font: 700 20px/1 var(--font); cursor: pointer; display: grid; place-items: center; }
+    .vista__btn:focus-visible { outline: 3px solid var(--paper-2); outline-offset: 3px; }
+    .vista__chiudi { top: 8px; right: 12px; }
+    .vista__prec { left: 12px; bottom: 8px; }
+    .vista__succ { right: 12px; bottom: 8px; }
+    .vista__conta { position: absolute; left: 0; right: 0; bottom: 20px; text-align: center; font-size: 14px; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="./" class="topbar__logo" aria-label="bolla® home"><img src="assets/bolla-logo.png" alt="bolla®" width="808" height="312"></a>
+    <nav class="topbar__nav">
+      <a href="manifesto.html" class="topbar__link" data-i18n>Manifesto</a>
+      <a href="archivio.html" class="topbar__link" data-i18n>Eventi passati</a>
+      <a href="vibes.html" class="topbar__link" aria-current="page">Vibes</a>
+      <a href="./#prenota" class="btn btn--small" data-i18n>Prenota pass</a>
+      <button type="button" class="lingua" data-lingua>EN</button>
+    </nav>
+  </header>
+
+  <main class="vibes">
+    <h1 class="vibes__titolo">Vibes</h1>
+    <p class="vibes__intro" data-i18n>Foto e video delle serate di bolla®. Ti riconosci e preferisci non esserci? Scrivici e togliamo la foto.</p>
+    <div data-bind="vibes"></div>
+  </main>
+
+  <dialog class="vista" aria-label="Foto e video" data-vista>
+    <div class="vista__media" data-vista-media></div>
+    <button type="button" class="vista__btn vista__chiudi" data-vista-chiudi aria-label="Chiudi">×</button>
+    <button type="button" class="vista__btn vista__prec" data-vista-prec aria-label="Precedente">‹</button>
+    <button type="button" class="vista__btn vista__succ" data-vista-succ aria-label="Successiva">›</button>
+    <p class="vista__conta" data-vista-conta></p>
+  </dialog>
+
+  <footer class="footer">
+    <img src="assets/bolla-logo.png" alt="bolla®" class="footer__logo" width="808" height="312" loading="lazy">
+    <nav class="social" aria-label="Contatti e social">
+      <a href="https://www.instagram.com/bbbbolla/" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" class="pieno"/></svg>
+      </a>
+      <a href="https://www.facebook.com/people/BOLLA/61595612496320/" target="_blank" rel="noopener" aria-label="Facebook">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="pieno" d="M14.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.5V4.4c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.4H9.2v3h2.5V21z"/></svg>
+      </a>
+      <a href="mailto:bollacatania@gmail.com" aria-label="Email: bollacatania@gmail.com">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7l8 6 8-6"/></svg>
+      </a>
+    </nav>
+    <p class="footer__small"><a href="privacy.html" data-i18n>Privacy</a> · <a href="archivio.html" data-i18n>Eventi passati</a> · <a href="vibes.html">Vibes</a> · © 2026 bolla®</p>
+  </footer>
+
+  <script src="js/i18n.js?v=202611021145"></script>
+  <script src="js/config.js?v=202611021145"></script>
+  <script src="js/vibes.js?v=202611021145"></script>
+</body>
+</html>
