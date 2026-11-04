@@ -224,6 +224,7 @@ function doGet() {
     riga('Ricerca segnalazione', 'CERCA_ESITO') +
     riga('QR esterni', 'QR_ESTERNI_ESITO') +
     riga('Mail Vibes', 'VIBES_ESITO') +
+    riga('Mail Vibes secondo Brevo', 'VIBES_VERIFICA') +
     riga('Eventi Brevo', 'EVENTI_BREVO') +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
     erroriAggiornamenti_() + colonneSfasate_(ss) + confermeInSospeso_(db) + (s ? gruppiInSospeso_(db, s.id) : '') + '</div>';
@@ -367,7 +368,9 @@ function aggiornamentiUnaTantum_() {
     { id: 'vibes-2026-10-30-prova-3', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
     // quarta prova: tolta anche "Aiutaci a raccogliere foto e video della serata!" (richiesta dell'utente, 02.11)
     { id: 'vibes-2026-10-30-prova-4', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
-    { id: 'vibes-2026-10-30', dopo: '2026-11-03 17:00', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.tutti()); } }
+    { id: 'vibes-2026-10-30', dopo: '2026-11-03 17:00', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.tutti()); } },
+    // conferma da Brevo che la mail Vibes del 03.11 è arrivata: consegne, rimbalzi, blocchi, aperture (richiesta dell'utente, 04.11)
+    { id: 'vibes-2026-10-30-verifica', fai: function () { verificaMailBrevo_('VIBES_VERIFICA', oggettoVibes_(), '2026-11-03', '2026-11-04'); } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
     // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
@@ -1433,6 +1436,36 @@ function eventiBrevo_(emails) {
     parti.push('indirizzo ' + (i + 1) + ': ' + testo);
   });
   PropertiesService.getScriptProperties().setProperty('EVENTI_BREVO', new Date().toISOString().slice(0, 16) + ' ' + parti.join(' ¦ '));
+}
+
+// Esito di un invio in Brevo, contato sugli eventi con quell'oggetto (le prove "[Prova] …" non contano):
+// per ogni tipo di evento quanti indirizzi diversi, più i motivi di rimbalzi e blocchi. Solo numeri, niente indirizzi.
+function verificaMailBrevo_(chiave, oggetto, dal, al) {
+  var opz = { headers: { 'api-key': chiaveBrevo_(), accept: 'application/json' }, muteHttpExceptions: true };
+  var tipi = ['requests', 'delivered', 'deferred', 'softBounces', 'hardBounces', 'blocked', 'invalid', 'spam', 'unsubscribed', 'opened', 'clicks'];
+  var motivi = {};
+  var parti = tipi.map(function (tipo) {
+    var indirizzi = {}, offset = 0, pagina;
+    do {
+      var r = UrlFetchApp.fetch('https://api.brevo.com/v3/smtp/statistics/events?limit=2500&offset=' + offset + '&startDate=' + dal +
+        '&endDate=' + al + '&event=' + tipo, opz);
+      if (r.getResponseCode() !== 200) return tipo + ' errore ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 120);
+      pagina = JSON.parse(r.getContentText()).events || [];
+      pagina.forEach(function (e) {
+        if (String(e.subject || '') !== oggetto) return;
+        indirizzi[String(e.email).toLowerCase()] = 1;
+        if (e.reason && ['softBounces', 'hardBounces', 'blocked', 'invalid', 'deferred'].indexOf(tipo) >= 0) {
+          var m = tipo + ': ' + String(e.reason).slice(0, 80);
+          motivi[m] = (motivi[m] || 0) + 1;
+        }
+      });
+      offset += pagina.length;
+    } while (pagina.length === 2500);
+    return tipo + ' ' + Object.keys(indirizzi).length;
+  });
+  var m = Object.keys(motivi).map(function (k) { return k + ' (' + motivi[k] + ')'; });
+  PropertiesService.getScriptProperties().setProperty(chiave, new Date().toISOString().slice(0, 16) + ' «' + oggetto + '» dal ' + dal +
+    ' al ' + al + ': ' + parti.join(' · ') + (m.length ? ' ¦ motivi: ' + m.join(' · ') : ''));
 }
 
 /* Promemoria a chi ha un pass di gruppo ancora da confermare. La scadenza è la sua: CONFIG.oreConferma ore
