@@ -60,6 +60,11 @@
     });
   });
   bind("testo", function (n) { (W.testo || []).forEach(function (t) { n.appendChild(el("p", null, L(t))); }); });
+  // logo di chi conduce l'evento (es. la scuola che tiene il workshop), sopra il testo
+  bind("logo", function (n) {
+    if (!W.logo) return;
+    n.src = W.logo.src; n.alt = L(W.logo.alt) || ""; n.hidden = false;
+  });
   bind("locandina", function (n) {
     if (!W.locandina) { n.hidden = true; return; }
     n.src = L(W.locandina); n.alt = L(W.titolo) + (W.sottotitolo ? " — " + L(W.sottotitolo) : "");

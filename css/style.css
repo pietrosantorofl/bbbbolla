@@ -533,6 +533,8 @@ a { color: inherit; }
 .ws .booking { grid-area: card; }
 .ws__corpo { grid-area: corpo; }
 .ws__titolo .details__date { margin-top: 10px; font-size: .5em; letter-spacing: -.02em; line-height: 1.1; }
+.ws__logo { display: block; width: clamp(140px, 18vw, 200px); height: auto; margin: 0 0 20px; }
+.ws__logo[hidden] { display: none; }
 .ws__locandina { width: min(100%, 520px); height: auto; margin-top: 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); box-shadow: 10px 10px 0 var(--ink); }
 .ws .result .btn { margin-top: 4px; }
 

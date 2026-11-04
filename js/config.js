@@ -111,7 +111,7 @@ window.BOLLA = {
       },
       lineup: [
         {
-          nome: { it: "Workshop di Samba e Percussioni", en: "Samba and Percussion Workshop" }, ora: "19:00", tag: "Workshop",
+          nome: { it: "Workshop di SAMBA e PERCUSSIONI", en: "SAMBA and PERCUSSION Workshop" }, ora: "19:00", tag: "Workshop",
           note: { it: "a cura di Sambazita", en: "by Sambazita" }, link: "https://www.instagram.com/sambazita_/",
           dettagli: {
             prenota: { href: "prenota.html?e=samba-2026-11-06", testo: { it: "Prenota il workshop", en: "Book the workshop" } },
@@ -201,9 +201,10 @@ window.BOLLA = {
       serata: "2026-11-06",
       ora: "19:00",
       durata: 1,
-      titolo: { it: "Workshop di Samba e Percussioni", en: "Samba and Percussion Workshop" },
+      titolo: { it: "Workshop di SAMBA e PERCUSSIONI", en: "SAMBA and PERCUSSION Workshop" },
       sottotitolo: { it: "a cura di Sambazita", en: "by Sambazita" },
       bottone: { it: "Prenota il workshop", en: "Book the workshop" },
+      logo: { src: "assets/sambazita-logo.png", alt: "Scuola Popolare Sambazita" },
       conduttori: [
         { nome: "Sambazita", ruolo: { it: "samba e percussioni brasiliane", en: "Brazilian samba and percussion" } }
       ],
