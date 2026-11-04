@@ -343,6 +343,12 @@ function aggiornamentiUnaTantum_() {
       var e = trova_(db.Eventi, 'id', 'tavolacunzata-2026-11-06');
       if (e) aggiorna_(db.Eventi, e, { max_persone: 20, avvisa: 'pietrosantoro90@gmail.com, sipariomarchese@gmail.com' });
     } },
+    // workshop di samba del 6.11 (richiesta dell'utente, 04.11): prenotazioni nel foglio Prenotazioni, 40 posti come la cumbia
+    { id: 'workshop-samba-2026-11-06', fai: function () {
+      var db = carica_(['Eventi']);
+      if (!trova_(db.Eventi, 'id', 'samba-2026-11-06')) appendi_('Eventi', { id: 'samba-2026-11-06', tipo: 'workshop',
+        titolo: 'Workshop di Samba e Percussioni', serata: '2026-11-06', inizio: '2026-11-06 19:00', posti: 40, max_persone: 0, foglio: '', attivo: 'TRUE' });
+    } },
     { id: 'serata-2026-10-30-esempio', fai: function () {
       var db = carica_(['Serate']);
       var r = trova_(db.Serate, 'id', '2026-10-30');

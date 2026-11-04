@@ -169,6 +169,11 @@ a { color: inherit; }
   white-space: nowrap;
 }
 
+/* locandinaHero: al posto di sfera e programma c'è l'immagine della locandina, intera nello schermo */
+.locandina--immagine { padding: clamp(32px, 4vw, 48px) clamp(12px, 3vw, 40px) clamp(12px, 3vw, 40px); }
+.locandina__img { display: block; width: auto; max-width: 100%; height: auto; max-height: 86svh; margin: 0 auto; border-radius: 6px; }
+.hero__stage[hidden], .programma[hidden] { display: none; }
+
 /* ---------- hero: sfera con logo ---------- */
 .hero {
   max-width: var(--wrap);

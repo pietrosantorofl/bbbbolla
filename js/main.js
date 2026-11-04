@@ -99,6 +99,20 @@
     if (serata.sfera.ombra) n.style.filter = "drop-shadow(18px 28px 40px " + serata.sfera.ombra + ")";
   });
 
+  // locandinaHero: la locandina della serata (immagine) al posto di sfera, date e programma
+  bind("locandinaHero", function (n) {
+    var l = serata.locandinaHero;
+    if (!l) return;
+    n.src = l.src;
+    n.alt = L(l.alt) || "";
+    if (l.formato) { var f = l.formato.split(":"); n.width = 1080; n.height = Math.round(1080 * f[1] / f[0]); }
+    n.hidden = false;
+    var box = n.closest(".locandina");
+    box.classList.add("locandina--immagine");
+    $(".hero__stage", box).hidden = true;
+    $(".programma", box).hidden = true;
+  });
+
   // locandina: a sinistra il programma in ordine di orario (gli orari sono nella line-up), a destra food & beverage
   bind("lineupHero", function (n) {
     // programmaPubblico: false = nella locandina solo sfera e date

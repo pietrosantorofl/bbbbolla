@@ -98,7 +98,9 @@ window.BOLLA = {
       locandine: [
         { src: "assets/locandine/2026-11-06-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 6 novembre 2026", en: "Poster of the 6 November 2026 night" } }
       ],
-      // locandina della home: sfera ricolorata con i colori di Tavola Cunzata
+      // locandinaHero: nella home l'immagine della locandina al posto di sfera, date e programma
+      locandinaHero: { src: "assets/locandine/2026-11-06-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 6 novembre 2026: workshop di samba e percussioni, live podcast Tavola Cunzata e cena colombiana, live jam session, Vini Manciaciumi, Milenaria e Dario Aiello", en: "Poster of the 6 November 2026 night: samba and percussion workshop, Tavola Cunzata live podcast and Colombian dinner, live jam session, Manciaciumi wines, Milenaria and Dario Aiello" } },
+      // sfera ricolorata con i colori di Tavola Cunzata (si vede solo senza locandinaHero)
       sfera: { src: "assets/sfera-tavola-cunzata.webp", ombra: "rgba(3, 195, 241, .35)" },
       orario: { inizio: "19:00", fine: null },
       senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },
@@ -112,6 +114,7 @@ window.BOLLA = {
           nome: { it: "Workshop di Samba e Percussioni", en: "Samba and Percussion Workshop" }, ora: "19:00", tag: "Workshop",
           note: { it: "a cura di Sambazita", en: "by Sambazita" }, link: "https://www.instagram.com/sambazita_/",
           dettagli: {
+            prenota: { href: "prenota.html?e=samba-2026-11-06", testo: { it: "Prenota il workshop", en: "Book the workshop" } },
             testo: [
               { it: "Un workshop aperto a chiunque abbia voglia di mettersi in gioco, scoprire nuove sonorità e lasciarsi coinvolgere dall’energia della musica brasiliana.",
                 en: "A workshop open to anyone who wants to get involved, discover new sounds and be swept up by the energy of Brazilian music." },
@@ -189,6 +192,28 @@ window.BOLLA = {
           en: "A workshop on Afro-Colombian rhythms, from cumbia to bullerengue: voice, body and drum to make music together, in a circle." },
         { it: "Nessuna esperienza richiesta.",
           en: "No experience needed." }
+      ]
+    },
+    {
+      id: "samba-2026-11-06",
+      tipo: "workshop",
+      etichetta: "Workshop",
+      serata: "2026-11-06",
+      ora: "19:00",
+      durata: 1,
+      titolo: { it: "Workshop di Samba e Percussioni", en: "Samba and Percussion Workshop" },
+      sottotitolo: { it: "a cura di Sambazita", en: "by Sambazita" },
+      bottone: { it: "Prenota il workshop", en: "Book the workshop" },
+      conduttori: [
+        { nome: "Sambazita", ruolo: { it: "samba e percussioni brasiliane", en: "Brazilian samba and percussion" } }
+      ],
+      testo: [
+        { it: "BOLLA incontra il ritmo del samba con un workshop aperto a chiunque abbia voglia di mettersi in gioco, scoprire nuove sonorità e lasciarsi coinvolgere dall’energia della musica brasiliana.",
+          en: "BOLLA meets the rhythm of samba with a workshop open to anyone who wants to get involved, discover new sounds and be swept up by the energy of Brazilian music." },
+        { it: "Il samba non è solo musica: è corpo, condivisione, energia collettiva. È imparare ad ascoltarsi, trovare il proprio tempo e diventare parte di un unico grande suono.",
+          en: "Samba isn’t just music: it’s body, sharing, collective energy. It’s learning to listen to each other, finding your own time and becoming part of one big sound." },
+        { it: "Porta la tua curiosità, al resto pensiamo insieme. Nessuna esperienza richiesta.",
+          en: "Bring your curiosity, we’ll figure out the rest together. No experience needed." }
       ]
     },
     {
