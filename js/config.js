@@ -128,8 +128,8 @@ window.BOLLA = {
           note: { it: "con Marina dell’Antojito Colombiano", en: "with Marina of Antojito Colombiano" }, link: "6nov-tavolacunzata/",
           dettagli: {
             testo: [
-              { it: "Marina e la sua cucina dell’Antojito Colombiano. La cena è su prenotazione, prezzo speciale 18€ con bevanda inclusa.",
-                en: "Marina and her Antojito Colombiano cooking. The dinner is by reservation, special price €18 including a drink." },
+              { it: "Marina e la sua cucina dell’Antojito Colombiano. La cena è su prenotazione, prezzo speciale 15€ con bevanda inclusa.",
+                en: "Marina and her Antojito Colombiano cooking. The dinner is by reservation, special price €15 including a drink." },
               { it: "Menù: arroz con pollo (riso con pollo, tipico colombiano) · due empanadas, pollo e carne · hawaiana (cipollina colombiana) · bebida “La Colombiana” gusto uva o fragola, analcolica. Menù veggy: arroz con verdure · due empanadas alle verdure · platanos · bebida “La Colombiana”.",
                 en: "Menu: arroz con pollo (chicken and rice, a Colombian classic) · two empanadas, chicken and beef · hawaiana (Colombian spring onion) · “La Colombiana” soft drink, grape or strawberry. Veggie menu: rice with vegetables · two vegetable empanadas · platanos · “La Colombiana” soft drink." }
             ],
