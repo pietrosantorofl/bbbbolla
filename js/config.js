@@ -149,8 +149,10 @@ window.BOLLA = {
           }
         },
         { nome: "Live Jam Session", ora: "22:00", tag: "Live", note: { it: "con l’orchestra del podcast", en: "with the podcast’s orchestra" } },
-        { nome: "Milenaria", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, link: "https://www.instagram.com/milenaria.sur/" },
-        { nome: "Dario Aiello", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, note: { it: "elettronica · dub · downtempo", en: "electronic · dub · downtempo" }, link: "https://www.instagram.com/darioaiello77/" },
+        {
+          nome: "Milenaria · Dario Aiello", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, note: { it: "elettronica · dub · downtempo", en: "electronic · dub · downtempo" },
+          artisti: [{ nome: "Milenaria", link: "https://www.instagram.com/milenaria.sur/" }, { nome: "Dario Aiello", link: "https://www.instagram.com/darioaiello77/" }]
+        },
         // minore: true = più piccolo delle proposte musicali (vino, cibo)
         {
           nome: "Vini Manciaciumi", tag: { it: "Cantina del giorno", en: "Winery of the day" }, minore: true, link: "https://www.instagram.com/manciaciumi.etna/",

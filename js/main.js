@@ -85,6 +85,15 @@
 
   // nome dell'artista: link al profilo (Instagram, nuova scheda) o a una pagina del sito, se c'è
   function nomeArtista(a, cls) {
+    // più artisti sulla stessa riga (es. due selezioni alla stessa ora): ognuno col suo link, separati da " · "
+    if (a.artisti) {
+      var g = el("span", cls);
+      a.artisti.forEach(function (x, i) {
+        if (i) g.appendChild(document.createTextNode(" · "));
+        g.appendChild(nomeArtista(x));
+      });
+      return g;
+    }
     if (!a.link) return el("span", cls, L(a.nome));
     var l = el("a", (cls ? cls + " " : "") + "artista", L(a.nome));
     l.href = a.link;
