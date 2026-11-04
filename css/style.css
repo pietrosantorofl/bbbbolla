@@ -169,9 +169,10 @@ a { color: inherit; }
   white-space: nowrap;
 }
 
-/* locandinaHero: al posto di sfera e programma c'è l'immagine della locandina, intera nello schermo */
-.locandina--immagine { padding: clamp(32px, 4vw, 48px) clamp(12px, 3vw, 40px) clamp(12px, 3vw, 40px); }
-.locandina__img { display: block; width: auto; max-width: 100%; height: auto; max-height: 86svh; margin: 0 auto; border-radius: 6px; }
+/* locandinaHero: al posto di sfera e programma c'è l'immagine della locandina, intera nello schermo;
+   il riquadro si stringe sull'immagine: niente bordo di carta diversa attorno alla locandina */
+.locandina--immagine { width: fit-content; max-width: 100%; margin: 0 auto; padding: 0; background: none; }
+.locandina__img { display: block; width: auto; max-width: 100%; height: auto; max-height: 86svh; margin: 0 auto; border-radius: 26.5px; }
 .hero__stage[hidden], .programma[hidden] { display: none; }
 
 /* ---------- hero: sfera con logo ---------- */
@@ -567,6 +568,7 @@ a { color: inherit; }
   body { font-size: 16px; }
   .hero { padding-top: 28px; }
   .locandina { border-radius: 22px; box-shadow: 6px 6px 0 var(--ink); }
+  .locandina__img { border-radius: 20.5px; }
   .locandina__etichetta { font-size: 11px; }
   .hero__stage { gap: 2px; }
   .programma { grid-template-columns: 1fr; gap: 20px; }

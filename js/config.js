@@ -150,7 +150,7 @@ window.BOLLA = {
         },
         { nome: "Live Jam Session", ora: "22:00", tag: "Live", note: { it: "con l’orchestra del podcast", en: "with the podcast’s orchestra" } },
         {
-          nome: "Milenaria · Dario Aiello", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, note: { it: "elettronica · dub · downtempo", en: "electronic · dub · downtempo" },
+          nome: "Milenaria · Dario Aiello", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, note: { it: "cumbia · downtempo · elettronica", en: "cumbia · downtempo · electronic" },
           artisti: [{ nome: "Milenaria", link: "https://www.instagram.com/milenaria.sur/" }, { nome: "Dario Aiello", link: "https://www.instagram.com/darioaiello77/" }]
         },
         // minore: true = più piccolo delle proposte musicali (vino, cibo)
