@@ -94,11 +94,13 @@ window.BOLLA = {
     {
       id: "2026-11-06",
       data: "2026-11-06",
-      // locandina della home: sfera ricolorata con i colori di Tavola Cunzata, solo date e sfera (niente programma sotto)
+      // locandina definitiva (Canva, 1080x1350 = 4:5), per la pagina Eventi passati
+      locandine: [
+        { src: "assets/locandine/2026-11-06-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 6 novembre 2026", en: "Poster of the 6 November 2026 night" } }
+      ],
+      // locandina della home: sfera ricolorata con i colori di Tavola Cunzata
       sfera: { src: "assets/sfera-tavola-cunzata.webp", ombra: "rgba(3, 195, 241, .35)" },
-      // programmaPubblico: false = finché non esce la locandina: nella locandina solo sfera e date, nella Line-up "TO BE ANNOUNCED"
-      programmaPubblico: false,
-      orario: { inizio: "20:00", fine: null },
+      orario: { inizio: "19:00", fine: null },
       senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },
       luogo: {
         nome: "MONO",
@@ -106,24 +108,59 @@ window.BOLLA = {
         mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
       },
       lineup: [
-        // DA COMPLETARE con la locandina: titolo, conduttori, link alla prenotazione (riga nel foglio Eventi + voce in "eventi")
-        { nome: "Workshop", ora: "20:00", tag: "Workshop", note: { it: "dettagli in arrivo", en: "details coming soon" } },
         {
-          nome: "Tavola Cunzata", ora: "21:30", tag: { it: "Podcast e cena", en: "Podcast & dinner" }, link: "6nov-tavolacunzata/",
+          nome: { it: "Workshop di Samba e Percussioni", en: "Samba and Percussion Workshop" }, ora: "19:00", tag: "Workshop",
+          note: { it: "a cura di Sambazita", en: "by Sambazita" }, link: "https://www.instagram.com/sambazita_/",
           dettagli: {
-            titolo: { it: "Cena colombiana", en: "Colombian dinner" },
+            testo: [
+              { it: "Un workshop aperto a chiunque abbia voglia di mettersi in gioco, scoprire nuove sonorità e lasciarsi coinvolgere dall’energia della musica brasiliana.",
+                en: "A workshop open to anyone who wants to get involved, discover new sounds and be swept up by the energy of Brazilian music." },
+              { it: "Il samba non è solo musica: è corpo, condivisione, energia collettiva. È imparare ad ascoltarsi, trovare il proprio tempo e diventare parte di un unico grande suono. Nessuna esperienza richiesta.",
+                en: "Samba isn’t just music: it’s body, sharing, collective energy. It’s learning to listen to each other, finding your own time and becoming part of one big sound. No experience needed." }
+            ]
+          }
+        },
+        {
+          nome: { it: "Cena Colombiana", en: "Colombian Dinner" }, ora: "20:00", tag: { it: "Cena", en: "Dinner" },
+          note: { it: "con Marina dell’Antojito Colombiano", en: "with Marina of Antojito Colombiano" }, link: "6nov-tavolacunzata/",
+          dettagli: {
             testo: [
               { it: "Marina e la sua cucina dell’Antojito Colombiano. La cena è su prenotazione.",
-                en: "Marina and her Antojito Colombiano cooking. The dinner is by reservation." }
+                en: "Marina and her Antojito Colombiano cooking. The dinner is by reservation." },
+              { it: "Menù: arroz con pollo (riso con pollo, tipico colombiano) · due empanadas, pollo e carne · hawaiana (cipollina colombiana) · bebida “La Colombiana” gusto uva o fragola, analcolica.",
+                en: "Menu: arroz con pollo (chicken and rice, a Colombian classic) · two empanadas, chicken and beef · hawaiana (Colombian spring onion) · “La Colombiana” soft drink, grape or strawberry." }
             ],
             prenota: { href: "6nov-tavolacunzata/", testo: { it: "Prenota la cena", en: "Book the dinner" } }
           }
         },
-        // DA COMPLETARE: nome del DJ e link Instagram
-        { nome: "DJ set", ora: "23:00", tag: "DJ set", main: true, note: { it: "nome in arrivo", en: "line-up coming soon" } },
-        // DA COMPLETARE: vino del giorno
-        { nome: { it: "Vino in arrivo", en: "Wine to be announced" }, tag: { it: "Vino del giorno", en: "Wine of the day" }, minore: true },
-        { nome: "SPIZZICO", tag: { it: "Food dalle 20:00", en: "Food from 8 pm" }, minore: true }
+        {
+          nome: "Tavola Cunzata", ora: "21:00", tag: "Live Podcast", main: true, link: "https://www.instagram.com/tavolacunzata.podcast/",
+          note: { it: "ospite: Marina dell’Antojito Colombiano", en: "guest: Marina of Antojito Colombiano" },
+          dettagli: {
+            testo: [
+              { it: "Tavola Cunzata si registra dal vivo e a tavola c’è Marina dell’Antojito Colombiano: dopo la cena, un viaggio da Catania fino alla Colombia tra racconti, musica, parole e sapori.",
+                en: "Tavola Cunzata records live, with Marina of Antojito Colombiano at the table: after dinner, a journey from Catania to Colombia through stories, music, words and flavours." },
+              { it: "La sua storia, le tradizioni e i piatti di casa, i modi di dire e cosa vuol dire portare le proprie radici dall’altra parte del mondo.",
+                en: "Her story, home traditions and dishes, sayings, and what it means to carry your roots to the other side of the world." }
+            ]
+          }
+        },
+        { nome: "Live Jam Session", ora: "22:00", tag: "Live", note: { it: "con l’orchestra del podcast", en: "with the podcast’s orchestra" } },
+        { nome: "Milenaria", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, link: "https://www.instagram.com/milenaria.sur/" },
+        { nome: "Dario Aiello", ora: "23:30", tag: { it: "Sel Musicali", en: "Selections" }, note: { it: "elettronica · dub · downtempo", en: "electronic · dub · downtempo" }, link: "https://www.instagram.com/darioaiello77/" },
+        // minore: true = più piccolo delle proposte musicali (vino, cibo)
+        {
+          nome: "Vini Manciaciumi", tag: { it: "Cantina del giorno", en: "Winery of the day" }, minore: true, link: "https://www.instagram.com/manciaciumi.etna/",
+          dettagli: {
+            testo: [
+              { it: "Nati sull’Etna nel 2020, intorno a una vecchia vigna. In siciliano “manciaciumi” è l’irrequietezza, il bisogno di fare, sperimentare, muoversi.",
+                en: "Born on Etna in 2020, around an old vineyard. In Sicilian, “manciaciumi” means restlessness, the urge to do, experiment, move." },
+              { it: "Oggi è il progetto di Dario Sciuto e Virginia Paracino, tutto etneo: versanti, vitigni e terroir di un unico vulcano.",
+                en: "Today it’s Dario Sciuto and Virginia Paracino’s project, all from Etna: the slopes, grapes and terroirs of a single volcano." }
+            ]
+          }
+        },
+        { nome: "MONAMOUR", tag: { it: "Cucina dalle 19 alle 23", en: "Kitchen 7–11 pm" }, minore: true }
       ]
     }
   ],

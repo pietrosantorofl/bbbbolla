@@ -40,6 +40,8 @@
         a.href = l.src; a.target = "_blank"; a.rel = "noopener";
         var img = el("img");
         img.src = l.src; img.alt = L(l.alt) || ""; img.loading = "lazy"; img.width = 900; img.height = 1200;
+        // formato: "larghezza:altezza" se la locandina non è 3:4 (es. "4:5"), così non viene tagliata
+        if (l.formato) { var f = l.formato.split(":"); img.height = Math.round(900 * f[1] / f[0]); img.style.aspectRatio = f[0] + " / " + f[1]; }
         a.appendChild(img);
         griglia.appendChild(a);
       });
