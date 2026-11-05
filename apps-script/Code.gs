@@ -226,6 +226,7 @@ function doGet() {
     riga('Mail Vibes', 'VIBES_ESITO') +
     riga('Mail Vibes secondo Brevo', 'VIBES_VERIFICA') +
     riga('Mail invito', 'INVITO_ESITO') +
+    riga('Mail invito, destinatari', 'INVITO_CONTEGGIO') +
     riga('Eventi Brevo', 'EVENTI_BREVO') +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
     erroriAggiornamenti_() + colonneSfasate_(ss) + confermeInSospeso_(db) + (s ? gruppiInSospeso_(db, s.id) : '') + '</div>';
@@ -373,6 +374,16 @@ function aggiornamentiUnaTantum_() {
     // conferma da Brevo che la mail Vibes del 03.11 è arrivata: consegne, rimbalzi, blocchi, aperture (richiesta dell'utente, 04.11)
     // mail d'invito al 6.11 con la locandina e i link: prima solo la prova a Pietro (richiesta dell'utente, 05.11)
     { id: 'invito-2026-11-06-prova', fai: function () { mailInvito_('2026-11-06', INVITO_06_11.prova('pietrosantoro90@gmail.com')); } },
+    // conteggio dei destinatari, senza inviare (richiesta dell'utente, 05.11)
+    { id: 'invito-2026-11-06-conteggio', fai: function () { contaInvito_('2026-11-06', INVITO_06_11.tutti()); } },
+    // invio a tutti il 05.11 alle 18:30; se per qualche motivo non è finito entro le 18:00 del giorno della serata, non si continua
+    { id: 'invito-2026-11-06', dopo: '2026-11-05 18:30', fai: function () {
+      if (new Date() > Utilities.parseDate('2026-11-06 18:00', TZ, 'yyyy-MM-dd HH:mm')) {
+        accoda_('INVITO_ESITO', new Date().toISOString().slice(0, 16) + ' 2026-11-06: troppo tardi, invio fermato');
+        return;
+      }
+      mailInvito_('2026-11-06', INVITO_06_11.tutti());
+    } },
     { id: 'vibes-2026-10-30-verifica', fai: function () { verificaMailBrevo_('VIBES_VERIFICA', oggettoVibes_(), '2026-11-03', '2026-11-04'); } },
     // le prenotazioni del samba finivano nel foglio Workshop (segnalazione dell'utente, 05.11): l'evento torna sul foglio
     // Prenotazioni e le righe del samba già in Workshop si spostano lì. Sotto lock, così nessuna prenotazione si perde.
@@ -2238,7 +2249,8 @@ function mailVibes_(serata, o) {
 /* Una mail a tutti gli iscritti alla newsletter (Contatti con newsletter TRUE, tranne chi in un pass ha detto no), solo con Brevo.
  * m.prova = un indirizzo: parte solo a quello, con "[Prova]" nell'oggetto e il nome Pietro.
  * Gli indirizzi già fatti restano nella proprietà m.fatti ("!" = provato e non riuscito, non si riprova): niente doppioni,
- * e dopo un'interruzione si riprende da dove si era rimasti. m.testo(c) e m.html(c) ricevono il contatto. */
+ * e dopo un'interruzione si riprende da dove si era rimasti. m.testo(c) e m.html(c) ricevono il contatto.
+ * m.filtro(c), facoltativo: false = quel contatto non la riceve. */
 function mailATutti_(db, m) {
   var brevo = chiaveBrevo_();
   if (!brevo) throw new Error('Brevo non collegato');
@@ -2256,7 +2268,7 @@ function mailATutti_(db, m) {
   var noPass = {};
   db.Pass.forEach(function (r) { if (r.email_norm && !vero_(r.newsletter)) noPass[r.email_norm] = true; });
   var lista = db.Contatti.filter(function (c) {
-    return c.email_norm && c.email && vero_(c.newsletter) && !noPass[c.email_norm] && !fatti[c.email_norm];
+    return c.email_norm && c.email && vero_(c.newsletter) && !noPass[c.email_norm] && !fatti[c.email_norm] && (!m.filtro || m.filtro(c));
   });
 
   var inizio = Date.now();
@@ -2304,11 +2316,44 @@ function mailInvito_(serata, o) {
   if (!s) throw new Error('serata ' + serata + ' non trovata');
   var passDi = {};
   db.Pass.forEach(function (r) { if (r.serata === s.id && r.email_norm && passVivo_(db, r)) passDi[r.email_norm] = r; });
+  var filtro = filtroInvito_(db, s, o);
   mailATutti_(db, {
-    etichetta: serata, fatti: 'INVITO_FATTI:' + serata, esito: 'INVITO_ESITO', prova: o.prova, oggetto: o.oggetto,
+    etichetta: serata, fatti: 'INVITO_FATTI:' + serata, esito: 'INVITO_ESITO', prova: o.prova, oggetto: o.oggetto, filtro: filtro,
     testo: function (c) { return testoInvito_(c.nome, s, o, passDi[c.email_norm]); },
     html: function (c) { return emailInvito_(c.nome, s, o, passDi[c.email_norm]); }
   });
+}
+
+// o.iscrittiPrima ('yyyy-MM-dd'): solo i contatti con la prima conferma (colonna "creato") prima di quel giorno, ora italiana.
+// o.senzaPass: niente mail a chi ha già un pass per la serata (qualsiasi riga del foglio Pass non annullata).
+function filtroInvito_(db, s, o) {
+  var limite = o.iscrittiPrima ? Utilities.parseDate(o.iscrittiPrima + ' 00:00', TZ, 'yyyy-MM-dd HH:mm') : null;
+  var conPass = {};
+  db.Pass.forEach(function (r) { if (r.serata === s.id && r.email_norm && r.stato !== 'annullato') conPass[r.email_norm] = true; });
+  return function (c) {
+    if (o.senzaPass && conPass[c.email_norm]) return false;
+    if (!limite) return true;
+    var d = c.creato instanceof Date ? c.creato : new Date(c.creato);
+    return !isNaN(d) && String(c.creato) !== '' && d < limite;
+  };
+}
+
+// Quanti riceverebbero la mail d'invito, senza inviare niente (solo numeri, per la pagina di stato)
+function contaInvito_(serata, o) {
+  var db = carica_(['Serate', 'Pass', 'Gruppi', 'Contatti']);
+  var s = serata_(db, serata);
+  var noPass = {};
+  db.Pass.forEach(function (r) { if (r.email_norm && !vero_(r.newsletter)) noPass[r.email_norm] = true; });
+  var iscritti = db.Contatti.filter(function (c) { return c.email_norm && c.email && vero_(c.newsletter) && !noPass[c.email_norm]; });
+  var conta = function (oo) { var f = filtroInvito_(db, s, oo); return iscritti.filter(f).length; };
+  // il giorno dopo il limite: per contare anche chi si è iscritto il giorno stesso
+  var giorno = o.iscrittiPrima ? Utilities.formatDate(new Date(Utilities.parseDate(o.iscrittiPrima + ' 12:00', TZ, 'yyyy-MM-dd HH:mm').getTime() + 86400000), TZ, 'yyyy-MM-dd') : '';
+  PropertiesService.getScriptProperties().setProperty('INVITO_CONTEGGIO', new Date().toISOString().slice(0, 16) + ' ' + serata +
+    ': iscritti alla newsletter ' + iscritti.length +
+    ' · senza pass per la serata ' + conta({ senzaPass: true }) +
+    ' · iscritti prima del ' + o.iscrittiPrima + ' ' + conta({ iscrittiPrima: o.iscrittiPrima }) +
+    ' · entrambe le cose (riceveranno la mail) ' + conta(o) +
+    (giorno ? ' · se valesse anche chi si è iscritto il giorno stesso ' + conta({ senzaPass: o.senzaPass, iscrittiPrima: giorno }) : ''));
 }
 
 function testoInvito_(nome, s, o, pass) {
@@ -2365,6 +2410,9 @@ var INVITO_06_11 = {
       orario: 'dalle 19:00',
       mappa: 'https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania',
       instagram: 'https://www.instagram.com/bbbbolla/',
+      // destinatari (richiesta dell'utente, 05.11): iscritti prima del 30.10 e senza pass per il 6.11
+      iscrittiPrima: '2026-10-30',
+      senzaPass: true,
       programma: [
         { ora: '19:00', nome: 'Workshop di samba e percussioni', link: 'https://www.instagram.com/sambazita_/', nota: 'a cura di Sambazita · su prenotazione' },
         { ora: '20:00', nome: 'Cena colombiana', link: CONFIG.sito + '/6nov-tavolacunzata/', nota: 'con Marina dell’Antojito Colombiano · 15€ con bevanda, su prenotazione' },
