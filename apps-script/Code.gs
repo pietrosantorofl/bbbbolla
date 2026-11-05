@@ -225,6 +225,7 @@ function doGet() {
     riga('QR esterni', 'QR_ESTERNI_ESITO') +
     riga('Mail Vibes', 'VIBES_ESITO') +
     riga('Mail Vibes secondo Brevo', 'VIBES_VERIFICA') +
+    riga('Mail invito', 'INVITO_ESITO') +
     riga('Eventi Brevo', 'EVENTI_BREVO') +
     '<p>Sveglia automatica: ' + sveglia + '</p>' +
     erroriAggiornamenti_() + colonneSfasate_(ss) + confermeInSospeso_(db) + (s ? gruppiInSospeso_(db, s.id) : '') + '</div>';
@@ -370,6 +371,8 @@ function aggiornamentiUnaTantum_() {
     { id: 'vibes-2026-10-30-prova-4', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
     { id: 'vibes-2026-10-30', dopo: '2026-11-03 17:00', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.tutti()); } },
     // conferma da Brevo che la mail Vibes del 03.11 è arrivata: consegne, rimbalzi, blocchi, aperture (richiesta dell'utente, 04.11)
+    // mail d'invito al 6.11 con la locandina e i link: prima solo la prova a Pietro (richiesta dell'utente, 05.11)
+    { id: 'invito-2026-11-06-prova', fai: function () { mailInvito_('2026-11-06', INVITO_06_11.prova('pietrosantoro90@gmail.com')); } },
     { id: 'vibes-2026-10-30-verifica', fai: function () { verificaMailBrevo_('VIBES_VERIFICA', oggettoVibes_(), '2026-11-03', '2026-11-04'); } },
     // le prenotazioni del samba finivano nel foglio Workshop (segnalazione dell'utente, 05.11): l'evento torna sul foglio
     // Prenotazioni e le righe del samba già in Workshop si spostano lì. Sotto lock, così nessuna prenotazione si perde.
@@ -1892,7 +1895,7 @@ function layout_(o) {
   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e9e7e3;font-family:Helvetica,Arial,sans-serif;color:#121212">' +
     '<tr><td align="center" style="padding:28px 12px">' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#f3f2ef;border:1.5px solid #121212;border-radius:22px;overflow:hidden">' +
-        '<tr><td style="padding:0;line-height:0"><a href="' + CONFIG.sito + '"><img src="' + img + '" width="520" alt="bolla®" style="display:block;width:100%;max-width:520px;height:auto;border:0"></a></td></tr>' +
+        '<tr><td style="padding:0;line-height:0"><a href="' + CONFIG.sito + '"><img src="' + img + '" width="520" alt="' + esc_(o.bannerAlt || 'bolla®') + '" style="display:block;width:100%;max-width:520px;height:auto;border:0"></a></td></tr>' +
         '<tr><td style="padding:28px 24px 8px">' + o.corpo + '</td></tr>' +
         '<tr><td style="padding:8px 24px 28px">' +
           // s.titolo vuoto (mail Vibes): niente riga col titolo, la linea passa sopra il testo della newsletter
@@ -2221,23 +2224,35 @@ function esportaNewsletter() {
 // per il riquadro con il bottone del pass (facoltativi);
 // o.prova: un solo indirizzo, con [Prova] nell'oggetto e senza segnare niente.
 function mailVibes_(serata, o) {
-  var brevo = chiaveBrevo_();
-  if (!brevo) throw new Error('Brevo non collegato');
   var db = carica_(['Serate', 'Pass', 'Contatti']);
   var s = serata_(db, serata);
   if (!s) throw new Error('serata ' + serata + ' non trovata');
   o.dopo = o.prossima ? serata_(db, o.prossima) : null;
+  mailATutti_(db, {
+    etichetta: serata, fatti: 'VIBES_FATTI:' + serata, esito: 'VIBES_ESITO', prova: o.prova, oggetto: oggettoVibes_(),
+    testo: function (c) { return testoVibes_(c.nome, s); },
+    html: function (c) { return emailVibes_(c.nome, s, o); }
+  });
+}
+
+/* Una mail a tutti gli iscritti alla newsletter (Contatti con newsletter TRUE, tranne chi in un pass ha detto no), solo con Brevo.
+ * m.prova = un indirizzo: parte solo a quello, con "[Prova]" nell'oggetto e il nome Pietro.
+ * Gli indirizzi già fatti restano nella proprietà m.fatti ("!" = provato e non riuscito, non si riprova): niente doppioni,
+ * e dopo un'interruzione si riprende da dove si era rimasti. m.testo(c) e m.html(c) ricevono il contatto. */
+function mailATutti_(db, m) {
+  var brevo = chiaveBrevo_();
+  if (!brevo) throw new Error('Brevo non collegato');
   var props = PropertiesService.getScriptProperties();
 
-  if (o.prova) {
-    inviaBrevo_(brevo, o.prova, '[Prova] ' + oggettoVibes_(), testoVibes_('Pietro', s), emailVibes_('Pietro', s, o));
-    accoda_('VIBES_ESITO', new Date().toISOString().slice(0, 16) + ' ' + serata + ' prova inviata');
+  if (m.prova) {
+    var pietro = { nome: 'Pietro', email: m.prova, email_norm: String(m.prova).toLowerCase() };
+    inviaBrevo_(brevo, m.prova, '[Prova] ' + m.oggetto, m.testo(pietro), m.html(pietro));
+    accoda_(m.esito, new Date().toISOString().slice(0, 16) + ' ' + m.etichetta + ' prova inviata');
     return;
   }
 
-  var chiave = 'VIBES_FATTI:' + serata;
   var fatti = {};
-  (props.getProperty(chiave) || '').split('\n').forEach(function (e) { if (e) fatti[e.replace(/^!/, '')] = e; });
+  (props.getProperty(m.fatti) || '').split('\n').forEach(function (e) { if (e) fatti[e.replace(/^!/, '')] = e; });
   var noPass = {};
   db.Pass.forEach(function (r) { if (r.email_norm && !vero_(r.newsletter)) noPass[r.email_norm] = true; });
   var lista = db.Contatti.filter(function (c) {
@@ -2246,19 +2261,19 @@ function mailVibes_(serata, o) {
 
   var inizio = Date.now();
   var inviate = 0, errori = 0, diFila = [];
-  var salva = function () { props.setProperty(chiave, Object.keys(fatti).map(function (k) { return fatti[k]; }).join('\n')); };
+  var salva = function () { props.setProperty(m.fatti, Object.keys(fatti).map(function (k) { return fatti[k]; }).join('\n')); };
   try {
     for (var i = 0; i < lista.length; i++) {
       // Apps Script si ferma a 6 minuti: oltre i 4 si riprende al giro dopo
       if (Date.now() - inizio > 4 * 60 * 1000) throw new Error('tempo finito, continuo al prossimo giro');
       var c = lista[i];
       try {
-        inviaBrevo_(brevo, c.email, oggettoVibes_(), testoVibes_(c.nome, s), emailVibes_(c.nome, s, o));
+        inviaBrevo_(brevo, c.email, m.oggetto, m.testo(c), m.html(c));
         fatti[c.email_norm] = c.email_norm;
         inviate++;
         diFila = [];
       } catch (err) {
-        console.error('Mail Vibes non inviata a ' + c.email + ': ' + err);
+        console.error('Mail ' + m.esito + ' non inviata a ' + c.email + ': ' + err);
         // "!" = provata e non riuscita: non si riprova
         fatti[c.email_norm] = '!' + c.email_norm;
         errori++;
@@ -2275,11 +2290,102 @@ function mailVibes_(serata, o) {
   } finally {
     salva();
     var tutti = Object.keys(fatti);
-    accoda_('VIBES_ESITO', new Date().toISOString().slice(0, 16) + ' ' + serata + ': ' + inviate + ' inviate in questo giro, ' +
+    accoda_(m.esito, new Date().toISOString().slice(0, 16) + ' ' + m.etichetta + ': ' + inviate + ' inviate in questo giro, ' +
       errori + ' non riuscite; in tutto ' + tutti.filter(function (k) { return fatti[k] === k; }).length + ' inviate, ' +
       (lista.length - inviate - errori) + ' ancora da inviare');
   }
 }
+
+/* Mail d'invito a una serata: locandina al posto del banner, programma con i link, bottoni per pass, workshop e cena.
+ * Chi ha già un pass vivo per la serata trova "Apri il tuo pass" al posto di "Prenota il pass". */
+function mailInvito_(serata, o) {
+  var db = carica_(['Serate', 'Pass', 'Gruppi', 'Contatti']);
+  var s = serata_(db, serata);
+  if (!s) throw new Error('serata ' + serata + ' non trovata');
+  var passDi = {};
+  db.Pass.forEach(function (r) { if (r.serata === s.id && r.email_norm && passVivo_(db, r)) passDi[r.email_norm] = r; });
+  mailATutti_(db, {
+    etichetta: serata, fatti: 'INVITO_FATTI:' + serata, esito: 'INVITO_ESITO', prova: o.prova, oggetto: o.oggetto,
+    testo: function (c) { return testoInvito_(c.nome, s, o, passDi[c.email_norm]); },
+    html: function (c) { return emailInvito_(c.nome, s, o, passDi[c.email_norm]); }
+  });
+}
+
+function testoInvito_(nome, s, o, pass) {
+  return 'Ciao ' + nome + ', ' + o.invito + ' ' + giorno_(fineSerata_(s)) + ', ' + o.orario + ', ' + String(s.luogo).split(',')[0] + '. ' +
+    o.programma.map(function (p) { return (p.ora ? p.ora + ' ' : '') + p.nome; }).join(' · ') + '. ' +
+    (pass ? 'Il tuo pass: ' + linkPass_(pass.chiave) : 'Il pass è gratuito: ' + CONFIG.sito + '/#prenota') + ' — ' +
+    o.bottoni.map(function (b) { return b.testo + ': ' + b.href; }).join(' — ');
+}
+
+function emailInvito_(nome, s, o, pass) {
+  var a = function (href, t) { return '<a href="' + href + '" style="color:#121212;text-decoration:underline">' + t + '</a>'; };
+  var luogo = String(s.luogo).split(',')[0];
+  var dettagli = dettagli_({ orario: o.orario, luogo: s.luogo, senzaPass: s.senzaPass }, giorno_(fineSerata_(s)));
+  // programma: ora a sinistra, nome (con link) e una riga sotto
+  var programma = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;font-size:15px">' +
+    o.programma.map(function (p) {
+      var nomi = p.link ? a(p.link, esc_(p.nome)) : (p.artisti || [p]).map(function (x) { return x.link ? a(x.link, esc_(x.nome)) : esc_(x.nome); }).join(' · ');
+      return '<tr><td style="padding:10px 0;border-top:1px solid #d6d3ce;width:56px;vertical-align:top;font-weight:700;font-size:14px">' + (p.ora || '') + '</td>' +
+        '<td style="padding:10px 0;border-top:1px solid #d6d3ce;vertical-align:top"><span style="font-weight:700">' + nomi + '</span>' +
+        (p.nota ? '<br><span style="font-size:13px;color:#5f5b56">' + esc_(p.nota) + '</span>' : '') + '</td></tr>';
+    }).join('') + '</table>';
+  var corpo =
+    kicker_(Utilities.formatDate(fineSerata_(s), TZ, 'dd.MM') + ' · ' + esc_(luogo)) +
+    titolo_(o.titolo) +
+    paragrafo_('Ciao ' + esc_(nome) + ',') +
+    paragrafo_(o.racconto) +
+    dettagli +
+    (pass
+      ? bottone_(linkPass_(pass.chiave), 'Apri il tuo pass') + nota_('Hai già il pass per questa serata: all\'ingresso mostra il QR.')
+      : bottone_(CONFIG.sito + '/#prenota', 'Prenota il pass gratuito')) +
+    '<p style="margin:28px 0 0;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#5f5b56">Programma</p>' +
+    programma +
+    o.bottoni.map(function (b) {
+      return riquadro_('<p style="margin:0 0 6px;font-size:15px;font-weight:700">' + esc_(b.titolo) + '</p>' +
+        '<p style="margin:0 0 14px;font-size:14px;line-height:1.5">' + esc_(b.descrizione) + '</p>' + bottone_(b.href, esc_(b.testo), true));
+    }).join('') +
+    nota_(a(o.mappa, 'Come arrivare al ' + esc_(luogo)) + ' · ' + a(o.instagram, 'bolla® su Instagram') + ' · ' +
+      a(CONFIG.sito + '/vibes.html', 'Le Vibes della prima serata'));
+  return layout_({ banner: o.locandina, bannerAlt: o.locandinaAlt, anteprima: o.anteprima, corpo: corpo, s: { titolo: '' }, newsletter: true });
+}
+
+// testi della mail d'invito al 6.11 (come la pagina: js/config.js, serata 2026-11-06)
+var INVITO_06_11 = {
+  base: function () {
+    return {
+      oggetto: 'Venerdì 6 novembre torna bolla®: samba, cena colombiana e Tavola Cunzata',
+      anteprima: 'Workshop di samba, cena colombiana, Tavola Cunzata dal vivo, jam session e selezioni fino a tardi',
+      locandina: 'locandine/2026-11-06-serata.jpg',
+      locandinaAlt: 'Locandina di bolla® del 6 novembre 2026',
+      titolo: 'Ti aspettiamo nella bolla®',
+      racconto: 'Venerdì 6 novembre si parte alle 19:00 con il workshop di samba e percussioni, poi la cena colombiana di Marina, ' +
+        'Tavola Cunzata che registra dal vivo, la jam session e le selezioni di Milenaria e Dario Aiello fino a tardi.',
+      invito: 'ti aspettiamo alla seconda serata di bolla®:',
+      orario: 'dalle 19:00',
+      mappa: 'https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania',
+      instagram: 'https://www.instagram.com/bbbbolla/',
+      programma: [
+        { ora: '19:00', nome: 'Workshop di samba e percussioni', link: 'https://www.instagram.com/sambazita_/', nota: 'a cura di Sambazita · su prenotazione' },
+        { ora: '20:00', nome: 'Cena colombiana', link: CONFIG.sito + '/6nov-tavolacunzata/', nota: 'con Marina dell’Antojito Colombiano · 15€ con bevanda, su prenotazione' },
+        { ora: '21:00', nome: 'Tavola Cunzata', link: 'https://www.instagram.com/tavolacunzata.podcast/', nota: 'live podcast con Marina dell’Antojito Colombiano' },
+        { ora: '22:00', nome: 'Live Jam Session', nota: 'con l’orchestra del podcast' },
+        { ora: '23:30', nome: 'Milenaria · Dario Aiello', nota: 'selezioni musicali: cumbia · downtempo · elettronica',
+          artisti: [{ nome: 'Milenaria', link: 'https://www.instagram.com/milenaria.sur/' }, { nome: 'Dario Aiello', link: 'https://www.instagram.com/darioaiello77/' }] },
+        { nome: 'Vini Manciaciumi', link: 'https://www.instagram.com/manciaciumi.etna/', nota: 'cantina del giorno' },
+        { nome: 'MONAMOUR', nota: 'cucina dalle 19 alle 23' }
+      ],
+      bottoni: [
+        { titolo: 'Workshop di samba e percussioni · 19:00', descrizione: 'Con la Scuola Popolare Sambazita. Aperto a tutti, nessuna esperienza richiesta.',
+          testo: 'Prenota il workshop', href: CONFIG.sito + '/prenota.html?e=samba-2026-11-06' },
+        { titolo: 'Cena colombiana · 20:00', descrizione: 'Arroz con pollo, empanadas e bebida “La Colombiana”, anche in versione veggy. 15€ con bevanda inclusa.',
+          testo: 'Prenota la cena', href: CONFIG.sito + '/6nov-tavolacunzata/' }
+      ]
+    };
+  },
+  prova: function (a) { var o = INVITO_06_11.base(); o.prova = a; return o; },
+  tutti: function () { return INVITO_06_11.base(); }
+};
 
 // testi della mail Vibes del 30.10
 var VIBES_30_10 = {
