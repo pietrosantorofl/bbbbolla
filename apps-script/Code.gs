@@ -370,7 +370,36 @@ function aggiornamentiUnaTantum_() {
     { id: 'vibes-2026-10-30-prova-4', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
     { id: 'vibes-2026-10-30', dopo: '2026-11-03 17:00', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.tutti()); } },
     // conferma da Brevo che la mail Vibes del 03.11 è arrivata: consegne, rimbalzi, blocchi, aperture (richiesta dell'utente, 04.11)
-    { id: 'vibes-2026-10-30-verifica', fai: function () { verificaMailBrevo_('VIBES_VERIFICA', oggettoVibes_(), '2026-11-03', '2026-11-04'); } }
+    { id: 'vibes-2026-10-30-verifica', fai: function () { verificaMailBrevo_('VIBES_VERIFICA', oggettoVibes_(), '2026-11-03', '2026-11-04'); } },
+    // le prenotazioni del samba finivano nel foglio Workshop (segnalazione dell'utente, 05.11): l'evento torna sul foglio
+    // Prenotazioni e le righe del samba già in Workshop si spostano lì. Sotto lock, così nessuna prenotazione si perde.
+    { id: 'samba-2026-11-06-in-prenotazioni', fai: function () {
+      var out = conLock_(function () {
+        var id = 'samba-2026-11-06';
+        var db = carica_(['Eventi', 'Workshop', 'Prenotazioni']);
+        var e = trova_(db.Eventi, 'id', id);
+        if (!e) throw new Error('evento ' + id + ' non trovato nel foglio Eventi');
+        var prima = String(e.foglio);
+        if (prima !== '') aggiorna_(db.Eventi, e, { foglio: '' });
+        var gia = {};
+        db.Prenotazioni.forEach(function (r) { if (r.evento === id) gia[r.telefono_norm] = true; });
+        var sposta = db.Workshop.filter(function (r) { return r.workshop === id; });
+        sposta.forEach(function (r) {
+          if (gia[r.telefono_norm]) return;
+          appendi_('Prenotazioni', { creato: r.creato, evento: id, nome: r.nome, cognome: r.cognome, telefono: r.telefono,
+            telefono_norm: r.telefono_norm, persone: '', note: r.note });
+          gia[r.telefono_norm] = true;
+        });
+        SpreadsheetApp.flush();
+        // dal basso, così i numeri di riga restano giusti
+        sposta.map(function (r) { return r._riga; }).sort(function (a, b) { return b - a; })
+          .forEach(function (n) { db.Workshop[0]._foglio.deleteRow(n); });
+        PropertiesService.getScriptProperties().setProperty('diagnosi:' + id,
+          'foglio era "' + prima + '", spostate ' + sposta.length + ' righe da Workshop');
+        return { ok: true };
+      });
+      if (!out.ok) throw new Error(out.messaggio);
+    } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
     // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
