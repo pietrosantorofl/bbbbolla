@@ -376,6 +376,8 @@ function aggiornamentiUnaTantum_() {
     { id: 'invito-2026-11-06-prova', fai: function () { mailInvito_('2026-11-06', INVITO_06_11.prova('pietrosantoro90@gmail.com')); } },
     // conteggio dei destinatari, senza inviare (richiesta dell'utente, 05.11)
     { id: 'invito-2026-11-06-conteggio', fai: function () { contaInvito_('2026-11-06', INVITO_06_11.tutti()); } },
+    // di nuovo, con il limite spostato al 30.10 compreso
+    { id: 'invito-2026-11-06-conteggio-2', fai: function () { contaInvito_('2026-11-06', INVITO_06_11.tutti()); } },
     // invio a tutti il 05.11 alle 18:30; se per qualche motivo non è finito entro le 18:00 del giorno della serata, non si continua
     { id: 'invito-2026-11-06', dopo: '2026-11-05 18:30', fai: function () {
       if (new Date() > Utilities.parseDate('2026-11-06 18:00', TZ, 'yyyy-MM-dd HH:mm')) {
@@ -2410,8 +2412,8 @@ var INVITO_06_11 = {
       orario: 'dalle 19:00',
       mappa: 'https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania',
       instagram: 'https://www.instagram.com/bbbbolla/',
-      // destinatari (richiesta dell'utente, 05.11): iscritti prima del 30.10 e senza pass per il 6.11
-      iscrittiPrima: '2026-10-30',
+      // destinatari (richiesta dell'utente, 05.11): iscritti entro il 30.10 compreso e senza pass per il 6.11
+      iscrittiPrima: '2026-10-31',
       senzaPass: true,
       programma: [
         { ora: '19:00', nome: 'Workshop di samba e percussioni', link: 'https://www.instagram.com/sambazita_/', nota: 'a cura di Sambazita · su prenotazione' },
