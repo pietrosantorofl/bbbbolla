@@ -418,6 +418,14 @@ function aggiornamentiUnaTantum_() {
         return { ok: true };
       });
       if (!out.ok) throw new Error(out.messaggio);
+    } },
+    // pass dato lo stesso a chi ha confermato in un gruppo incompleto, alle 18:00 del 6.11 (richiesta dell'utente, 06.11):
+    // colonna "regalo" della serata, poi ci pensa automazioni_ nella sveglia
+    { id: 'regalo-2026-11-06-18', fai: function () {
+      var db = carica_(['Serate']);
+      var r = trova_(db.Serate, 'id', '2026-11-06');
+      if (!r) throw new Error('serata 2026-11-06 non trovata');
+      aggiorna_(db.Serate, r, { regalo: "'18:00" });
     } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
