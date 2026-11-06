@@ -12,7 +12,8 @@
  * Fogli (creati da setup()):
  *   Serate  id | titolo | data | capienza | aperta | orario | luogo | senza_pass | chiusura_pass | chiusura_gruppi |
  *           promemoria | solleciti | regalo | recap | recap_a        (vedi "Serate e automazioni")
- *   Inviti  token | etichetta | serata | max | scadenza | attivo | creato
+ *   Inviti  token | etichetta | serata | max | scadenza | attivo | creato   (ogni invito vale per tutte le serate:
+ *           la colonna serata non conta più; max = pass per serata)
  *   Gruppi  id | serata | creato | scadenza | capogruppo | stato | completato | confermati
  *   Pass    creato | serata | tipo | rif | nome | cognome | email | email_norm | chiave | codice | stato | confermato | checkin | newsletter | checkin_da
  *   Attesa  creato | serata | nome | cognome | email | email_norm | arrivato_da | newsletter | note
@@ -941,7 +942,8 @@ function invito_(db, token, s) {
   var inv = trova_(db.Inviti, 'token', String(token || ''));
   var nonValido = errore_('invito', 'Questo invito non è valido o è scaduto.');
   if (!inv || !vero_(inv.attivo)) return nonValido;
-  if (inv.serata && inv.serata !== s.id) return nonValido;
+  // ogni invito vale per tutte le serate (richiesta dell'utente, 06.11): la colonna serata non conta più,
+  // così anche i link creati per il 30.10 funzionano alle serate dopo
   if (inv.scadenza && new Date() > data_(inv.scadenza)) return nonValido;
   // il tetto vale per ogni serata: un link per tutte le serate non si esaurisce dopo la prima
   var usati = db.Pass.filter(function (r) { return r.tipo === 'invito' && r.rif === inv.token && r.serata === s.id && r.stato === 'confermato'; }).length;
