@@ -426,6 +426,14 @@ function aggiornamentiUnaTantum_() {
       var r = trova_(db.Serate, 'id', '2026-11-06');
       if (!r) throw new Error('serata 2026-11-06 non trovata');
       aggiorna_(db.Serate, r, { regalo: "'18:00" });
+    } },
+    // secondo giro alle 22:00, come il 30.10 (richiesta dell'utente, 06.11): passRegalo_ manda il pass solo se trova
+    // gruppi ancora aperti con qualcuno confermato, altrimenti non parte nessuna email. Il giro delle 18:00 non si ripete.
+    { id: 'regalo-2026-11-06-22', fai: function () {
+      var db = carica_(['Serate']);
+      var r = trova_(db.Serate, 'id', '2026-11-06');
+      if (!r) throw new Error('serata 2026-11-06 non trovata');
+      aggiorna_(db.Serate, r, { regalo: "'18:00, 22:00" });
     } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
