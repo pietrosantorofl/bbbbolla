@@ -130,6 +130,7 @@ function onOpen() {
     .addSeparator()
     .addItem('Crea link segreto staff (app ingresso)', 'creaLinkStaffDaMenu')
     .addItem('Crea link segreto visuals (schermo e regia)', 'creaLinkVisualsDaMenu')
+    .addItem('Crea link segreto dashboard (numeri)', 'creaLinkDashboardDaMenu')
     .addItem('Rigenera codice live (QR in sala)', 'rigeneraCodiceLiveDaMenu')
     .addItem('Imposta chiave Brevo…', 'impostaChiaveBrevoDaMenu')
     .addItem('Invia email di prova (Brevo)', 'emailProvaDaMenu')
@@ -254,6 +255,7 @@ function doPost(e) {
       case 'live_invia': return json_(azioneLiveInvia_(d));
       case 'live_feed': return json_(azioneLiveFeed_(d));
       case 'live_regia': return json_(azioneLiveRegia_(d));
+      case 'dashboard': return json_(azioneDashboard_(d));
       case 'evento_stato': return json_(azioneEventoStato_(d));
       case 'evento_prenota': return json_(azioneEventoPrenota_(d));
       // pagine dei primi eventi (workshop.html, 6nov-tavolacunzata): stesse azioni, risposta nel loro formato
@@ -1018,17 +1020,20 @@ function reinvia_(db, pass, s) {
    - staff:   bbbbolla.it/staff.html#k=<segreto>            (app ingresso, telefoni alla porta)
    - visuals: bbbbolla.it/live/schermo.html#k=<segreto>     (computer del proiettore)
               bbbbolla.it/live/regia.html#k=<segreto>       (chi gestisce le visuals)
+   - dashboard: bbbbolla.it/dashboard.html#k=<segreto>      (numeri di pass, gruppi, prenotazioni: solo conteggi)
    Il segreto sta dopo il #: il browser non lo manda a nessun server, la pagina lo salva e lo toglie dalla barra.
    Le pagine lo mandano al backend nel campo "accesso".
    ============================================================ */
 
 var LINK_SEGRETI = {
   staff: { prop: 'LINK_STAFF', nome: 'Link staff (app ingresso)', pagine: [['App ingresso', '/staff.html']], menu: 'Crea link segreto staff' },
-  visuals: { prop: 'LINK_VISUALS', nome: 'Link visuals', pagine: [['Schermo (computer del proiettore)', '/live/schermo.html'], ['Regia (chi gestisce le visuals)', '/live/regia.html']], menu: 'Crea link segreto visuals' }
+  visuals: { prop: 'LINK_VISUALS', nome: 'Link visuals', pagine: [['Schermo (computer del proiettore)', '/live/schermo.html'], ['Regia (chi gestisce le visuals)', '/live/regia.html']], menu: 'Crea link segreto visuals' },
+  dashboard: { prop: 'LINK_DASHBOARD', nome: 'Link dashboard', pagine: [['Dashboard (numeri delle serate)', '/dashboard.html']], menu: 'Crea link segreto dashboard' }
 };
 
 function creaLinkStaffDaMenu() { creaLinkDaMenu_('staff'); }
 function creaLinkVisualsDaMenu() { creaLinkDaMenu_('visuals'); }
+function creaLinkDashboardDaMenu() { creaLinkDaMenu_('dashboard'); }
 
 function creaLinkDaMenu_(tipo) {
   var t = LINK_SEGRETI[tipo];
@@ -1062,6 +1067,157 @@ function controllaAccesso_(tipo, accesso) {
     return errore_('accesso', 'Link non valido o sostituito: chiedi il link nuovo.');
   }
   return null;
+}
+
+/* ============================================================
+   Dashboard (bbbbolla.it/dashboard.html, link segreto dashboard): i numeri di una serata e l'andamento delle serate.
+   Solo conteggi: niente nomi, email o telefoni, così un link finito in giro non espone dati personali.
+   Legge anche i fogli "Archivio …", per le serate passate. Risposta in cache 30 secondi per serata.
+   ============================================================ */
+
+// Righe del foglio più quelle del suo archivio (se c'è): le serate passate stanno lì
+function conArchivio_(ss, nome) {
+  var righe = [];
+  [nome, 'Archivio ' + nome].forEach(function (n) {
+    var sh = ss.getSheetByName(n);
+    if (sh && sh.getLastRow() > 1) righe = righe.concat(leggiFoglio_(sh, nome, false));
+  });
+  return righe;
+}
+
+function azioneDashboard_(d) {
+  var no = controllaAccesso_('dashboard', d.accesso);
+  if (no) return no;
+  var cache = CacheService.getScriptCache();
+  var k = 'dash:' + String(d.serata || '');
+  var pronta = !d.fresco && cache.get(k);
+  if (pronta) return JSON.parse(pronta);
+  var out = datiDashboard_(d.serata);
+  var testo = JSON.stringify(out);
+  if (testo.length < 90000) cache.put(k, testo, 30);
+  return out;
+}
+
+function datiDashboard_(idSerata) {
+  var ss = SpreadsheetApp.getActive();
+  var db = carica_(['Serate', 'Eventi', 'Inviti', 'Contatti']);
+  ['Pass', 'Gruppi', 'Attesa', 'Prenotazioni', 'Workshop', 'Cena'].forEach(function (n) { db[n] = conArchivio_(ss, n); });
+  var serate = db.Serate.map(function (r) { return serata_(db, r.id); }).filter(Boolean)
+    .sort(function (a, b) { return a.data < b.data ? 1 : a.data > b.data ? -1 : 0; });
+  var s = serata_(db, idSerata) || prossimaSerata_(db);
+  if (!s) return errore_('serata', 'Nessuna serata nel foglio.');
+
+  var giornoOra = function (v, f) { var x = data_(v); return x && !isNaN(x) ? Utilities.formatDate(x, TZ, f) : ''; };
+  var gruppiDi = function (id) { return db.Gruppi.filter(function (g) { return g.serata === id && g.stato !== 'annullato'; }); };
+  var contaGruppi = function (id) {
+    var c = { completo: 0, aperto: 0, scaduto: 0 };
+    gruppiDi(id).forEach(function (g) { var st = statoGruppo_(db, g).stato; c[st] = (c[st] || 0) + 1; });
+    return c;
+  };
+
+  // la serata scelta
+  var tutti = db.Pass.filter(function (r) { return r.serata === s.id; });
+  var pass = tutti.filter(function (r) { return r.stato !== 'annullato'; });
+  var validi = pass.filter(function (r) { return passAttivo_(db, r); });
+  var conta = function (righe, f) { return righe.filter(f).length; };
+  var esterni = function (r) { return r.rif === 'qr-esterni'; };
+
+  // gruppi aperti: quanti hanno confermato su quanti posti
+  var aperti = [];
+  gruppiDi(s.id).forEach(function (g) {
+    var st = statoGruppo_(db, g);
+    if (st.stato === 'aperto') aperti.push({ membri: st.attivi.length, confermati: st.confermati.length });
+  });
+  aperti.sort(function (a, b) { return b.confermati - a.confermati || b.membri - a.membri; });
+
+  // pass chiesti giorno per giorno (annullati esclusi, QR esterni a parte)
+  var perGiorno = {};
+  pass.forEach(function (r) {
+    if (esterni(r)) return;
+    var g = giornoOra(r.creato, 'yyyy-MM-dd');
+    if (!g) return;
+    var x = perGiorno[g] = perGiorno[g] || { giorno: g, invito: 0, gruppo: 0 };
+    x[r.tipo === 'invito' ? 'invito' : 'gruppo']++;
+  });
+  var andamento = Object.keys(perGiorno).sort().map(function (g) { return perGiorno[g]; });
+
+  // ingressi ogni 15 minuti
+  var perQuarto = {};
+  pass.forEach(function (r) {
+    var x = data_(r.checkin);
+    if (!r.checkin || !x || isNaN(x)) return;
+    var q = new Date(Math.floor(x.getTime() / 900000) * 900000);
+    var kq = Utilities.formatDate(q, TZ, 'yyyy-MM-dd HH:mm');
+    perQuarto[kq] = (perQuarto[kq] || 0) + 1;
+  });
+  var ingressi = Object.keys(perQuarto).sort().map(function (kq) { return { ora: kq.slice(11), n: perQuarto[kq] }; });
+
+  // pass per link invito (etichetta del foglio Inviti)
+  var etichette = {};
+  db.Inviti.forEach(function (i) { etichette[i.token] = i.etichetta || 'Invito senza nome'; });
+  var perInvito = {};
+  validi.forEach(function (r) {
+    if (r.tipo !== 'invito') return;
+    var nome = esterni(r) ? 'QR di un\'altra biglietteria' : etichette[r.rif] || 'Invito senza nome';
+    perInvito[nome] = (perInvito[nome] || 0) + 1;
+  });
+  var inviti = Object.keys(perInvito).map(function (n) { return { nome: n, pass: perInvito[n] }; })
+    .sort(function (a, b) { return b.pass - a.pass; });
+
+  // eventi con prenotazione della serata
+  var eventi = db.Eventi.filter(function (e) { return e.serata === s.id; }).map(function (e) {
+    var ev = evento_(db, e.id);
+    var righe = (db[ev.foglio] || []).filter(function (r) { return r[ev.colonna] === ev.id; });
+    var persone = 0;
+    righe.forEach(function (r) { persone += Number(r.persone) || 1; });
+    var ultima = righe.reduce(function (m, r) { var x = data_(r.creato); return x && x > m ? x : m; }, null);
+    return { id: ev.id, tipo: ev.tipo, titolo: ev.titolo || ev.id, inizio: ev.inizio && !isNaN(ev.inizio) ? Utilities.formatDate(ev.inizio, TZ, 'HH:mm') : '',
+      posti: ev.posti, prenotazioni: righe.length, persone: persone, aperto: eventoAperto_(ev),
+      ultima: ultima ? Utilities.formatDate(ultima, TZ, 'dd.MM HH:mm') : '' };
+  });
+
+  var gruppi = contaGruppi(s.id);
+  var newsletter = conta(db.Contatti, function (c) { return vero_(c.newsletter); });
+
+  // tutte le serate, per confrontarle
+  var storico = serate.slice().reverse().map(function (x) {
+    var p = db.Pass.filter(function (r) { return r.serata === x.id && r.stato !== 'annullato'; });
+    var v = p.filter(function (r) { return passAttivo_(db, r); });
+    var pren = 0;
+    db.Eventi.filter(function (e) { return e.serata === x.id; }).forEach(function (e) {
+      var ev = evento_(db, e.id);
+      (db[ev.foglio] || []).forEach(function (r) { if (r[ev.colonna] === ev.id) pren += Number(r.persone) || 1; });
+    });
+    return { id: x.id, data: x.data, titolo: x.titolo, validi: v.length, entrati: conta(p, function (r) { return !!r.checkin; }),
+      gruppi: contaGruppi(x.id).completo, prenotati: pren, nuoviContatti: conta(db.Contatti, function (c) { return c.prima === x.id; }) };
+  });
+
+  return {
+    ok: true,
+    aggiornato: new Date().toISOString(),
+    serate: serate.map(function (x) { return { id: x.id, data: x.data, titolo: x.titolo }; }),
+    serata: { id: s.id, titolo: s.titolo, data: s.data, capienza: s.capienza, chiusuraPass: s.chiusuraPass, chiusuraGruppi: s.chiusuraGruppi,
+      oggi: s.data === oggi_(), passata: s.data < oggi_() },
+    pass: {
+      validi: validi.length,
+      invito: conta(validi, function (r) { return r.tipo === 'invito' && !esterni(r); }),
+      esterni: conta(validi, esterni),
+      gruppo: conta(validi, function (r) { return r.tipo === 'gruppo'; }),
+      inAttesaDelGruppo: conta(pass, function (r) { return r.stato === 'confermato' && !passAttivo_(db, r); }),
+      daConfermare: conta(pass, function (r) { return r.stato === 'da_confermare'; }),
+      annullati: conta(tutti, function (r) { return r.stato === 'annullato'; }),
+      entrati: conta(pass, function (r) { return !!r.checkin; }),
+      newsletter: conta(validi, function (r) { return vero_(r.newsletter); })
+    },
+    gruppi: { completi: gruppi.completo, aperti: gruppi.aperto, scaduti: gruppi.scaduto, dimensione: CONFIG.dimensioneGruppo, inCorso: aperti },
+    attesa: conta(db.Attesa, function (r) { return r.serata === s.id; }),
+    eventi: eventi,
+    andamento: andamento,
+    ingressi: ingressi,
+    inviti: inviti,
+    contatti: { totale: db.Contatti.length, newsletter: newsletter, nuovi: conta(db.Contatti, function (c) { return c.prima === s.id; }) },
+    storico: storico
+  };
 }
 
 /* ============================================================
