@@ -35,6 +35,7 @@
     "Ore {inizio} – {fine}": "{inizio} – {fine}",
     "Orario in arrivo": "Time to be announced",
     "Location in arrivo": "Venue to be announced",
+    "Locandina in arrivo": "Poster coming soon",
     " · Pass gratuiti": " · Free passes",
     /* scheda pass */
     "Pass gratuito": "Free pass",

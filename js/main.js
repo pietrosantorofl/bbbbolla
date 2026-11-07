@@ -108,6 +108,12 @@
     if (serata.sfera.ombra) n.style.filter = "drop-shadow(18px 28px 40px " + serata.sfera.ombra + ")";
   });
 
+  // locandinaInArrivo: sotto la sfera la scritta "Locandina in arrivo" (finché la locandina non c'è)
+  if (serata.locandinaInArrivo && !serata.locandinaHero) {
+    var stage = $(".hero__stage");
+    if (stage) stage.insertAdjacentElement("afterend", el("p", "locandina__arrivo pending", T("Locandina in arrivo")));
+  }
+
   // locandinaHero: la locandina della serata (immagine) al posto di sfera, date e programma
   bind("locandinaHero", function (n) {
     var l = serata.locandinaHero;

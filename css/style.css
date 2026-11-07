@@ -290,6 +290,8 @@ a { color: inherit; }
 .facts dd { margin: 4px 0 0; font-size: 17px; line-height: 1.3; }
 .facts a { text-underline-offset: 3px; }
 .pending { color: var(--muted); font-style: italic; }
+/* serata senza locandina: riga sotto la sfera */
+.locandina__arrivo { margin: 4px 0 0; text-align: center; font-size: 15px; }
 
 .prose p { margin: 0 0 1em; font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; max-width: 60ch; }
 /* menù della cena: piatto in grassetto, descrizione sotto */

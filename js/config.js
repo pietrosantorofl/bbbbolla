@@ -96,7 +96,9 @@ window.BOLLA = {
       data: "2026-11-06",
       // locandina definitiva (Canva, 1080x1350 = 4:5), per la pagina Eventi passati
       locandine: [
-        { src: "assets/locandine/2026-11-06-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 6 novembre 2026", en: "Poster of the 6 November 2026 night" } }
+        { src: "assets/locandine/2026-11-06-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 6 novembre 2026", en: "Poster of the 6 November 2026 night" } },
+        { src: "assets/locandine/2026-11-06-workshop.jpg", formato: "4:5", alt: { it: "Locandina del workshop di samba e percussioni con Sambazita", en: "Poster of the samba and percussion workshop with Sambazita" } },
+        { src: "assets/locandine/2026-11-06-vino.jpg", formato: "4:5", alt: { it: "Locandina della cantina del giorno: Vini Manciaciumi di Dario Sciuto", en: "Poster of the winery of the day: Manciaciumi wines by Dario Sciuto" } }
       ],
       // locandinaHero: nella home l'immagine della locandina al posto di sfera, date e programma
       locandinaHero: { src: "assets/locandine/2026-11-06-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 6 novembre 2026: workshop di samba e percussioni, live podcast Tavola Cunzata e cena colombiana, live jam session, Vini Manciaciumi, Milenaria e Dario Aiello", en: "Poster of the 6 November 2026 night: samba and percussion workshop, Tavola Cunzata live podcast and Colombian dinner, live jam session, Manciaciumi wines, Milenaria and Dario Aiello" } },
@@ -166,6 +168,25 @@ window.BOLLA = {
           }
         },
         { nome: "MONAMOUR", tag: { it: "Cucina dalle 19 alle 23", en: "Kitchen 7–11 pm" }, minore: true }
+      ]
+    },
+    {
+      id: "2026-11-13",
+      data: "2026-11-13",
+      // locandina non ancora pronta: grafica delle bolle con il logo (assets/sfera-13-11.webp) e la scritta "Locandina in arrivo".
+      // DA COMPLETARE con la locandina: locandine + locandinaHero (come il 6.11), orario, line-up e workshop (riga Eventi + voce in "eventi")
+      sfera: { src: "assets/sfera-13-11.webp", ombra: "rgba(240, 48, 90, .35)" },
+      locandinaInArrivo: true,
+      orario: null,
+      senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },
+      luogo: {
+        nome: "MONO",
+        indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
+        mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
+      },
+      lineup: [
+        { nome: "Workshop", tag: "Workshop", note: { it: "dettagli in arrivo", en: "details coming soon" } },
+        { nome: { it: "Line-up in arrivo", en: "Line-up coming soon" }, tag: "Live" }
       ]
     }
   ],

@@ -48,12 +48,14 @@ var CONFIG = {
   oreValiditaModulo: 2,           // dopo, il modulo va ricaricato
   maxRegistrazioniAlMinuto: 60,   // tetto globale: oltre, le richieste vengono respinte per un minuto
 
-  /* serata nuova dal menu del foglio (bolla® → Nuova serata…): automazioni già compilate, si cambiano nella riga */
+  /* serata nuova dal menu del foglio (bolla® → Nuova serata…). Dal 07.11 nessun invio automatico (scelta dell'utente):
+     automazioni vuote = spente. Per riaccenderne una scrivi l'ora nella riga della serata (es. promemoria "-2 14:00",
+     solleciti "09:30", regalo "18:00, 22:00", recap "16:00, 17:00, 18:00, 19:00"). */
   nuovaSerata: {
-    promemoria: '-2 14:00',                 // due giorni prima alle 14:00
-    solleciti: '09:30',                     // il giorno della serata
+    promemoria: '',
+    solleciti: '',
     regalo: '',                             // vuoto = chi è in un gruppo incompleto non riceve il pass
-    recap: '16:00, 17:00, 18:00, 19:00',
+    recap: '',
     recapA: 'pietrosantoro90@gmail.com, tommiferrara@gmail.com'
   },
 
@@ -131,6 +133,7 @@ function onOpen() {
     .addItem('Crea link segreto staff (app ingresso)', 'creaLinkStaffDaMenu')
     .addItem('Crea link segreto visuals (schermo e regia)', 'creaLinkVisualsDaMenu')
     .addItem('Crea link segreto dashboard (numeri)', 'creaLinkDashboardDaMenu')
+    .addItem('Crea link segreto pagina di stato (backend)', 'creaLinkStatoDaMenu')
     .addItem('Rigenera codice live (QR in sala)', 'rigeneraCodiceLiveDaMenu')
     .addItem('Imposta chiave Brevo…', 'impostaChiaveBrevoDaMenu')
     .addItem('Invia email di prova (Brevo)', 'emailProvaDaMenu')
@@ -191,7 +194,14 @@ function nuovaSerataDaMenu() {
 
 // Aprire l'URL della Web App da browser: crea i fogli se mancano e mostra lo stato.
 // La prima volta, da proprietario, Google chiede anche le autorizzazioni.
-function doGet() {
+// Dal 07.11 la pagina di stato si vede solo con il link segreto (…/exec?k=<segreto>, menu del foglio):
+// senza, una riga e basta, nessuna lettura dei fogli e nessun lavoro.
+function doGet(e) {
+  if (!accessoStato_(e && e.parameter && e.parameter.k)) {
+    Utilities.sleep(800);
+    return HtmlService.createHtmlOutput('<!doctype html><meta charset="utf-8"><p style="font-family:Helvetica,Arial,sans-serif">bolla&reg;</p>')
+      .setTitle('bolla®');
+  }
   setup();
   aggiornamentiUnaTantum_(); // idempotente: ogni aggiornamento gira una volta sola
   var db = carica_(['Serate', 'Pass', 'Gruppi', 'Eventi']);
@@ -225,6 +235,7 @@ function doGet() {
     riga('Avvisi prenotazioni eventi', 'AVVISI_ESITO') +
     riga('Ricerca segnalazione', 'CERCA_ESITO') +
     riga('QR esterni', 'QR_ESTERNI_ESITO') +
+    riga('Colonne vuote del foglio Cena', 'CENA_COLONNE_ESITO') +
     riga('Mail Vibes', 'VIBES_ESITO') +
     riga('Mail Vibes secondo Brevo', 'VIBES_VERIFICA') +
     riga('Mail invito', 'INVITO_ESITO') +
@@ -423,6 +434,39 @@ function aggiornamentiUnaTantum_() {
     // serata del 6.11 finita: backup nel Drive subito (richiesta dell'utente, 07.11). L'archivio del 6.11 resta automatico,
     // la notte del 09.11, e fa un altro backup. Esito nella riga "Backup nel Drive" della pagina di stato.
     { id: 'backup-2026-11-07', fai: function () { if (!backupDrive_()) throw new Error('backup non verificato'); } },
+    // pagina di stato protetta (richiesta dell'utente, 07.11): impronta del primo segreto, che sta nel Portachiavi del Mac
+    // (servizio "bolla-pagina-stato"). Un link nuovo dal menu del foglio sostituisce questo.
+    { id: 'link-stato-2026-11-07', fai: function () {
+      var props = PropertiesService.getScriptProperties();
+      if (!props.getProperty('LINK_STATO_SHA')) props.setProperty('LINK_STATO_SHA', '0a06bd5714a741b7b33603f093b8362a7c086ed019965a66b7735f19589d78aa');
+    } },
+    // nessun invio automatico per il 13.11 (richiesta dell'utente, 07.11): promemoria, solleciti, pass regalo e recap spenti
+    { id: 'serata-2026-11-13-senza-invii', fai: function () {
+      var db = carica_(['Serate']);
+      var r = trova_(db.Serate, 'id', '2026-11-13');
+      if (!r) throw new Error('serata 2026-11-13 non trovata nel foglio Serate');
+      aggiorna_(db.Serate, r, { promemoria: '', solleciti: '', regalo: '', recap: '' });
+    } },
+    // foglio Cena: tolte le colonne senza intestazione tra "cena" e "nome", solo se vuote in tutte le righe (richiesta dell'utente, 07.11)
+    { id: 'cena-colonne-vuote-2026-11-07', fai: function () {
+      var out = conLock_(function () {
+        var sh = SpreadsheetApp.getActive().getSheetByName('Cena');
+        if (!sh) return { ok: true };
+        var valori = sh.getDataRange().getValues();
+        var tolte = 0;
+        for (var c = valori[0].length - 1; c >= 0; c--) {
+          if (String(valori[0][c]).trim() !== '') continue;
+          var piena = valori.some(function (riga) { return String(riga[c]).trim() !== ''; });
+          if (piena) throw new Error('colonna ' + (c + 1) + ' del foglio Cena senza intestazione ma con dati: non tolta');
+          sh.deleteColumn(c + 1);
+          tolte++;
+        }
+        delete TESTATE_.Cena;
+        accoda_('CENA_COLONNE_ESITO', new Date().toISOString().slice(0, 16) + ' colonne vuote tolte: ' + tolte);
+        return { ok: true };
+      });
+      if (out && out.errore) throw new Error(out.messaggio);
+    } },
     { id: 'vibes-2026-10-30-verifica', fai: function () { verificaMailBrevo_('VIBES_VERIFICA', oggettoVibes_(), '2026-11-03', '2026-11-04'); } },
     // le prenotazioni del samba finivano nel foglio Workshop (segnalazione dell'utente, 05.11): l'evento torna sul foglio
     // Prenotazioni e le righe del samba già in Workshop si spostano lì. Sotto lock, così nessuna prenotazione si perde.
@@ -1082,6 +1126,29 @@ var LINK_SEGRETI = {
 };
 
 function creaLinkStaffDaMenu() { creaLinkDaMenu_('staff'); }
+
+// Pagina di stato del backend: link …/exec?k=<segreto>. Nelle proprietà resta solo l'impronta SHA-256 del segreto.
+function accessoStato_(k) {
+  var impronta = PropertiesService.getScriptProperties().getProperty('LINK_STATO_SHA');
+  return !!impronta && !!k && String(k).length >= 24 && hashChiave_(String(k)) === impronta;
+}
+
+function creaLinkStatoDaMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty('LINK_STATO_SHA')) {
+    var r = ui.alert('Link pagina di stato', 'Esiste già un link. Crearne uno nuovo disattiva quello vecchio. Continuo?', ui.ButtonSet.YES_NO);
+    if (r !== ui.Button.YES) return;
+  }
+  var segreto = token_(32);
+  props.setProperty('LINK_STATO_SHA', hashChiave_(segreto));
+  // stesso indirizzo di apiUrl in js/config.js (deployment-id.txt)
+  var url = 'https://script.google.com/macros/s/AKfycbzEckzChK4ZcFHJ7wOjREzUTepDHg8QxMismXJwFMElQ1BRL8c74Ltsrsx2YinHvO5v4w/exec?k=' + segreto;
+  var html = '<div style="font-family:Helvetica,Arial,sans-serif"><p style="margin:0 0 4px;font-weight:600">Pagina di stato del backend</p>' +
+    '<input readonly value="' + esc_(url) + '" onclick="this.select()" style="width:100%;padding:8px;font:13px monospace;box-sizing:border-box">' +
+    '<p style="margin-top:16px;color:#555;font-size:13px">Clicca il link per selezionarlo e copialo. Chi lo ha vede la pagina di stato.</p></div>';
+  ui.showModalDialog(HtmlService.createHtmlOutput(html).setWidth(560).setHeight(200), 'Link pagina di stato');
+}
 function creaLinkVisualsDaMenu() { creaLinkDaMenu_('visuals'); }
 function creaLinkDashboardDaMenu() { creaLinkDaMenu_('dashboard'); }
 
