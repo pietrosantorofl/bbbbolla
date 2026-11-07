@@ -74,6 +74,8 @@
 
   // prima il prezzo al botteghino, sotto l'ingresso gratuito con pass
   bind("ingresso", function (n) {
+    // ingresso: false = niente riga Ingresso (es. finché non si sa)
+    if (serata.ingresso === false) { n.parentNode.hidden = true; return; }
     if (!serata.senzaPass) return;
     n.textContent = L(serata.senzaPass);
     n.appendChild(document.createElement("br"));
@@ -131,7 +133,8 @@
   // locandina: a sinistra il programma in ordine di orario (gli orari sono nella line-up), a destra food & beverage
   bind("lineupHero", function (n) {
     // programmaPubblico: false = nella locandina solo sfera e date
-    if (serata.programmaPubblico === false) { n.hidden = true; return; }
+    // line-up vuota (serata ancora da annunciare): nella locandina solo sfera e date
+    if (serata.programmaPubblico === false || !serata.lineup.length) { n.hidden = true; return; }
     var lista = $(".programma__lista", n), fb = $(".programma__fb ul", n);
     serata.lineup.forEach(function (a) {
       var li = el("li", a.main ? "is-main" : null);
@@ -153,6 +156,13 @@
       tba.setAttribute("data-ora", "");
       tba.appendChild(el("span", "lineup__name", "TO BE ANNOUNCED"));
       n.appendChild(tba);
+      return;
+    }
+    // line-up vuota: niente titolo "Line-up" e niente lista
+    if (!serata.lineup.length) {
+      n.hidden = true;
+      var titolo = n.previousElementSibling;
+      if (titolo && titolo.classList.contains("section-title")) titolo.hidden = true;
       return;
     }
     serata.lineup.forEach(function (a) {
@@ -218,7 +228,7 @@
       var a = el("a");
       a.href = "?serata=" + encodeURIComponent(s.id);
       a.appendChild(el("span", null, sd.getDate() + " " + MESI[sd.getMonth()]));
-      a.appendChild(el("span", null, s.lineup.map(function (x) { return L(x.nome); }).slice(0, 2).join(", ") + " →"));
+      a.appendChild(el("span", null, (s.lineup.map(function (x) { return L(x.nome); }).slice(0, 2).join(", ") || C.rassegna.nome) + " →"));
       var li = el("li"); li.appendChild(a); ul.appendChild(li);
     });
     n.hidden = false;
@@ -612,7 +622,7 @@
       "UID:" + serata.id + "@bbbbolla.it",
       "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""),
       dt,
-      "SUMMARY:" + C.rassegna.nome + " — " + serata.lineup.filter(function (a) { return !a.minore; }).map(function (a) { return L(a.nome); }).join(", "),
+      "SUMMARY:" + [C.rassegna.nome].concat(serata.lineup.filter(function (a) { return !a.minore; }).map(function (a) { return L(a.nome); }).join(", ") || []).join(" — "),
       "DESCRIPTION:Pass " + codice + " — " + location.href,
       luogo ? "LOCATION:" + luogo.replace(/,/g, "\\,") : null,
       "END:VEVENT", "END:VCALENDAR"

@@ -178,16 +178,14 @@ window.BOLLA = {
       sfera: { src: "assets/sfera-13-11.webp", ombra: "rgba(240, 48, 90, .35)" },
       locandinaInArrivo: true,
       orario: null,
-      senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },
+      ingresso: false,                  // niente riga Ingresso finché non si sa (scelta dell'utente, 07.11)
       luogo: {
         nome: "MONO",
         indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
         mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
       },
-      lineup: [
-        { nome: "Workshop", tag: "Workshop", note: { it: "dettagli in arrivo", en: "details coming soon" } },
-        { nome: { it: "Line-up in arrivo", en: "Line-up coming soon" }, tag: "Live" }
-      ]
+      // vuota finché non arriva il programma: niente line-up né sulla locandina né sotto (scelta dell'utente, 07.11)
+      lineup: []
     }
   ],
 
