@@ -102,6 +102,23 @@ window.BOLLA = {
       ],
       // locandinaHero: nella home l'immagine della locandina al posto di sfera, date e programma
       locandinaHero: { src: "assets/locandine/2026-11-06-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 6 novembre 2026: workshop di samba e percussioni, live podcast Tavola Cunzata e cena colombiana, live jam session, Vini Manciaciumi, Milenaria e Dario Aiello", en: "Poster of the 6 November 2026 night: samba and percussion workshop, Tavola Cunzata live podcast and Colombian dinner, live jam session, Manciaciumi wines, Milenaria and Dario Aiello" } },
+      // foto e video per la pagina Vibes (vibes.html#2026-11-06), file in assets/vibes/2026-11-06/
+      vibes: [
+        { tipo: "foto", src: "assets/vibes/2026-11-06/cerchio-samba.webp", formato: "3:4",
+          alt: { it: "Il cerchio del workshop di samba e percussioni, visto dall’alto", en: "The samba and percussion workshop circle, seen from above" } },
+        { tipo: "video", src: "assets/vibes/2026-11-06/samba-workshop.mp4", poster: "assets/vibes/2026-11-06/samba-workshop.jpg", formato: "9:16",
+          alt: { it: "Il workshop di samba con Sambazita, tra tamburi e bolle", en: "The samba workshop with Sambazita, among drums and bubbles" } },
+        { tipo: "foto", src: "assets/vibes/2026-11-06/tamburi.webp", formato: "3:4",
+          alt: { it: "Tamburi e mani in movimento durante il workshop", en: "Drums and hands in motion during the workshop" } },
+        { tipo: "foto", src: "assets/vibes/2026-11-06/tamburi-2.webp", formato: "3:4",
+          alt: { it: "Partecipanti del workshop ai tamburi di Sambazita", en: "Workshop participants playing Sambazita’s drums" } },
+        { tipo: "video", src: "assets/vibes/2026-11-06/tavola-cunzata-live.mp4", poster: "assets/vibes/2026-11-06/tavola-cunzata-live.jpg", formato: "3:4",
+          alt: { it: "Tavola Cunzata dal vivo, tra racconti e danza colombiana", en: "Tavola Cunzata live, with stories and Colombian dance" } },
+        { tipo: "video", src: "assets/vibes/2026-11-06/jam-session.mp4", poster: "assets/vibes/2026-11-06/jam-session.jpg", formato: "9:16",
+          alt: { it: "La live jam session e il pubblico", en: "The live jam session and the crowd" } },
+        { tipo: "foto", src: "assets/vibes/2026-11-06/selezione.webp", formato: "3:4",
+          alt: { it: "La selezione musicale a fine serata", en: "The late-night music selection" } }
+      ],
       // sfera ricolorata con i colori di Tavola Cunzata (si vede solo senza locandinaHero)
       sfera: { src: "assets/sfera-tavola-cunzata.webp", ombra: "rgba(3, 195, 241, .35)" },
       orario: { inizio: "19:00", fine: null },
