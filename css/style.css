@@ -190,7 +190,7 @@ a { color: inherit; }
   gap: clamp(8px, 3vw, 40px);
 }
 .hero__sfera { aspect-ratio: 1; }
-.hero__sfera img {
+.hero__sfera > img {
   width: 100%;
   height: auto;
   filter: drop-shadow(18px 28px 40px rgba(240, 48, 127, .35));
@@ -199,6 +199,37 @@ a { color: inherit; }
 @keyframes galleggia {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50%      { transform: translateY(-12px) rotate(-1.5deg); }
+}
+
+/* sfera a bolle (config: sfera.bolle): ogni bolla è un livello con il suo movimento, il logo segue la sua bolla.
+   Le misure sono in % del quadrato; gli spostamenti in cqw, così restano proporzionati su telefono e desktop. */
+.sfera-bolle { position: relative; width: 100%; aspect-ratio: 1; container-type: inline-size; }
+.sfera-bolle__bolla, .sfera-bolle__logo { position: absolute; will-change: transform; animation: 9s ease-in-out infinite; }
+.sfera-bolle__bolla img { display: block; width: 100%; height: 100%; }
+.sfera-bolle__logo { width: 37.8%; transform-origin: 0 0; }   /* left/top = centro della bolla: ruota attorno a quello */
+.sfera-bolle__logo img { display: block; width: 100%; height: auto; transform: translate(-50%, -50%); filter: brightness(0) invert(1); }
+.sfera-bolle__bolla--deriva   { animation-name: bolla-deriva;   animation-duration: 9s; }
+.sfera-bolle__bolla--ondeggia { animation-name: bolla-ondeggia; animation-duration: 7s; }
+.sfera-bolle__bolla--orbita   { animation-name: bolla-orbita;   animation-duration: 11s; }
+.sfera-bolle__bolla--rimbalza { animation-name: bolla-rimbalza; animation-duration: 5.5s; }
+@keyframes bolla-deriva {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-1.1cqw, 1.2cqw) scale(1.025); }
+}
+@keyframes bolla-ondeggia {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50%      { transform: translate(.4cqw, -1.4cqw) rotate(-2deg); }
+}
+@keyframes bolla-orbita {
+  0%, 100% { transform: translate(0, 0); }
+  25%      { transform: translate(-1.2cqw, .5cqw); }
+  50%      { transform: translate(-.4cqw, 1.5cqw); }
+  75%      { transform: translate(.8cqw, .7cqw); }
+}
+@keyframes bolla-rimbalza {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%      { transform: translate(1.4cqw, -1.8cqw) scale(1.04); }
+  70%      { transform: translate(.5cqw, -.6cqw) scale(.98); }
 }
 
 .hero__date {
@@ -629,5 +660,5 @@ a { color: inherit; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .hero__sfera img, .result, .spinner, .btn.pulsa, .card.pulsa, .card.pulsa::before, .lineup__more { animation: none; }
+  .hero__sfera > img, .result, .spinner, .btn.pulsa, .card.pulsa, .card.pulsa::before, .lineup__more { animation: none; }
 }

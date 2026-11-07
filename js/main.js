@@ -108,6 +108,34 @@
     if (!serata.sfera) return;
     n.src = serata.sfera.src;
     if (serata.sfera.ombra) n.style.filter = "drop-shadow(18px 28px 40px " + serata.sfera.ombra + ")";
+    // bolle: la grafica divisa in livelli, ogni bolla con il suo movimento e il logo al centro di quella con logo: true.
+    // Con "riduci movimento" resta l'immagine fissa (src).
+    var bolle = serata.sfera.bolle;
+    var fermo = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!bolle || !bolle.length || fermo) return;
+    var gruppo = el("div", "sfera-bolle");
+    gruppo.setAttribute("role", "img");
+    gruppo.setAttribute("aria-label", n.alt || "bolla®");
+    if (n.style.filter) gruppo.style.filter = n.style.filter;
+    var conLogo = null;
+    bolle.forEach(function (b) {
+      var d = el("div", "sfera-bolle__bolla sfera-bolle__bolla--" + (b.moto || "deriva"));
+      d.style.left = b.box[0] + "%"; d.style.top = b.box[1] + "%"; d.style.width = d.style.height = b.box[2] + "%";
+      var i = el("img"); i.src = b.src; i.alt = ""; i.decoding = "async";
+      d.appendChild(i);
+      gruppo.appendChild(d);
+      if (b.logo) conLogo = b;
+    });
+    if (conLogo) {
+      // il logo sta sopra tutte le bolle ma si muove insieme alla sua
+      var lg = el("div", "sfera-bolle__logo sfera-bolle__bolla--" + (conLogo.moto || "deriva"));
+      lg.style.left = (conLogo.box[0] + conLogo.box[2] / 2) + "%";
+      lg.style.top = (conLogo.box[1] + conLogo.box[2] / 2) + "%";
+      var li = el("img"); li.src = "assets/bolla-logo.png"; li.alt = "";
+      lg.appendChild(li);
+      gruppo.appendChild(lg);
+    }
+    n.replaceWith(gruppo);
   });
 
   // locandinaInArrivo: sotto la sfera la scritta "Locandina in arrivo" (finché la locandina non c'è)

@@ -192,7 +192,16 @@ window.BOLLA = {
       data: "2026-11-13",
       // locandina non ancora pronta: grafica delle bolle con il logo (assets/sfera-13-11.webp) e la scritta "Locandina in arrivo".
       // DA COMPLETARE con la locandina: locandine + locandinaHero (come il 6.11), orario, line-up e workshop (riga Eventi + voce in "eventi")
-      sfera: { src: "assets/sfera-13-11.webp", ombra: "rgba(240, 48, 90, .35)" },
+      // bolle: la grafica divisa in livelli (assets/sfera-13-11/), ognuna con il suo movimento;
+      // box = [sinistra, alto, lato] in % del quadrato della sfera; moto: deriva · ondeggia · orbita · rimbalza;
+      // logo: true = scritta bolla® al centro di quella bolla. src = immagine fissa (anteprima e "riduci movimento").
+      sfera: { src: "assets/sfera-13-11.webp", ombra: "rgba(240, 48, 90, .35)",
+        bolle: [
+          { src: "assets/sfera-13-11/blu.webp", box: [22.877, 55.959, 38.63], moto: "deriva" },
+          { src: "assets/sfera-13-11/red.webp", box: [17.808, 17.877, 58.63], moto: "ondeggia", logo: true },
+          { src: "assets/sfera-13-11/tl.webp",  box: [-0.822, 5.411, 45.753], moto: "orbita" },
+          { src: "assets/sfera-13-11/gia.webp", box: [69.863, 57.74, 30.959], moto: "rimbalza" }
+        ] },
       locandinaInArrivo: true,
       orario: null,
       ingresso: false,                  // niente riga Ingresso finché non si sa (scelta dell'utente, 07.11)
