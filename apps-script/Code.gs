@@ -420,6 +420,9 @@ function aggiornamentiUnaTantum_() {
       ]); return { ok: true }; });
       if (out && out.errore) throw new Error(out.messaggio);
     } },
+    // serata del 6.11 finita: backup nel Drive subito (richiesta dell'utente, 07.11). L'archivio del 6.11 resta automatico,
+    // la notte del 09.11, e fa un altro backup. Esito nella riga "Backup nel Drive" della pagina di stato.
+    { id: 'backup-2026-11-07', fai: function () { if (!backupDrive_()) throw new Error('backup non verificato'); } },
     { id: 'vibes-2026-10-30-verifica', fai: function () { verificaMailBrevo_('VIBES_VERIFICA', oggettoVibes_(), '2026-11-03', '2026-11-04'); } },
     // le prenotazioni del samba finivano nel foglio Workshop (segnalazione dell'utente, 05.11): l'evento torna sul foglio
     // Prenotazioni e le righe del samba già in Workshop si spostano lì. Sotto lock, così nessuna prenotazione si perde.
