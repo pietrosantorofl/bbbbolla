@@ -14,19 +14,20 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/style.css?v=202611071410">
+  <link rel="stylesheet" href="css/style.css?v=202611071500">
   <style>
     .vibes { max-width: 1080px; margin: 0 auto; padding: clamp(28px, 5vw, 56px) var(--gutter) 40px; }
     .vibes__titolo { margin: 0 0 clamp(24px, 4vw, 48px); font-size: clamp(44px, 9vw, 96px); line-height: .92; letter-spacing: -.05em; font-weight: 700; }
     .vibes__vuoto { font-size: 18px; color: var(--muted); }
 
-    /* una serata: data e luogo, poi foto e video in griglia (ognuno con le sue proporzioni, allineati in alto).
-       Niente CSS columns: Safari spezza i riquadri tra le colonne e lascia riquadri bianchi sotto. */
+    /* una serata: data e luogo, poi foto e video a colonne senza buchi (js/vibes.js mette ogni riquadro nella colonna
+       più corta e pareggia il fondo con un piccolo ritaglio). Niente CSS columns: Safari spezza i riquadri tra le colonne. */
     .serata-vibes { border-top: 1.5px solid var(--ink); padding: clamp(20px, 3vw, 32px) 0 clamp(36px, 6vw, 72px); scroll-margin-top: 72px; }
     .serata-vibes__data { margin: 0 0 4px; font-size: clamp(28px, 4.5vw, 48px); line-height: 1; letter-spacing: -.03em; font-weight: 700; }
     .serata-vibes__luogo { margin: 0 0 clamp(16px, 3vw, 28px); font-size: 15px; color: var(--muted); }
-    .serata-vibes__griglia { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 2vw, 20px); align-items: start; }
-    @media (max-width: 720px) { .serata-vibes__griglia { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .serata-vibes__griglia { display: flex; flex-wrap: wrap; align-items: flex-start; gap: clamp(10px, 2vw, 20px); }
+    .serata-vibes__griglia > .vibe--largo { flex: 0 0 100%; }
+    .serata-vibes__col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: clamp(10px, 2vw, 20px); }
 
     .vibe { position: relative; display: block; width: 100%; margin: 0; padding: 0;
       border: 1.5px solid var(--ink); border-radius: 4px; overflow: hidden; background: #121212; cursor: zoom-in; font: inherit; color: inherit; }
@@ -95,8 +96,8 @@
     <p class="footer__small"><a href="privacy.html" data-i18n>Privacy</a> · <a href="archivio.html" data-i18n>Eventi passati</a> · <a href="vibes.html">Vibes</a> · © 2026 bolla®</p>
   </footer>
 
-  <script src="js/i18n.js?v=202611071410"></script>
-  <script src="js/config.js?v=202611071410"></script>
-  <script src="js/vibes.js?v=202611071410"></script>
+  <script src="js/i18n.js?v=202611071500"></script>
+  <script src="js/config.js?v=202611071500"></script>
+  <script src="js/vibes.js?v=202611071500"></script>
 </body>
 </html>

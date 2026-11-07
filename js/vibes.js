@@ -15,8 +15,8 @@
     return n;
   }
   function parseData(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
-  // "9:16" -> "9 / 16" per aspect-ratio
-  function proporzioni(f) { var p = String(f || "4:5").split(":"); return (+p[0] || 4) + " / " + (+p[1] || 5); }
+  // "9:16" -> 16/9: altezza del riquadro rispetto alla larghezza
+  function altezzaSuLarghezza(f) { var p = String(f || "4:5").split(":"); return (+p[1] || 5) / (+p[0] || 4); }
   var oggi = new Date(); oggi.setHours(0, 0, 0, 0);
   var fermo = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -35,6 +35,64 @@
     });
   }, { threshold: 0.5 }) : null;
 
+  var griglie = [];
+  var stretto = window.matchMedia ? matchMedia("(max-width: 720px)") : { matches: false };
+
+  /* Colonne senza buchi: ogni riquadro va nella colonna più corta (in ordine, così la lettura resta da sinistra a destra),
+     poi il fondo delle colonne si pareggia allungando o accorciando un po' i riquadri (foto e video sono in "cover").
+     Se per pareggiare servirebbe un ritaglio forte (oltre il 22%), le colonne restano come sono. */
+  function impagina(g) {
+    var box = g.box;
+    box.textContent = "";
+    var n = g.riquadri.length;
+    // se le colonne non si pareggiano (es. 3 riquadri su 2 colonne), l'ultimo va sotto, a tutta larghezza
+    if (!disponi(box, g.riquadri) && n > (stretto.matches ? 2 : 3)) {
+      box.textContent = "";
+      disponi(box, g.riquadri.slice(0, n - 1));
+      var ultimo = g.riquadri[n - 1];
+      ultimo.n.classList.add("vibe--largo");
+      ultimo.n.style.aspectRatio = "1 / " + Math.min(ultimo.r, 1.25).toFixed(4);
+      box.appendChild(ultimo.n);
+    }
+  }
+  function disponi(box, riquadri) {
+    var nCol = stretto.matches ? 2 : 3;
+    riquadri.forEach(function (q) { q.n.classList.remove("vibe--largo"); });
+    var cols = [], alt = [];
+    for (var c = 0; c < nCol; c++) { cols.push(el("div", "serata-vibes__col")); alt.push(0); box.appendChild(cols[c]); }
+    var larga = box.clientWidth || 900;
+    var spazio = parseFloat(getComputedStyle(box).columnGap) || 0;
+    var w = (larga - spazio * (nCol - 1)) / nCol;
+    var dentro = cols.map(function () { return []; });
+    riquadri.forEach(function (q) {
+      var c = 0;
+      for (var k = 1; k < nCol; k++) if (alt[k] < alt[c] - 0.5) c = k;
+      alt[c] += (dentro[c].length ? spazio : 0) + w * q.r;
+      dentro[c].push(q);
+      cols[c].appendChild(q.n);
+    });
+    // altezza da raggiungere: la media delle colonne piene
+    var piene = alt.filter(function (h) { return h > 0; });
+    var meta = piene.reduce(function (a, b) { return a + b; }, 0) / (piene.length || 1);
+    var fattori = dentro.map(function (lista, c) {
+      if (!lista.length) return 1;
+      var media = alt[c] - spazio * (lista.length - 1);
+      return (meta - spazio * (lista.length - 1)) / media;
+    });
+    // una colonna vuota (meno riquadri che colonne) non si pareggia
+    var ok = piene.length === nCol && fattori.every(function (f) { return f > 0.78 && f < 1.22; });
+    dentro.forEach(function (lista, c) {
+      lista.forEach(function (q) { q.n.style.aspectRatio = "1 / " + (q.r * (ok ? fattori[c] : 1)).toFixed(4); });
+    });
+    return ok;
+  }
+  function impaginaTutto() { griglie.forEach(impagina); }
+  var attesa = null, ultimaLarghezza = 0;
+  window.addEventListener("resize", function () {
+    if (window.innerWidth === ultimaLarghezza) return;   // sul telefono la barra che compare/scompare non conta
+    clearTimeout(attesa); attesa = setTimeout(function () { ultimaLarghezza = window.innerWidth; impaginaTutto(); }, 150);
+  });
+
   serate.forEach(function (s) {
     var d = parseData(s.data);
     var data = d.getDate() + " " + I18N.mesi[d.getMonth()] + " " + d.getFullYear();
@@ -45,6 +103,7 @@
     if (s.luogo && s.luogo.nome) sez.appendChild(el("p", "serata-vibes__luogo", s.luogo.nome));
 
     var griglia = el("div", "serata-vibes__griglia");
+    var riquadri = [];
     // solo i file arrivati entrano nella vista grande
     var pronti = s.vibes.filter(function (v) { return v.src; });
     s.vibes.forEach(function (v) {
@@ -75,12 +134,15 @@
         var i = pronti.indexOf(v);
         tile.addEventListener("click", function () { apri(pronti, i); });
       }
-      tile.style.aspectRatio = proporzioni(v.formato);
-      griglia.appendChild(tile);
+      riquadri.push({ n: tile, r: altezzaSuLarghezza(v.formato) });
     });
     sez.appendChild(griglia);
+    griglie.push({ box: griglia, riquadri: riquadri });
     box.appendChild(sez);
   });
+
+  ultimaLarghezza = window.innerWidth;
+  impaginaTutto();
 
   // la pagina si costruisce qui: l'ancora del link (#2026-10-30) va raggiunta a mano
   if (location.hash) {
