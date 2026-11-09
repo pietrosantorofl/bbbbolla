@@ -283,6 +283,19 @@ window.BOLLA = {
         indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
         mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
       }
+    },
+    {
+      // pagina della cena: bbbbolla.it/13nov-cucinaromantica/ (js/cena.js, testi e menù nell'HTML)
+      id: "cucinaromantica-2026-11-13",
+      tipo: "cena",
+      pagina: "13nov-cucinaromantica/",
+      etichetta: "Cucina Romantica & Valerio Brunetto",
+      serata: "2026-11-13",             // data e luogo della serata
+      ora: null,                        // orario in arrivo: la pagina lo scrive così
+      durata: 3,
+      titolo: "Cena al MONO",
+      sottotitolo: "Cucina Romantica & Valerio Brunetto",
+      bottone: { it: "Prenota il tavolo", en: "Book a table" }
     }
   ],
 

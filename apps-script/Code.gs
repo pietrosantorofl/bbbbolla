@@ -333,7 +333,20 @@ function aggiornamentiUnaTantum_() {
     // archivi) nel foglio Prenotazioni. Prima un backup verificato nel Drive; i fogli vecchi restano come "vecchio – …"
     { id: 'attivita-e-prenotazioni-2026-11-09', fai: function () { modelloAttivita_(); } },
     // una settimana dopo, i fogli "vecchio – …" si eliminano (il backup del 09.11 resta nel Drive)
-    { id: 'fogli-vecchi-via-2026-11-16', dopo: '2026-11-16 10:00', fai: function () { eliminaFogliVecchi_(); } }
+    { id: 'fogli-vecchi-via-2026-11-16', dopo: '2026-11-16 10:00', fai: function () { eliminaFogliVecchi_(); } },
+    // cena del 13.11 con Cucina Romantica & Valerio Brunetto (richiesta dell'utente, 09.11): pagina bbbbolla.it/13nov-cucinaromantica/,
+    // 70 posti, nessun limite di persone per prenotazione (= i posti), prenotazioni fino alle 19:00 del 13, avviso con l'elenco a ogni prenotazione.
+    // Dopo, la riga si cambia a mano nel foglio Attività (per esempio "inizio" quando c'è l'orario).
+    { id: 'cena-cucinaromantica-2026-11-13', fai: function () {
+      if (!SpreadsheetApp.getActive().getSheetByName(FOGLIO_ATTIVITA)) throw new Error('foglio Attività non ancora pronto');
+      var db = carica_([FOGLIO_ATTIVITA]);
+      var campi = { serata: '2026-11-13', tipo: 'cena', titolo: 'Cena — Cucina Romantica & Valerio Brunetto', inizio: "'19:00",
+        prenotazione: true, posti: 70, max_persone: 70, attivo: 'TRUE', avvisa: 'pietrosantoro90@gmail.com, romanticacucina@gmail.com',
+        link: CONFIG.sito + '/13nov-cucinaromantica/' };
+      var e = trova_(db[FOGLIO_ATTIVITA], 'id', 'cucinaromantica-2026-11-13');
+      if (e) aggiorna_(db[FOGLIO_ATTIVITA], e, campi);
+      else appendi_(FOGLIO_ATTIVITA, Object.assign({ id: 'cucinaromantica-2026-11-13' }, campi));
+    } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
     // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
@@ -741,7 +754,8 @@ function azioneEventoPrenota_(d, tipo) {
     // avviso agli organizzatori (colonna "avvisa"), dopo il lock: con i totali aggiornati
     var totali = { prenotazioni: 1, persone: persone };
     sue.forEach(function (r) { totali.prenotazioni++; totali.persone += Number(r.persone) || 1; });
-    return { ok: true, _email: ev.avvisa.length ? function () { avvisoPrenotazione_(ev, riga, totali); } : null };
+    var elenco = sue.concat([riga]);
+    return { ok: true, _email: ev.avvisa.length ? function () { avvisoPrenotazione_(ev, riga, totali, elenco); } : null };
   });
 }
 
@@ -785,8 +799,9 @@ function caselleAttivita_(sh, righe) {
   if (rg.getDataValidations().some(function (x) { return !x[0]; })) rg.setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
 }
 
-// Email agli indirizzi della colonna "avvisa" dell'attività. Esito (senza dati personali) nella pagina di stato.
-function avvisoPrenotazione_(ev, r, totali) {
+// Email agli indirizzi della colonna "avvisa" dell'attività: la prenotazione nuova e sotto l'elenco completo di tutte
+// le prenotazioni dell'attività (richiesta dell'utente, 09.11), in ordine di arrivo. Esito (senza dati personali) nella pagina di stato.
+function avvisoPrenotazione_(ev, r, totali, elenco) {
   var titolo = ev.titolo || ev.id;
   var persone = ev.maxPersone ? Number(r.persone) : 1;
   var righe = [
@@ -798,15 +813,35 @@ function avvisoPrenotazione_(ev, r, totali) {
     ['Totale persone', totali.persone + (ev.posti ? ' su ' + ev.posti : '')]
   ];
   var oggetto = 'Nuova prenotazione — ' + titolo + ': ' + r.nome + ' ' + r.cognome + ', ' + (persone === 1 ? '1 persona' : persone + ' persone');
-  var testo = oggetto + '\n\n' + righe.map(function (x) { return x[0] + ': ' + x[1]; }).join('\n');
-  var html = '<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px">' +
+  var tutte = (elenco || [r]).slice().sort(function (a, b) { return data_(a.creato) - data_(b.creato); }).map(function (x, i) {
+    var quando = data_(x.creato);
+    return { n: i + 1, nome: x.nome + ' ' + x.cognome, telefono: x.telefono, tel: x.telefono_norm, persone: ev.maxPersone ? (Number(x.persone) || 1) : 1,
+      quando: quando && !isNaN(quando) ? Utilities.formatDate(quando, TZ, 'dd.MM HH:mm') : '', nuova: x === r };
+  });
+  var testo = oggetto + '\n\n' + righe.map(function (x) { return x[0] + ': ' + x[1]; }).join('\n') +
+    '\n\nTutte le prenotazioni (' + tutte.length + '):\n' + tutte.map(function (x) {
+      return x.n + '. ' + x.nome + ' — ' + x.telefono + ' — ' + (x.persone === 1 ? '1 persona' : x.persone + ' persone') + ' — ' + x.quando;
+    }).join('\n');
+  var cella = 'padding:6px 10px 6px 0;border-top:1px solid #e2dfda;vertical-align:top';
+  var tabella = '<h3 style="margin:24px 0 8px;font-size:16px">Tutte le prenotazioni (' + tutte.length + ' · ' + totali.persone +
+    (totali.persone === 1 ? ' persona' : ' persone') + (ev.posti ? ' su ' + ev.posti : '') + ')</h3>' +
+    '<table style="border-collapse:collapse;font-size:14px;width:100%">' +
+    '<tr style="color:#5f5b56;font-size:12px;text-align:left"><th style="padding:0 10px 4px 0">#</th><th style="padding:0 10px 4px 0">Nome</th>' +
+    '<th style="padding:0 10px 4px 0">Telefono</th><th style="padding:0 10px 4px 0;text-align:right">Persone</th><th style="padding:0 0 4px 0">Quando</th></tr>' +
+    tutte.map(function (x) {
+      var st = cella + (x.nuova ? ';font-weight:bold' : '');
+      return '<tr><td style="' + st + ';color:#5f5b56">' + x.n + '</td><td style="' + st + '">' + esc_(x.nome) + (x.nuova ? ' (nuova)' : '') + '</td>' +
+        '<td style="' + st + ';white-space:nowrap"><a href="tel:' + esc_(x.tel) + '" style="color:#121212">' + esc_(x.telefono) + '</a></td>' +
+        '<td style="' + st + ';text-align:right">' + x.persone + '</td><td style="' + st + ';white-space:nowrap;color:#5f5b56">' + esc_(x.quando) + '</td></tr>';
+    }).join('') + '</table>';
+  var html = '<div style="font-family:Helvetica,Arial,sans-serif;max-width:620px">' +
     '<h2 style="margin:0 0 12px">bolla&reg; · ' + esc_(titolo) + '</h2>' +
     '<p style="margin:0 0 12px">Nuova prenotazione:</p>' +
     '<table style="border-collapse:collapse;font-size:15px">' + righe.map(function (x) {
       var v = x[0] === 'Telefono' ? '<a href="tel:' + esc_(r.telefono_norm) + '">' + esc_(String(x[1])) + '</a>' : esc_(String(x[1]));
       return '<tr><td style="padding:4px 16px 4px 0;color:#5f5b56">' + esc_(x[0]) + '</td><td style="padding:4px 0;font-weight:bold">' + v + '</td></tr>';
-    }).join('') + '</table>' +
-    '<p style="font-size:12px;color:#777;margin-top:16px">Tutte le prenotazioni sono nel foglio Prenotazioni (colonna attivita = ' + esc_(ev.id) + ').</p></div>';
+    }).join('') + '</table>' + tabella +
+    '<p style="font-size:12px;color:#777;margin-top:16px">Le prenotazioni sono anche nel foglio Prenotazioni (colonna attivita = ' + esc_(ev.id) + ').</p></div>';
   var esiti = ev.avvisa.map(function (a) {
     try { return a.split('@')[0] + ' ' + invia_(a, oggetto, testo, html); }
     catch (err) { return a.split('@')[0] + ' errore: ' + String(err.message).slice(0, 80); }

@@ -158,7 +158,7 @@
         var serata = window.BOLLA.serate.filter(function (s) { return s.id === e.serata; })[0];
         var giorno = e.data || (serata && serata.data);
         // nella demo le prenotazioni restano aperte anche per gli eventi passati
-        var inizio = giorno < new Date().toISOString().slice(0, 10) ? "2099-01-01 20:00" : giorno + " " + e.ora;
+        var inizio = giorno < new Date().toISOString().slice(0, 10) ? "2099-01-01 20:00" : giorno + " " + (e.ora || "23:00");
         api.appendi_("Attività", { id: e.id, serata: e.serata || "", tipo: e.tipo || "", titolo: e.id, inizio: inizio, prenotazione: true,
           posti: e.tipo === "cena" ? 0 : 10, max_persone: e.tipo === "cena" ? 20 : 0, attivo: "TRUE" });
       });

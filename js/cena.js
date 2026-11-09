@@ -1,21 +1,22 @@
-/* bolla® — pagina nascosta della cena (bbbbolla.it/6nov-tavolacunzata/): prenotazione con nome, cognome, telefono e persone.
-   Stesso schema della pagina workshop; i contenuti sono qui sotto, non in config.js. */
+/* bolla® — pagine nascoste delle cene (bbbbolla.it/6nov-tavolacunzata/, 13nov-cucinaromantica/…):
+   prenotazione con nome, cognome, telefono e persone. Testi della pagina nell'HTML; data, ora e luogo nella voce
+   di config.js → attivita con l'id scritto in <body data-attivita="…"> (lo stesso della colonna "id" del foglio Attività). */
 (function () {
   "use strict";
 
   var C = window.BOLLA;
+  var ID = document.body.getAttribute("data-attivita") || "tavolacunzata-2026-11-06";
+  var voce = (C.attivita || []).filter(function (a) { return a.id === ID; })[0] || {};
+  var serataVoce = (C.serate || []).filter(function (s) { return s.id === voce.serata; })[0] || {};
   var CENA = {
-    id: "tavolacunzata-2026-11-06",     // deve coincidere con la colonna "id" del foglio Attività
-    data: "2026-11-06",
-    ora: "20:00",
-    durata: 3,                          // ore, per il calendario
-    titolo: "Cena colombiana",
-    sottotitolo: "Marina e la sua cucina dell’Antojito Colombiano",
-    luogo: {
-      nome: "MONO",
-      indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
-      mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
-    }
+    id: ID,
+    data: voce.data || serataVoce.data,
+    ora: voce.ora || null,              // null = "Orario in arrivo"
+    durata: voce.durata || 3,           // ore, per il calendario
+    titolo: voce.titolo || "Cena",
+    sottotitolo: voce.sottotitolo || "",
+    serie: voce.etichetta || "",        // nel titolo dell'evento in calendario
+    luogo: voce.luogo || serataVoce.luogo
   };
   var DEMO = !C.apiUrl;
   var GIORNI = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
@@ -36,11 +37,11 @@
   var giorno = new Date(+p[0], +p[1] - 1, +p[2]);
   var dataLunga = GIORNI[giorno.getDay()] + " " + giorno.getDate() + " " + MESI[giorno.getMonth()] + " " + giorno.getFullYear();
 
-  bind("data", function (n) { n.textContent = maiuscola(dataLunga) + " · dalle " + CENA.ora; });
+  bind("data", function (n) { n.textContent = maiuscola(dataLunga) + (CENA.ora ? " · dalle " + CENA.ora : " · orario in arrivo"); });
   bind("quando", function (n) {
     n.textContent = maiuscola(dataLunga);
     n.appendChild(document.createElement("br"));
-    n.appendChild(document.createTextNode("Dalle " + CENA.ora));
+    n.appendChild(document.createTextNode(CENA.ora ? "Dalle " + CENA.ora : "Orario in arrivo"));
   });
   bind("dove", function (n) {
     var nome = el("a", null, CENA.luogo.nome);
@@ -76,7 +77,7 @@
     maxPersone = max;
     form.persone.max = String(max);
   }
-  persone(20);
+  persone(Number(form.persone.max) || 20);   // fino alla risposta del backend: il massimo scritto nella pagina
   function personeValide() {
     var n = Number(form.persone.value);
     return n >= 1 && n <= maxPersone && Math.floor(n) === n;
@@ -184,7 +185,8 @@
     result.appendChild(el("p", "done__kicker", "Prenotazione ricevuta"));
     result.appendChild(el("p", "done__name", dati.nome + " " + dati.cognome));
     result.appendChild(el("p", "done__text", "Cena per " + (dati.persone === 1 ? "1 persona" : dati.persone + " persone") +
-      ". Ti aspettiamo " + dataLunga + " alle " + CENA.ora + " al " + CENA.luogo.nome + ". Se serve ti chiamiamo al " + dati.telefono + "."));
+      ". Ti aspettiamo " + dataLunga + (CENA.ora ? " alle " + CENA.ora : "") + " al " + CENA.luogo.nome + "." +
+      (CENA.ora ? "" : " L'orario lo pubblichiamo a breve.") + " Se serve ti chiamiamo al " + dati.telefono + "."));
     var cal = el("button", "btn btn--ghost btn--small", "Aggiungi al calendario");
     cal.type = "button";
     cal.addEventListener("click", scaricaIcs);
@@ -200,9 +202,10 @@
       "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//bbbbolla.it//cena//IT", "BEGIN:VEVENT",
       "UID:" + CENA.id + "@bbbbolla.it",
       "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""),
-      "DTSTART;TZID=Europe/Rome:" + CENA.data.replace(/-/g, "") + "T" + CENA.ora.replace(":", "") + "00",
-      "DURATION:PT" + CENA.durata + "H",
-      "SUMMARY:" + CENA.titolo + " — Tavola Cunzata · " + C.rassegna.nome,
+      // senza orario: evento di tutto il giorno
+      CENA.ora ? "DTSTART;TZID=Europe/Rome:" + CENA.data.replace(/-/g, "") + "T" + CENA.ora.replace(":", "") + "00" : "DTSTART;VALUE=DATE:" + CENA.data.replace(/-/g, ""),
+      CENA.ora ? "DURATION:PT" + CENA.durata + "H" : "DURATION:P1D",
+      "SUMMARY:" + CENA.titolo + (CENA.serie ? " — " + CENA.serie : "") + " · " + C.rassegna.nome,
       "DESCRIPTION:" + CENA.sottotitolo + "\\n" + location.origin + location.pathname,
       "LOCATION:" + [CENA.luogo.nome, CENA.luogo.indirizzo].join(", ").replace(/,/g, "\\,"),
       "END:VEVENT", "END:VCALENDAR"

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- pagina nascosta: non collegata dal resto del sito e fuori dai motori di ricerca.
+       Tutti i percorsi partono dalla radice del sito (base ../), così css, js e demo restano gli stessi. -->
+  <base href="../">
+  <title>Cena al MONO — Cucina Romantica &amp; Valerio Brunetto · bolla®</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Cucina Romantica &amp; Valerio Brunetto insieme al MONO: piattini di stagione e vino. Venerdì 13 novembre 2026. Prenota il tuo tavolo, i posti sono limitati.">
+  <meta name="theme-color" content="#e9e7e3">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Cena al MONO — Cucina Romantica &amp; Valerio Brunetto · bolla®">
+  <meta property="og:description" content="Piattini di stagione e vino. Venerdì 13 novembre al MONO. Prenota il tuo tavolo, i posti sono limitati.">
+  <meta property="og:image" content="https://bbbbolla.it/assets/cucina-romantica-13-11.jpg">
+  <meta property="og:image:width" content="1075">
+  <meta property="og:image:height" content="1433">
+  <meta property="og:url" content="https://bbbbolla.it/13nov-cucinaromantica/">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css?v=202611092307">
+</head>
+<body data-attivita="cucinaromantica-2026-11-13">
+  <header class="topbar">
+    <a href="./" class="topbar__logo" aria-label="bolla® home"><img src="assets/bolla-logo.png" alt="bolla®" width="808" height="312"></a>
+  </header>
+
+  <main class="layout ws">
+    <header class="ws__testa">
+      <p class="eyebrow">Cena · bolla®</p>
+      <h1 class="details__title ws__titolo">Cena al MONO <span class="details__date">Cucina Romantica &amp; Valerio Brunetto</span></h1>
+      <dl class="facts">
+        <div><dt>Quando</dt><dd data-bind="quando"></dd></div>
+        <div><dt>Dove</dt><dd data-bind="dove"></dd></div>
+        <div><dt>In cucina</dt><dd><strong>Cucina Romantica</strong><br>piattini di stagione</dd></div>
+        <div><dt>Da bere</dt><dd><strong>Valerio Brunetto</strong><br>cosa beviamo? Chiedi a Valerio!</dd></div>
+      </dl>
+    </header>
+
+    <aside class="booking" id="prenota" aria-labelledby="booking-title">
+      <div class="card">
+        <div class="card__head">
+          <h2 id="booking-title" class="card__title">Prenota il tavolo</h2>
+          <span class="badge" data-bind="demo" hidden>Demo</span>
+        </div>
+        <p class="card__date" data-bind="data"></p>
+
+        <p class="status" aria-live="polite"><span class="status__dot"></span><span class="status__label">Controllo disponibilità…</span></p>
+        <p class="card__lead">Posti limitati. Lascia nome, cognome, numero di telefono e per quante persone prenoti: ti contattiamo solo per comunicazioni sulla cena.</p>
+
+        <form class="form" id="form" novalidate>
+          <div class="field-row">
+            <label class="field">
+              <span>Nome</span>
+              <input name="nome" autocomplete="given-name" required maxlength="60">
+            </label>
+            <label class="field">
+              <span>Cognome</span>
+              <input name="cognome" autocomplete="family-name" required maxlength="60">
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span>Telefono</span>
+              <input name="telefono" type="tel" autocomplete="tel" inputmode="tel" required maxlength="30" pattern="[0-9+ \(\)\.\/\-]{8,30}" placeholder="+39 333 123 4567">
+            </label>
+            <label class="field">
+              <span>Persone</span>
+              <input name="persone" type="number" inputmode="numeric" min="1" max="70" step="1" value="1" required>
+            </label>
+          </div>
+
+          <label class="hp" aria-hidden="true">Sito web <input name="website" tabindex="-1" autocomplete="off"></label>
+
+          <p class="form__error" role="alert" hidden></p>
+          <button class="btn btn--block" type="submit">Prenota il tavolo</button>
+          <p class="form__legal">Cliccando sul bottone accetti che nome, cognome, telefono e numero di persone siano usati solo per gestire la prenotazione e contattarti sulla cena: non li cediamo a terzi e li cancelliamo entro 30 giorni dalla cena. Titolare: Pietro Santoro, <a href="mailto:bollacatania@gmail.com">bollacatania@gmail.com</a>. Altre informazioni nell'<a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a>.</p>
+        </form>
+
+        <div class="result" hidden tabindex="-1"></div>
+      </div>
+    </aside>
+
+    <section class="ws__corpo">
+      <div class="prose">
+        <p>Cucina Romantica &amp; Valerio Brunetto insieme al MONO.</p>
+        <p>Vieni a provare i piattini firmati Cucina Romantica, che porta sempre con sé prodotti di stagione, ingredienti del territorio, erbe spontanee e tanto cuore.</p>
+        <p>Cosa beviamo? Chiedi a Valerio!</p>
+        <h2 class="menu__titolo">Il menù</h2>
+        <ul class="menu">
+          <li><strong>Tuma in foglie di limone</strong> <span>alla piastra con origano e mosto</span></li>
+          <li><strong>Focaccina di timilia</strong> <span>burro montato allo zafferano, acciughe e mandarino verde</span></li>
+          <li><strong>Caponata d’autunno</strong> <span>zucca, patate e melanzane</span></li>
+          <li><strong>Arancini al cavolo trunzo di Aci</strong> <span>e Normanno</span></li>
+          <li><strong>Zuppa di ajo blanco e caldarroste</strong> <span>con lupini e telline</span></li>
+          <li><strong>Tartare di manzo</strong> <span>gelato alla senape, cannatedda e ruchetta</span></li>
+          <li><strong>Polpettine all’agro</strong> <span>vegetariane o di maiale</span></li>
+          <li><strong>Gelato alla ricotta</strong> <span>mosto e crumble di carruba</span></li>
+        </ul>
+        <p><strong>Prenota il tuo tavolo: i posti sono limitati.</strong> In regalo il menù con xilografia originale.</p>
+        <p>Listening session by <a href="https://www.instagram.com/lacasetta____/" target="_blank" rel="noopener">@lacasetta____</a>. Start ore 19:00.</p>
+        <p>Vi aspettiamo!</p>
+      </div>
+      <img class="ws__locandina" src="assets/cucina-romantica-13-11.jpg" alt="Locandina in xilografia, blu e arancio, con una bottiglia che versa vino in un bicchiere, forchetta, coltello e stelle: Cucina Romantica &amp; Valerio Brunetto, 13/11 al MONO" width="1075" height="1433" loading="lazy">
+    </section>
+  </main>
+
+  <footer class="footer">
+    <img src="assets/bolla-logo.png" alt="bolla®" class="footer__logo" width="808" height="312" loading="lazy">
+    <nav class="social" aria-label="Contatti e social">
+      <a href="https://www.instagram.com/bbbbolla/" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" class="pieno"/></svg>
+      </a>
+      <a href="https://www.facebook.com/people/BOLLA/61595612496320/" target="_blank" rel="noopener" aria-label="Facebook">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="pieno" d="M14.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.5V4.4c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.4H9.2v3h2.5V21z"/></svg>
+      </a>
+      <a href="mailto:bollacatania@gmail.com" aria-label="Email: bollacatania@gmail.com">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7l8 6 8-6"/></svg>
+      </a>
+    </nav>
+    <p class="footer__small"><a href="privacy.html">Privacy</a> · © 2026 bolla®</p>
+  </footer>
+
+  <a href="13nov-cucinaromantica/#prenota" class="mobile-cta btn">Prenota il tavolo</a>
+
+  <script src="js/config.js?v=202611092307"></script>
+  <script src="js/demo.js?v=202611092307"></script>
+  <script src="js/cena.js?v=202611092307"></script>
+</body>
+</html>
