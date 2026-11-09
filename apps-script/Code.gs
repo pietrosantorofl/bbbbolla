@@ -751,15 +751,38 @@ function linkAttivita_() {
   try {
     var sh = SpreadsheetApp.getActive().getSheetByName(FOGLIO_ATTIVITA);
     if (!sh || sh.getLastRow() < 2) return;
-    leggiFoglio_(sh, FOGLIO_ATTIVITA, true).forEach(function (r) {
+    var righe = leggiFoglio_(sh, FOGLIO_ATTIVITA, true);
+    righe.forEach(function (r) {
       if (!r.id) return;
       var auto = linkPrenota_(r.id);
       var giusto = vero_(r.prenotazione) ? (r.link || auto) : (r.link === auto ? '' : r.link);
       if (giusto !== r.link) aggiorna_(null, r, { link: giusto });
     });
+    caselleAttivita_(sh, righe);
   } catch (err) {
     console.error('Link attività non aggiornati: ' + err);
   }
+}
+
+// Caselle "prenotazione" solo fino all'ultima riga scritta: una casella vuota vale FALSE e Sheets la conta come riga
+// piena (con le caselle su tutta la colonna il foglio sembrava lungo 1000 righe e le righe nuove finivano in fondo).
+// Una riga nuova scritta a mano riceve la sua casella al giro dopo della sveglia.
+function caselleAttivita_(sh, righe) {
+  var col = righe.length ? righe[0]._head.indexOf('prenotazione') + 1 : 0;
+  if (col < 1) return;
+  var ultima = 1;
+  righe.forEach(function (r) {
+    var piena = r._head.some(function (h) { return h === 'prenotazione' ? vero_(r[h]) : r[h] !== ''; });
+    if (piena) ultima = r._riga;
+  });
+  if (sh.getLastRow() > ultima) {
+    var coda = sh.getRange(ultima + 1, col, sh.getMaxRows() - ultima, 1);
+    coda.clearDataValidations();
+    coda.clearContent();
+  }
+  if (ultima < 2) return;
+  var rg = sh.getRange(2, col, ultima - 1, 1);
+  if (rg.getDataValidations().some(function (x) { return !x[0]; })) rg.setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
 }
 
 // Email agli indirizzi della colonna "avvisa" dell'attività. Esito (senza dati personali) nella pagina di stato.
@@ -2938,8 +2961,7 @@ function modelloAttivita_() {
     if (n !== att.length) throw new Error('Attività: scritte ' + n + ' righe su ' + att.length);
     try {
       var sh = ss.getSheetByName(FOGLIO_ATTIVITA);
-      sh.getRange(2, COLONNE[FOGLIO_ATTIVITA].indexOf('prenotazione') + 1, sh.getMaxRows() - 1, 1)
-        .setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
+      caselleAttivita_(sh, leggiFoglio_(sh, FOGLIO_ATTIVITA, false));
     } catch (err) { /* senza caselle funziona lo stesso: TRUE/FALSE scritti a mano */ }
     esito.push('Attività ' + n);
     esito.push(unisciPrenotazioni_(ss, 'Prenotazioni', [{ nome: 'Workshop', colonna: 'workshop' }, { nome: 'Cena', colonna: 'cena' }]));
