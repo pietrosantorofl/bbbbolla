@@ -570,6 +570,7 @@ a { color: inherit; }
 .ws__logo { display: block; width: clamp(140px, 18vw, 200px); height: auto; margin: 0 0 20px; }
 .ws__logo[hidden] { display: none; }
 .ws__locandina { width: min(100%, 520px); height: auto; margin-top: 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); box-shadow: 10px 10px 0 var(--ink); }
+.ws__locandina--testa { display: block; margin: clamp(20px, 3vw, 32px) 0 clamp(24px, 4vw, 40px); }
 .ws .result .btn { margin-top: 4px; }
 
 /* ---------- responsive ---------- */

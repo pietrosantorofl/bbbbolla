@@ -289,12 +289,12 @@ window.BOLLA = {
       id: "cucinaromantica-2026-11-13",
       tipo: "cena",
       pagina: "13nov-cucinaromantica/",
-      etichetta: "Cucina Romantica & Valerio Brunetto",
+      etichetta: "Cena",
       serata: "2026-11-13",             // data e luogo della serata
-      ora: null,                        // orario in arrivo: la pagina lo scrive così
+      ora: "19:00",                     // null = la pagina scrive "Orario in arrivo"
       durata: 3,
-      titolo: "Cena al MONO",
-      sottotitolo: "Cucina Romantica & Valerio Brunetto",
+      titolo: "Cucina Romantica & Valerio Brunetto",
+      sottotitolo: "Cena al MONO",
       bottone: { it: "Prenota il tavolo", en: "Book a table" }
     }
   ],
