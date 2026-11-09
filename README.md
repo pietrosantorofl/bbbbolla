@@ -171,12 +171,16 @@ Ricarica il foglio dopo il setup: compare il menu **bolla®**.
   Un'ora è `HH:mm` (giorno della serata), `-N HH:mm` (N giorni prima) o `AAAA-MM-GG HH:mm`. Le fa partire la sveglia;
   con troppo ritardo (sveglia ferma, riga scritta tardi) l'automazione si salta. Esito nella pagina `/exec`.
   **Nuova serata…** compila già promemoria, solleciti e recap (`CONFIG.nuovaSerata`); il regalo resta spento.
-- **Eventi con prenotazione** (workshop, cene…): una riga nel foglio **Eventi** (`id`, `tipo`, `serata`, `inizio` AAAA-MM-GG HH:mm,
-  `posti`, `max_persone`, `attivo`) e una voce in `eventi` dentro `js/config.js` con lo stesso `id` (testi, locandina).
-  Pagina: `bbbbolla.it/prenota.html?e=<id>`. Le prenotazioni finiscono nel foglio **Prenotazioni** (colonna `evento`).
-  `max_persone` vuoto = una persona, il modulo non chiede quante. Il recap della serata conta le prenotazioni dei suoi eventi.
+- **Serata → attività → prenotazioni**. Ogni cosa della serata (workshop, cena, live, dj…) è una riga del foglio
+  **Attività**: `id`, `serata` (id della riga Serate), `tipo`, `titolo`, `inizio` (`HH:mm` nel giorno della serata o
+  `AAAA-MM-GG HH:mm`; da lì le prenotazioni chiudono), casella `prenotazione`, `posti`, `max_persone`, `attivo`, `avvisa`, `link`.
+  Con la casella `prenotazione` spuntata la sveglia scrive in `link` il link da condividere (`bbbbolla.it/prenota.html?e=<id>`);
+  un link scritto a mano resta. Le prenotazioni finiscono tutte nel foglio **Prenotazioni** (colonna `attivita` = id).
+  Sul sito: voce in `attivita` dentro `js/config.js` con lo stesso `id` (testi, locandina, `bottone`, eventuale `pagina`)
+  e `attivita: "<id>"` nella voce della line-up: il bottone di prenotazione compare da solo.
+  `max_persone` vuoto = una persona, il modulo non chiede quante. Il recap e la dashboard contano le prenotazioni per attività.
 - **Archivio**: due giorni dopo la serata, di notte (3-6), la sveglia sposta le sue righe da Pass, Gruppi, Attesa, Live
-  e dai fogli delle prenotazioni nei fogli **Archivio …** dello stesso file. I fogli che il sito legge restano piccoli
+  e le prenotazioni delle sue attività nei fogli **Archivio …** dello stesso file. I fogli che il sito legge restano piccoli
   e veloci anche dopo un anno di serate. Per cercare qualcuno di una serata passata: fogli Archivio.
 - **Contatti**: foglio **Contatti**, una riga per persona (email verificata): prima e ultima serata, quante serate.
 - **Newsletter**: menu **bolla® → Esporta newsletter**. Il foglio **Newsletter** contiene gli iscritti del foglio Contatti.

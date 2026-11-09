@@ -62,7 +62,9 @@ window.BOLLA = {
           // ora: orario in locandina (in ordine di programma); minore: true = food & beverage, colonna a destra;
           // main: true = main act, più grande nella locandina
           // link: profilo Instagram (si apre in una nuova scheda) oppure una pagina del sito
+          // attivita: id della riga del foglio Attività (e della voce "attivita" qui sotto): se si prenota, compare il bottone
           nome: { it: "La Cumbia tradizionale colombiana", en: "Traditional Colombian Cumbia" }, ora: "20:00", tag: "Workshop", link: "workshop.html",
+          attivita: "cumbia-2026-10-30",
           // dettagli: testo breve (massimo 5 righe) che si apre cliccando la voce nella line-up
           dettagli: {
             titolo: { it: "Laboratorio di percussioni e canto afrocolombiani", en: "An Afro-Colombian percussion and singing workshop" },
@@ -70,9 +72,7 @@ window.BOLLA = {
               { it: "Laboratorio sui ritmi afrocolombiani, dalla cumbia al bullerengue: voce, corpo e tamburo per creare musica insieme, in cerchio. Nessuna esperienza richiesta.",
                 en: "A workshop on Afro-Colombian rhythms, from cumbia to bullerengue: voice, body and drum to make music together, in a circle. No experience needed." },
               { it: "Con Karen Andrea Ramirez Viasus (percussioni) e Ana Milena Lozada Avella (voce).", en: "With Karen Andrea Ramirez Viasus (percussion) and Ana Milena Lozada Avella (vocals)." }
-            ],
-            // bottone in fondo ai dettagli
-            prenota: { href: "workshop.html", testo: { it: "Prenota il workshop", en: "Book the workshop" } }
+            ]
           }
         },
         {
@@ -132,8 +132,8 @@ window.BOLLA = {
         {
           nome: { it: "Workshop di SAMBA e PERCUSSIONI", en: "SAMBA and PERCUSSION Workshop" }, ora: "19:00", tag: "Workshop",
           note: { it: "a cura di Sambazita", en: "by Sambazita" }, link: "https://www.instagram.com/sambazita_/",
+          attivita: "samba-2026-11-06",
           dettagli: {
-            prenota: { href: "prenota.html?e=samba-2026-11-06", testo: { it: "Prenota il workshop", en: "Book the workshop" } },
             testo: [
               { it: "Un workshop aperto a chiunque abbia voglia di mettersi in gioco, scoprire nuove sonorità e lasciarsi coinvolgere dall’energia della musica brasiliana.",
                 en: "A workshop open to anyone who wants to get involved, discover new sounds and be swept up by the energy of Brazilian music." },
@@ -145,14 +145,14 @@ window.BOLLA = {
         {
           nome: { it: "Cena Colombiana", en: "Colombian Dinner" }, ora: "20:00", tag: { it: "Cena", en: "Dinner" },
           note: { it: "con Marina dell’Antojito Colombiano", en: "with Marina of Antojito Colombiano" }, link: "6nov-tavolacunzata/",
+          attivita: "tavolacunzata-2026-11-06",
           dettagli: {
             testo: [
               { it: "Marina e la sua cucina dell’Antojito Colombiano. La cena è su prenotazione, prezzo speciale 15€ con bevanda inclusa.",
                 en: "Marina and her Antojito Colombiano cooking. The dinner is by reservation, special price €15 including a drink." },
               { it: "Menù: arroz con pollo (riso con pollo, tipico colombiano) · due empanadas, pollo e carne · hawaiana (cipollina colombiana) · bebida “La Colombiana” gusto uva o fragola, analcolica. Menù veggy: arroz con verdure · due empanadas alle verdure · platanos · bebida “La Colombiana”.",
                 en: "Menu: arroz con pollo (chicken and rice, a Colombian classic) · two empanadas, chicken and beef · hawaiana (Colombian spring onion) · “La Colombiana” soft drink, grape or strawberry. Veggie menu: rice with vegetables · two vegetable empanadas · platanos · “La Colombiana” soft drink." }
-            ],
-            prenota: { href: "6nov-tavolacunzata/", testo: { it: "Prenota la cena", en: "Book the dinner" } }
+            ]
           }
         },
         {
@@ -191,7 +191,7 @@ window.BOLLA = {
       id: "2026-11-13",
       data: "2026-11-13",
       // locandina non ancora pronta: grafica delle bolle con il logo (assets/sfera-13-11.webp) e la scritta "Locandina in arrivo".
-      // DA COMPLETARE con la locandina: locandine + locandinaHero (come il 6.11), orario, line-up e workshop (riga Eventi + voce in "eventi")
+      // DA COMPLETARE con la locandina: locandine + locandinaHero (come il 6.11), orario, line-up e workshop (riga nel foglio Attività + voce in "attivita")
       // bolle: la grafica divisa in livelli (assets/sfera-13-11/), ognuna con il suo movimento;
       // box = [sinistra, alto, lato] in % del quadrato della sfera; moto: deriva · ondeggia · orbita · rimbalza;
       // logo: true = scritta bolla® al centro di quella bolla. src = immagine fissa (anteprima e "riduci movimento").
@@ -215,13 +215,15 @@ window.BOLLA = {
     }
   ],
 
-  /* Eventi con prenotazione (workshop, cene…): pagina bbbbolla.it/prenota.html?e=<id>.
-     id deve coincidere con la colonna "id" del foglio Eventi, dove stanno posti, chiusura e persone per prenotazione.
-     data e luogo: quelli della serata indicata, oppure data/luogo scritti qui (evento fuori dalle serate). */
-  eventi: [
+  /* Attività che si prenotano (workshop, cene…): testi della pagina bbbbolla.it/prenota.html?e=<id>.
+     Serata → attività → prenotazioni: id coincide con la colonna "id" del foglio Attività (dove stanno serata, posti,
+     chiusura e persone per prenotazione) e con la voce "attivita" della line-up, che così mostra il bottone di prenotazione.
+     pagina: un'altra pagina di prenotazione al posto di prenota.html (es. la cena del 6.11).
+     data e luogo: quelli della serata indicata, oppure data/luogo scritti qui (attività fuori dalle serate). */
+  attivita: [
     {
       id: "cumbia-2026-10-30",
-      tipo: "workshop",                 // come la colonna "tipo" del foglio Eventi
+      tipo: "workshop",                 // come la colonna "tipo" del foglio Attività
       etichetta: "Workshop",            // riga piccola sopra il titolo
       serata: "2026-10-30",             // serata bolla® di cui fa parte (data, luogo, link al pass)
       ora: "20:00",
@@ -268,6 +270,7 @@ window.BOLLA = {
       // la pagina della cena resta bbbbolla.it/6nov-tavolacunzata/ (js/cena.js); questa voce serve a prenota.html e alla demo
       id: "tavolacunzata-2026-11-06",
       tipo: "cena",
+      pagina: "6nov-tavolacunzata/",
       etichetta: "Tavola Cunzata",
       data: "2026-11-06",
       ora: "20:00",

@@ -1,11 +1,11 @@
 /* bolla® — prenotazione a un evento (workshop, cena…): nome, cognome, telefono e, se l'evento lo prevede, persone.
-   Pagina bbbbolla.it/prenota.html?e=<id>; contenuti in config.js, voce "eventi"; posti e chiusura nel foglio Eventi. */
+   Pagina bbbbolla.it/prenota.html?e=<id>; contenuti in config.js, voce "attivita"; posti e chiusura nel foglio Attività. */
 (function () {
   "use strict";
 
   var C = window.BOLLA;
   var id = new URLSearchParams(location.search).get("e") || document.body.getAttribute("data-evento");
-  var W = (C.eventi || []).filter(function (e) { return e.id === id; })[0];
+  var W = (C.attivita || []).filter(function (e) { return e.id === id; })[0];
   var DEMO = !C.apiUrl;
   var T = I18N.T, L = I18N.L, M = I18N.M;
 

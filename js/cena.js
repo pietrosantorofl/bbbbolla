@@ -5,7 +5,7 @@
 
   var C = window.BOLLA;
   var CENA = {
-    id: "tavolacunzata-2026-11-06",     // deve coincidere con la colonna "id" del foglio Eventi
+    id: "tavolacunzata-2026-11-06",     // deve coincidere con la colonna "id" del foglio Attività
     data: "2026-11-06",
     ora: "20:00",
     durata: 3,                          // ore, per il calendario

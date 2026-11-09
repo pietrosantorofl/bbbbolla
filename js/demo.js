@@ -5,7 +5,7 @@
   "use strict";
   if (window.BOLLA.apiUrl) return;
 
-  var KEY = "bolla-demo-v2";
+  var KEY = "bolla-demo-v3"; // v3: foglio Attività al posto di Eventi
   var db;
   try { db = JSON.parse(localStorage.getItem(KEY)); } catch (e) { db = null; }
   if (!db) db = { sheets: {}, mail: [], cache: {} };
@@ -151,16 +151,16 @@
       db.props = db.props || {};
       save();
     }
-    // eventi del sito (prenota.html?demo&e=<id>): posti e chiusura di prova, come le righe del foglio Eventi
-    if (!db.sheets.Eventi || db.sheets.Eventi.length <= 1) {
+    // attività del sito (prenota.html?demo&e=<id>): posti e chiusura di prova, come le righe del foglio Attività
+    if (!db.sheets["Attività"] || db.sheets["Attività"].length <= 1) {
       api.setup();
-      (window.BOLLA.eventi || []).forEach(function (e) {
+      (window.BOLLA.attivita || []).forEach(function (e) {
         var serata = window.BOLLA.serate.filter(function (s) { return s.id === e.serata; })[0];
         var giorno = e.data || (serata && serata.data);
         // nella demo le prenotazioni restano aperte anche per gli eventi passati
         var inizio = giorno < new Date().toISOString().slice(0, 10) ? "2099-01-01 20:00" : giorno + " " + e.ora;
-        api.appendi_("Eventi", { id: e.id, tipo: e.tipo || "", titolo: e.id, serata: e.serata || "", inizio: inizio,
-          posti: e.tipo === "cena" ? 0 : 10, max_persone: e.tipo === "cena" ? 20 : 0, foglio: "Prenotazioni", attivo: "TRUE" });
+        api.appendi_("Attività", { id: e.id, serata: e.serata || "", tipo: e.tipo || "", titolo: e.id, inizio: inizio, prenotazione: true,
+          posti: e.tipo === "cena" ? 0 : 10, max_persone: e.tipo === "cena" ? 20 : 0, attivo: "TRUE" });
       });
       save();
     }

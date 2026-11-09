@@ -202,7 +202,7 @@
         riga = el("summary");
         riga.setAttribute("data-ora", a.ora || "");
         det.appendChild(riga);
-        det.appendChild(dettagliArtista(a.dettagli));
+        det.appendChild(dettagliArtista(a.dettagli, prenotaDi(a)));
         li.appendChild(det);
       }
       var name = el("span", "lineup__name");
@@ -215,7 +215,7 @@
     });
   });
 
-  function dettagliArtista(d) {
+  function dettagliArtista(d, prenota) {
     var box = el("div", "lineup__more");
     if (d.titolo) box.appendChild(el("p", "lineup__more-titolo", L(d.titolo)));
     (d.testo || []).forEach(function (t) { box.appendChild(el("p", null, L(t))); });
@@ -227,20 +227,29 @@
       if (p.testo) w.appendChild(el("p", null, L(p.testo)));
       box.appendChild(w);
     });
-    if (d.prenota) {
-      var b = el("a", "btn btn--small lineup__prenota", L(d.prenota.testo));
-      b.href = d.prenota.href;
+    if (prenota) {
+      var b = el("a", "btn btn--small lineup__prenota", L(prenota.testo));
+      b.href = prenota.href;
       box.appendChild(b);
     }
     return box;
   }
 
+  // serata → attività: la voce della line-up con "attivita" prende il bottone dalla voce "attivita" di config.js
+  // (pagina prenota.html?e=<id>, oppure la sua "pagina"). Senza voce, o senza bottone, l'attività non si prenota.
+  function prenotaDi(a) {
+    var x = a.attivita && (C.attivita || []).filter(function (e) { return e.id === a.attivita; })[0];
+    if (!x || !x.bottone) return null;
+    return { href: x.pagina || "prenota.html?e=" + encodeURIComponent(x.id), testo: x.bottone };
+  }
+
   // accanto a "Prenota pass": un bottone per ogni voce della line-up che si prenota (workshop, cena…)
   bind("prenotazioni", function (n) {
     serata.lineup.forEach(function (a) {
-      if (!a.dettagli || !a.dettagli.prenota) return;
-      var b = el("a", "btn btn--ghost", L(a.dettagli.prenota.testo));
-      b.href = a.dettagli.prenota.href;
+      var p = prenotaDi(a);
+      if (!p) return;
+      var b = el("a", "btn btn--ghost", L(p.testo));
+      b.href = p.href;
       n.appendChild(b);
     });
   });

@@ -18,9 +18,10 @@
  *   Pass    creato | serata | tipo | rif | nome | cognome | email | email_norm | chiave | codice | stato | confermato | checkin | newsletter | checkin_da
  *   Attesa  creato | serata | nome | cognome | email | email_norm | arrivato_da | newsletter | note
  *   Contatti creato | email_norm | email | nome | cognome | newsletter | prima | ultima | serate | aggiornato   (una riga per persona)
- *   Eventi  id | tipo | titolo | serata | inizio | posti | max_persone | foglio | attivo | avvisa   (workshop, cene… con prenotazione)
- *   Prenotazioni creato | evento | nome | cognome | telefono | telefono_norm | persone | note
- *   Workshop, Cena: prenotazioni dei primi eventi (stesso schema, colonna "workshop" o "cena" al posto di "evento")
+ *   Attività id | serata | tipo | titolo | inizio | prenotazione | posti | max_persone | attivo | avvisa | link
+ *           (tutto quello che succede in una serata: workshop, cena, live, dj…; vedi "Attività e prenotazioni")
+ *   Prenotazioni creato | attivita | nome | cognome | telefono | telefono_norm | persone | note   (una riga per prenotazione)
+ *   Collegamenti: Serate.id ← Pass/Gruppi/Attesa.serata · Serate.id ← Attività.serata · Attività.id ← Prenotazioni.attivita
  *   Archivio …: le righe delle serate passate, spostate dalla sveglia (vedi "Archivio")
  *
  * Web App: POST body JSON { action, ... } con action = stato | crea_gruppo | unisciti | invito | pass
@@ -83,16 +84,12 @@ var COLONNE = {
   Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note'],
   Contatti: ['creato', 'email_norm', 'email', 'nome', 'cognome', 'newsletter', 'prima', 'ultima', 'serate', 'aggiornato'],
   Live: ['creato', 'serata', 'nickname', 'colore', 'emozione', 'dispositivo'],
-  Eventi: ['id', 'tipo', 'titolo', 'serata', 'inizio', 'posti', 'max_persone', 'foglio', 'attivo', 'avvisa'],
-  Prenotazioni: ['creato', 'evento', 'nome', 'cognome', 'telefono', 'telefono_norm', 'persone', 'note'],
-  Workshop: ['creato', 'workshop', 'nome', 'cognome', 'telefono', 'telefono_norm', 'note'],
-  Cena: ['creato', 'cena', 'nome', 'cognome', 'telefono', 'telefono_norm', 'persone', 'note']
+  'Attività': ['id', 'serata', 'tipo', 'titolo', 'inizio', 'prenotazione', 'posti', 'max_persone', 'attivo', 'avvisa', 'link'],
+  Prenotazioni: ['creato', 'attivita', 'nome', 'cognome', 'telefono', 'telefono_norm', 'persone', 'note']
 };
 var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome',
-  'workshop', 'telefono', 'telefono_norm', 'cena', 'confermati', 'evento', 'prima', 'ultima', 'inizio',
+  'telefono', 'telefono_norm', 'confermati', 'attivita', 'prima', 'ultima', 'inizio', 'link',
   'orario', 'chiusura_pass', 'chiusura_gruppi', 'promemoria', 'solleciti', 'regalo', 'recap'];
-// fogli delle prenotazioni agli eventi: colonna con l'id dell'evento
-var COLONNA_EVENTO = { Prenotazioni: 'evento', Workshop: 'workshop', Cena: 'cena' };
 // fogli spostati in archivio, con la colonna che dice a quale serata appartiene la riga
 var DA_ARCHIVIARE = { Pass: 'serata', Gruppi: 'serata', Attesa: 'serata', Live: 'serata' };
 // riserva se la lista online non è raggiungibile
@@ -111,6 +108,7 @@ var DOMINI_NOTI = ['gmail.com', 'googlemail.com', 'hotmail.com', 'hotmail.it', '
 
 function setup() {
   var ss = SpreadsheetApp.getActive();
+  rinominaModelloVecchio_(ss);
   Object.keys(COLONNE).forEach(function (nome) {
     var sh = ss.getSheetByName(nome) || ss.insertSheet(nome);
     if (sh.getLastRow() === 0) {
@@ -204,7 +202,7 @@ function doGet(e) {
   }
   setup();
   aggiornamentiUnaTantum_(); // idempotente: ogni aggiornamento gira una volta sola
-  var db = carica_(['Serate', 'Pass', 'Gruppi', 'Eventi']);
+  var db = carica_(['Serate', 'Pass', 'Gruppi']);
   aggiornaConfermati_(db);
   var props = PropertiesService.getScriptProperties();
   var emailEventi = props.getProperty('EVENTI_BREVO_EMAIL');
@@ -235,7 +233,9 @@ function doGet(e) {
     riga('Avvisi prenotazioni eventi', 'AVVISI_ESITO') +
     riga('Ricerca segnalazione', 'CERCA_ESITO') +
     riga('QR esterni', 'QR_ESTERNI_ESITO') +
-    riga('Colonne vuote del foglio Cena', 'CENA_COLONNE_ESITO') +
+    riga('Attività e prenotazioni (riordino del 09.11)', 'MODELLO_ESITO') +
+    riga('Fogli vecchi eliminati', 'VECCHI_ESITO') +
+    '<p>Tab del file: ' + ss.getSheets().map(function (sh) { return esc_(sh.getName()) + ' (' + Math.max(0, sh.getLastRow() - 1) + ')'; }).join(' · ') + '</p>' +
     riga('Mail Vibes', 'VIBES_ESITO') +
     riga('Mail Vibes secondo Brevo', 'VIBES_VERIFICA') +
     riga('Mail invito', 'INVITO_ESITO') +
@@ -297,6 +297,7 @@ function sveglia() {
   dominiUsaEGetta_();
   var db = carica_(['Serate', 'Pass', 'Gruppi']);
   aggiornaConfermati_(db);
+  linkAttivita_();
   automazioni_(db);
   archivio_(db);
 }
@@ -328,191 +329,11 @@ function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
-    // i primi due eventi con prenotazione passano dalla configurazione nel codice al foglio Eventi
-    { id: 'eventi-iniziali-2026-11', fai: function () {
-      var db = carica_(['Eventi']);
-      [
-        { id: 'cumbia-2026-10-30', tipo: 'workshop', titolo: 'La Cumbia tradizionale colombiana', serata: '2026-10-30',
-          inizio: '2026-10-30 20:00', posti: 40, max_persone: 0, foglio: 'Workshop', attivo: 'TRUE' },
-        { id: 'tavolacunzata-2026-11-06', tipo: 'cena', titolo: 'Cena colombiana — Tavola Cunzata', serata: '2026-11-06',
-          inizio: '2026-11-06 20:00', posti: 0, max_persone: 6, foglio: 'Cena', attivo: 'TRUE' }
-      ].forEach(function (e) { if (!trova_(db.Eventi, 'id', e.id)) appendi_('Eventi', e); });
-    } },
-    // una riga per persona nel foglio Contatti, dai pass confermati (newsletter: vale l'ultima disiscrizione)
-    { id: 'contatti-da-pass-2026-11', fai: function () {
-      ricostruisciContatti_();
-    } },
-    // di nuovo, con anche i disiscritti che non hanno un pass confermato
-    { id: 'contatti-con-disiscritti-2026-11', fai: function () {
-      ricostruisciContatti_();
-    } },
-    // richiesta dell'utente (01.11): backup nel Drive e archivio del 30.10 subito, senza aspettare la notte.
-    // L'archivio parte solo con il backup verificato; l'esito è nelle righe Backup e Archivio della pagina di stato.
-    { id: 'backup-e-archivio-2026-10-30', fai: function () {
-      var s = serata_(carica_(['Serate']), '2026-10-30');
-      if (s && !PropertiesService.getScriptProperties().getProperty('archiviata:' + s.id)) archiviaSerata_(s);
-    } },
-    // la riga del 30.10 come esempio di compilazione (richiesta dell'utente): i valori usati davvero quella sera.
-    // Serata passata: serataInCorso_ è falso, quindi le automazioni non ripartono.
-    // cena del 6.11 (richiesta dell'utente): da 1 a 20 persone per prenotazione e avviso a ogni prenotazione
-    { id: 'cena-2026-11-06-persone-20-avvisi', fai: function () {
-      var db = carica_(['Eventi']);
-      var e = trova_(db.Eventi, 'id', 'tavolacunzata-2026-11-06');
-      if (e) aggiorna_(db.Eventi, e, { max_persone: 20, avvisa: 'pietrosantoro90@gmail.com, sipariomarchese@gmail.com' });
-    } },
-    // workshop di samba del 6.11 (richiesta dell'utente, 04.11): prenotazioni nel foglio Prenotazioni, 40 posti come la cumbia
-    { id: 'workshop-samba-2026-11-06', fai: function () {
-      var db = carica_(['Eventi']);
-      if (!trova_(db.Eventi, 'id', 'samba-2026-11-06')) appendi_('Eventi', { id: 'samba-2026-11-06', tipo: 'workshop',
-        titolo: 'Workshop di Samba e Percussioni', serata: '2026-11-06', inizio: '2026-11-06 19:00', posti: 40, max_persone: 0, foglio: '', attivo: 'TRUE' });
-    } },
-    { id: 'serata-2026-10-30-esempio', fai: function () {
-      var db = carica_(['Serate']);
-      var r = trova_(db.Serate, 'id', '2026-10-30');
-      if (r) aggiorna_(db.Serate, r, { orario: 'dalle 20:00', luogo: 'MONO, Via Gornalunga 12, 95129 Catania CT',
-        senza_pass: '5€ al botteghino dopo le 22:30',
-        // l'apostrofo tiene il testo così com'è: "22:00" non diventa un orario, "-2 14:00" non diventa un numero
-        chiusura_pass: "'22:00", chiusura_gruppi: "'22:00", promemoria: "'-2 14:00", solleciti: "'09:15",
-        regalo: "'18:00, 22:00", recap: "'16:00, 17:00, 18:00, 19:00",
-        recap_a: 'pietrosantoro90@gmail.com, tommiferrara@gmail.com' });
-    } },
-    // mail Vibes del 30.10 (richiesta dell'utente, 02.11): prima una prova a Pietro, poi a tutti gli iscritti il 03.11 alle 17:00
-    { id: 'vibes-2026-10-30-prova', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
-    // seconda prova con i testi nuovi e senza il titolo della serata in fondo (richiesta dell'utente, 02.11)
-    { id: 'vibes-2026-10-30-prova-2', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
-    // terza prova: tolta la frase "Grazie a chi c'era…" (richiesta dell'utente, 02.11)
-    { id: 'vibes-2026-10-30-prova-3', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
-    // quarta prova: tolta anche "Aiutaci a raccogliere foto e video della serata!" (richiesta dell'utente, 02.11)
-    { id: 'vibes-2026-10-30-prova-4', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.prova('pietrosantoro90@gmail.com')); } },
-    { id: 'vibes-2026-10-30', dopo: '2026-11-03 17:00', fai: function () { mailVibes_('2026-10-30', VIBES_30_10.tutti()); } },
-    // conferma da Brevo che la mail Vibes del 03.11 è arrivata: consegne, rimbalzi, blocchi, aperture (richiesta dell'utente, 04.11)
-    // mail d'invito al 6.11 con la locandina e i link: prima solo la prova a Pietro (richiesta dell'utente, 05.11)
-    { id: 'invito-2026-11-06-prova', fai: function () { mailInvito_('2026-11-06', INVITO_06_11.prova('pietrosantoro90@gmail.com')); } },
-    // conteggio dei destinatari, senza inviare (richiesta dell'utente, 05.11)
-    { id: 'invito-2026-11-06-conteggio', fai: function () { contaInvito_('2026-11-06', INVITO_06_11.tutti()); } },
-    // di nuovo, con il limite spostato al 30.10 compreso
-    { id: 'invito-2026-11-06-conteggio-2', fai: function () { contaInvito_('2026-11-06', INVITO_06_11.tutti()); } },
-    // invio a tutti il 05.11 alle 18:30; se per qualche motivo non è finito entro le 18:00 del giorno della serata, non si continua
-    { id: 'invito-2026-11-06', dopo: '2026-11-05 18:30', fai: function () {
-      if (new Date() > Utilities.parseDate('2026-11-06 18:00', TZ, 'yyyy-MM-dd HH:mm')) {
-        accoda_('INVITO_ESITO', new Date().toISOString().slice(0, 16) + ' 2026-11-06: troppo tardi, invio fermato');
-        return;
-      }
-      mailInvito_('2026-11-06', INVITO_06_11.tutti());
-    } },
-    // 95 QR di un'altra biglietteria per la serata del 6.11 (richiesta dell'utente, 06.11), sotto lock
-    // perché la serata è aperta e i codici BOL- dei pass nuovi non devono sovrapporsi. Esito: "QR esterni" in /exec.
-    { id: 'qr-esterni-2026-11-06', fai: function () {
-      var out = conLock_(function () { aggiungiQrEsterni_('2026-11-06', [
-        '1FC13BY43G6B67Q2RK6YT6B248', 'DSHR9GJ4AQ8NM122H7SXCWB9CG', 'K74D2KTGK3WVMPJEVS0B98NZ1T', 'F7SRFK62QRNP0C7RH6F3TWX0C0',
-        'PCP0K6DP1K5QTQ15HG05WX6RM4', 'TJEMXXGZ2WPH33PG01RJYPS29K', '2Y2ZSGMPXFMBWXK10TDFW7ZJVM', 'Z18J72MM74VHG28TB68KPVJ5EW',
-        'YYSD7PTE20KQF183GEBK2EHVNV', '4QF7A46BFCP704C0TQN5JT3Z95', 'GHHE6NWDYDD36K171ZR64Z7G7C', 'D51XKPMB9ZJK520XWRXY9PCV65',
-        'TVHKYAYNT9WV7TR01SKJE6TM2R', 'H9XQNFXAE28QG3V1M40MV4HJMG', 'ZFE78Y8NJZS1GB4NA548G4AWFB', 'EMWGPFAR7J13EVV3B5GZMQ5R2V',
-        'F5F4RFYYV48YC3HN40YNVTJC2C', 'J7FBKHZP4MJHNE4AE7ZHG8G2YZ', '5PQRF76R8K6PAG1EHDVGSWQRQG', 'VAWYE1PXYQDE059R1K9TFBR4M6',
-        '007YB6N3RMQT9ZR4AZH7XKH1AA', '6P7H7E4CMJXAECCY4PSA6KDJ1C', '80841WRKF3WH057J3QVMG3YSZX', 'E40DFCCFPTTWK5NKS6AXBQ20A2',
-        '9EH3XW59K2ZDFG7B6DNQZP33KN', '4W0V5X7V5ZQVPC17H1Z75SGM8M', 'JCM1CB4Q2T586908RY2TTFD6VR', 'NZR9BAS47BWQH37PNM8980VGPJ',
-        '3SP5RP4EV2PAYYYY082K424V1S', 'CZZ2A6G6RH5GZDFPH2KTM8K6N7', 'CW5RX2G8AS8X97703DZKF95PV3', '0T1AWGY8G4HQ9FZ79J3YVXB42A',
-        'R7FRSG1YYP0WZA5S0EMB1VXJ77', 'KZC3EBK7B8T47P8X0T62GZE2KF', 'H4HVG1X37NVG2XRA44N0VX25NP', 'K8ZGDEH38MRB6F84JYMGFMK73Q',
-        'G7TD9JTEZHCNPM899FAZC5BKGV', '6BH31A6QRNZ8CT74GVNSZZER6H', '0ZA6TFXTVA0NWP0Y2BCWR5KKPW', '78Z1RXHF8SK8KMP7FPM3TMS6RT',
-        '6EZHXTEM2HTXRE34HFW1FD43YP', 'HXQKVVM44KGVXVE57K36PF005M', 'DSCTA4VENK589EVN5MW203W732', 'SD3RCDNG1GSE4V18ASE49TA5T7',
-        '8MB48Z2Y2WG62ZN5NEJ9Q687YJ', 'P9NTQ1YS642T1TPQPG3DPT4794', '9QD6Q64NV3F9YRT82P6F45RCRT', 'D0RNJBVRJA2265RCGAN89M34QF',
-        '1EMT8XD230NQA267KKVAP1V8AE', 'XDR2WQCSGVMM6N830C1M4MQVWV', 'B0X050YTBY349QJJ5DAZBX2R8E', 'YWEC0M36P4MPNM7CMRX2H6W4NZ',
-        'ZXVX0SST1GHX2MA8SE3P4XJFY3', 'JH5K7D6M1D1BWXXWK7E14NEEHZ', 'WDZGGBQ2Z8DTRWARVHVK2AMAV4', 'RKJ2CSD64KEDXGNX00PS4ZYRRH',
-        '5WF4NB32GNR1881JG5T0WY19A6', '5N3ND0JDAS9DCC2SFRA9D7HHDB', 'GCCT0A3B175YAQM99ZMB2G3YZH', 'CBBP8JPDJR8XEB2A3MPFAN9HT8',
-        'FM2AV7CC7HQN160P9F12QNKB82', 'GN3SMQM251NZ2PP703FPA1WTPM', 'G7TGMGPZM3VT5APRG775QAPTRR', 'VBK4JS1NE3Z1M3Z0GC1QVW7W1T',
-        '29HZRA2JN5PCT0NVXZFD8CZ5ME', 'S5NV4WPMRDP4T7QHAJV00DX320', '03GANQK20Z01FMQTMF7FX0ME9M', 'TJE9X94YTK9P3GSWE7A3Z6WY03',
-        'X9NWX3WJ5SFQJQW7WY20ACTSK3', 'W3ZDV5A5BASX7CWJRJFC0QGYEF', '9C6H15DWCVDEHWEVBAQK2JAT99', '4JFPE8DQDTWY1SRBEXRYGAY4XN',
-        'NV93ZAEEHWR53MBXMZRXVEMQPP', '39H5D34Z83RG6RZ5RA7NXVZEQA', 'CMRA7EXZMKH2ZQS5GEWQAYFV09', 'TER32A03G3XQAT8017FGXK00WG',
-        'SQQYGX3NHFS31HWG6E5P9FTD6Z', '6K8D8D6DF46C2S1TVNB7H7ZBP3', 'KVA55ABKSK88Y86031WDB8QV0H', 'FZTGARZKCVNVWN5NW7GVE27JT0',
-        'BPKWX4T0ESKT8XT9SXR78HZH8T', '318G2GKRKCCBD4PDKBCSXAAN12', 'ZS7FBGBV8S4J1XBZXQ8VSSB4W3', 'G968DD5A0ZZ3BB1H5PDWN7FQFT',
-        '44SKD7YVKZA46YMZP41FVW9VZ6', 'A6APEQ64AR8V8JH2308AA1XNV6', 'SEY8XPVPTWM8QDMWP53W01PPVZ', 'FN3N7JFRRVC8W13N6RD32JF8GZ',
-        '50P96RFYB8SC2GNF1Z3HDA4M0P', '7JJ3T2K7R6T3N1J0H9S1XA1NQ9', '39QWQJ7Z7JRF1K8FPC90JHMEHF', 'PJTGGS3JQ63RHYZ3MGDJR0FFWC',
-        'FA7AGXXS0FKWDXE18NH6X1CBEF', 'CT4ENPBZM8XPZGVW0Y91KBN2RF', 'BTDVAD11QCT1HMSTXADCZ7G17P'
-      ]); return { ok: true }; });
-      if (out && out.errore) throw new Error(out.messaggio);
-    } },
-    // serata del 6.11 finita: backup nel Drive subito (richiesta dell'utente, 07.11). L'archivio del 6.11 resta automatico,
-    // la notte del 09.11, e fa un altro backup. Esito nella riga "Backup nel Drive" della pagina di stato.
-    { id: 'backup-2026-11-07', fai: function () { if (!backupDrive_()) throw new Error('backup non verificato'); } },
-    // pagina di stato protetta (richiesta dell'utente, 07.11): impronta del primo segreto, che sta nel Portachiavi del Mac
-    // (servizio "bolla-pagina-stato"). Un link nuovo dal menu del foglio sostituisce questo.
-    { id: 'link-stato-2026-11-07', fai: function () {
-      var props = PropertiesService.getScriptProperties();
-      if (!props.getProperty('LINK_STATO_SHA')) props.setProperty('LINK_STATO_SHA', '0a06bd5714a741b7b33603f093b8362a7c086ed019965a66b7735f19589d78aa');
-    } },
-    // nessun invio automatico per il 13.11 (richiesta dell'utente, 07.11): promemoria, solleciti, pass regalo e recap spenti
-    { id: 'serata-2026-11-13-senza-invii', fai: function () {
-      var db = carica_(['Serate']);
-      var r = trova_(db.Serate, 'id', '2026-11-13');
-      if (!r) throw new Error('serata 2026-11-13 non trovata nel foglio Serate');
-      aggiorna_(db.Serate, r, { promemoria: '', solleciti: '', regalo: '', recap: '' });
-    } },
-    // foglio Cena: tolte le colonne senza intestazione tra "cena" e "nome", solo se vuote in tutte le righe (richiesta dell'utente, 07.11)
-    { id: 'cena-colonne-vuote-2026-11-07', fai: function () {
-      var out = conLock_(function () {
-        var sh = SpreadsheetApp.getActive().getSheetByName('Cena');
-        if (!sh) return { ok: true };
-        var valori = sh.getDataRange().getValues();
-        var tolte = 0;
-        for (var c = valori[0].length - 1; c >= 0; c--) {
-          if (String(valori[0][c]).trim() !== '') continue;
-          var piena = valori.some(function (riga) { return String(riga[c]).trim() !== ''; });
-          if (piena) throw new Error('colonna ' + (c + 1) + ' del foglio Cena senza intestazione ma con dati: non tolta');
-          sh.deleteColumn(c + 1);
-          tolte++;
-        }
-        delete TESTATE_.Cena;
-        accoda_('CENA_COLONNE_ESITO', new Date().toISOString().slice(0, 16) + ' colonne vuote tolte: ' + tolte);
-        return { ok: true };
-      });
-      if (out && out.errore) throw new Error(out.messaggio);
-    } },
-    { id: 'vibes-2026-10-30-verifica', fai: function () { verificaMailBrevo_('VIBES_VERIFICA', oggettoVibes_(), '2026-11-03', '2026-11-04'); } },
-    // le prenotazioni del samba finivano nel foglio Workshop (segnalazione dell'utente, 05.11): l'evento torna sul foglio
-    // Prenotazioni e le righe del samba già in Workshop si spostano lì. Sotto lock, così nessuna prenotazione si perde.
-    { id: 'samba-2026-11-06-in-prenotazioni', fai: function () {
-      var out = conLock_(function () {
-        var id = 'samba-2026-11-06';
-        var db = carica_(['Eventi', 'Workshop', 'Prenotazioni']);
-        var e = trova_(db.Eventi, 'id', id);
-        if (!e) throw new Error('evento ' + id + ' non trovato nel foglio Eventi');
-        var prima = String(e.foglio);
-        if (prima !== '') aggiorna_(db.Eventi, e, { foglio: '' });
-        var gia = {};
-        db.Prenotazioni.forEach(function (r) { if (r.evento === id) gia[r.telefono_norm] = true; });
-        var sposta = db.Workshop.filter(function (r) { return r.workshop === id; });
-        sposta.forEach(function (r) {
-          if (gia[r.telefono_norm]) return;
-          appendi_('Prenotazioni', { creato: r.creato, evento: id, nome: r.nome, cognome: r.cognome, telefono: r.telefono,
-            telefono_norm: r.telefono_norm, persone: '', note: r.note });
-          gia[r.telefono_norm] = true;
-        });
-        SpreadsheetApp.flush();
-        // dal basso, così i numeri di riga restano giusti
-        sposta.map(function (r) { return r._riga; }).sort(function (a, b) { return b - a; })
-          .forEach(function (n) { db.Workshop[0]._foglio.deleteRow(n); });
-        PropertiesService.getScriptProperties().setProperty('diagnosi:' + id,
-          'foglio era "' + prima + '", spostate ' + sposta.length + ' righe da Workshop');
-        return { ok: true };
-      });
-      if (!out.ok) throw new Error(out.messaggio);
-    } },
-    // pass dato lo stesso a chi ha confermato in un gruppo incompleto, alle 18:00 del 6.11 (richiesta dell'utente, 06.11):
-    // colonna "regalo" della serata, poi ci pensa automazioni_ nella sveglia
-    { id: 'regalo-2026-11-06-18', fai: function () {
-      var db = carica_(['Serate']);
-      var r = trova_(db.Serate, 'id', '2026-11-06');
-      if (!r) throw new Error('serata 2026-11-06 non trovata');
-      aggiorna_(db.Serate, r, { regalo: "'18:00" });
-    } },
-    // secondo giro alle 22:00, come il 30.10 (richiesta dell'utente, 06.11): passRegalo_ manda il pass solo se trova
-    // gruppi ancora aperti con qualcuno confermato, altrimenti non parte nessuna email. Il giro delle 18:00 non si ripete.
-    { id: 'regalo-2026-11-06-22', fai: function () {
-      var db = carica_(['Serate']);
-      var r = trova_(db.Serate, 'id', '2026-11-06');
-      if (!r) throw new Error('serata 2026-11-06 non trovata');
-      aggiorna_(db.Serate, r, { regalo: "'18:00, 22:00" });
-    } }
+    // riordino del database (richiesta dell'utente, 09.11): Eventi → Attività, prenotazioni di Workshop e Cena (e dei loro
+    // archivi) nel foglio Prenotazioni. Prima un backup verificato nel Drive; i fogli vecchi restano come "vecchio – …"
+    { id: 'attivita-e-prenotazioni-2026-11-09', fai: function () { modelloAttivita_(); } },
+    // una settimana dopo, i fogli "vecchio – …" si eliminano (il backup del 09.11 resta nel Drive)
+    { id: 'fogli-vecchi-via-2026-11-16', dopo: '2026-11-16 10:00', fai: function () { eliminaFogliVecchi_(); } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
     // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
@@ -796,54 +617,86 @@ function azionePass_(d) {
   });
 }
 
-/* ---------- eventi con prenotazione (workshop, cene…) ----------
- * Ogni evento è una riga del foglio Eventi: si aggiunge o si cambia lì, senza pubblicare il codice.
- *   id           lo stesso della voce in js/config.js (eventi) e del link bbbbolla.it/prenota.html?e=<id>
- *   tipo         workshop, cena… (solo per leggere il foglio; le pagine vecchie lo usano per trovare l'evento)
- *   serata       la serata bolla® di cui fa parte (il recap conta le prenotazioni)
- *   inizio       AAAA-MM-GG HH:mm: da quest'ora le prenotazioni si chiudono
+/* ---------- attività e prenotazioni ----------
+ * Serata → attività → prenotazioni. Ogni attività è una riga del foglio Attività: si aggiunge o si cambia lì,
+ * senza pubblicare il codice.
+ *   id           unico, es. samba-2026-11-06; lo stesso della voce "attivita" della line-up in js/config.js
+ *   serata       id della serata (foglio Serate) di cui fa parte
+ *   tipo         workshop, cena, live, dj, talk, altro (solo per leggere il foglio e per le pagine vecchie)
+ *   titolo       come compare nelle email di avviso, nel recap e nella dashboard
+ *   inizio       HH:mm (giorno della serata) oppure AAAA-MM-GG HH:mm: da quest'ora le prenotazioni si chiudono
+ *   prenotazione casella spuntata (TRUE) = si prenota; vuota = attività senza prenotazione (dj set, live…)
  *   posti        posti in tutto (sommando le persone); vuoto o 0 = nessun limite
  *   max_persone  persone al massimo in una prenotazione; vuoto o 0 = una persona, il modulo non chiede quante
- *   foglio       dove finiscono le prenotazioni: Prenotazioni (vuoto) oppure Workshop/Cena per i primi eventi
- *   attivo       FALSE = prenotazioni chiuse
+ *   attivo       FALSE = prenotazioni chiuse a mano (vuoto = aperte fino all'inizio)
  *   avvisa       email separate da virgola: a ogni prenotazione arriva un avviso con nome, telefono e persone; vuoto = nessuno
- * Nome, cognome e telefono (niente email, niente pass): lo staff richiama al telefono se serve.
- * Stesso anti-bot dei pass (modulo firmato, honeypot, tetto al minuto); lo stesso numero non può prenotare due volte. */
+ *   link         il link da condividere: lo scrive la sveglia (bbbbolla.it/prenota.html?e=<id>) se la cella è vuota;
+ *                si può sostituire con un'altra pagina (es. bbbbolla.it/6nov-tavolacunzata/)
+ * Le prenotazioni (foglio Prenotazioni, colonna attivita = id) chiedono nome, cognome e telefono (niente email, niente pass):
+ * lo staff richiama al telefono se serve. Stesso anti-bot dei pass (modulo firmato, honeypot, tetto al minuto);
+ * lo stesso numero non può prenotare due volte la stessa attività. */
 // pagine dei primi eventi rimaste in cache nei browser, che non mandano l'id
 var EVENTI_PAGINE_VECCHIE = { workshop: 'cumbia-2026-10-30', cena: 'tavolacunzata-2026-11-06' };
+var FOGLIO_ATTIVITA = 'Attività';
+
+function linkPrenota_(id) {
+  return CONFIG.sito + '/prenota.html?e=' + encodeURIComponent(id);
+}
+
+// "21:30" vale nel giorno della serata; "2026-11-13 21:30" così com'è. null se manca o non si legge.
+function inizioAttivita_(db, e) {
+  var v = e.inizio instanceof Date ? Utilities.formatDate(e.inizio, TZ, 'yyyy-MM-dd HH:mm') : String(e.inizio || '').trim();
+  if (/^\d{1,2}[:.]\d\d$/.test(v)) {
+    var s = db.Serate ? serata_(db, e.serata) : null;
+    var giorno = s ? s.data : /^\d{4}-\d\d-\d\d$/.test(e.serata) ? e.serata : '';
+    if (!giorno) return null;
+    v = giorno + ' ' + ('0' + v.replace('.', ':')).slice(-5);
+  }
+  if (!/^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(v)) return null;
+  return Utilities.parseDate(v, TZ, 'yyyy-MM-dd HH:mm');
+}
 
 function evento_(db, id, tipo) {
-  var e = trova_(db.Eventi, 'id', String(id || (tipo && EVENTI_PAGINE_VECCHIE[tipo]) || ''));
+  var e = trova_(db[FOGLIO_ATTIVITA], 'id', String(id || (tipo && EVENTI_PAGINE_VECCHIE[tipo]) || ''));
   if (!e) return null;
-  var inizio = e.inizio instanceof Date ? e.inizio : Utilities.parseDate(String(e.inizio).trim(), TZ, 'yyyy-MM-dd HH:mm');
-  var foglio = COLONNA_EVENTO[e.foglio] ? e.foglio : 'Prenotazioni';
-  return { id: e.id, tipo: e.tipo, titolo: e.titolo, serata: e.serata, inizio: inizio, posti: Number(e.posti) || 0,
-    maxPersone: Number(e.max_persone) || 0, foglio: foglio, colonna: COLONNA_EVENTO[foglio], attivo: e.attivo === '' || vero_(e.attivo),
+  return { id: e.id, tipo: e.tipo, titolo: e.titolo, serata: e.serata, inizio: inizioAttivita_(db, e), posti: Number(e.posti) || 0,
+    maxPersone: Number(e.max_persone) || 0, prenotabile: vero_(e.prenotazione), attivo: e.attivo === '' || vero_(e.attivo),
     avvisa: String(e.avvisa || '').split(/[\s,;]+/).filter(function (x) { return x.indexOf('@') > 0; }) };
 }
 
 function eventoAperto_(ev) {
-  return ev.attivo && new Date() < ev.inizio;
+  return ev.prenotabile && ev.attivo && !!ev.inizio && new Date() < ev.inizio;
 }
 
-// posti ancora liberi, sommando le persone (Infinity se l'evento non ha un limite)
+// prenotazioni di un'attività (db.Prenotazioni già letto)
+function prenotazioniDi_(db, ev) {
+  return db.Prenotazioni.filter(function (r) { return r.attivita === ev.id; });
+}
+
+// attività di una serata che si prenotano (o che hanno già prenotazioni), per recap e dashboard
+function attivitaConPrenotazione_(db, idSerata) {
+  return db[FOGLIO_ATTIVITA].filter(function (e) { return e.serata === idSerata; })
+    .map(function (e) { return evento_(db, e.id); })
+    .filter(function (ev) { return ev.prenotabile || prenotazioniDi_(db, ev).length; });
+}
+
+// posti ancora liberi, sommando le persone (Infinity se l'attività non ha un limite)
 function postiEvento_(db, ev) {
   if (!ev.posti) return Infinity;
   var presi = 0;
-  db[ev.foglio].forEach(function (r) { if (r[ev.colonna] === ev.id) presi += Number(r.persone) || 1; });
+  prenotazioniDi_(db, ev).forEach(function (r) { presi += Number(r.persone) || 1; });
   return ev.posti - presi;
 }
 
 function nomeEvento_(ev) {
-  return ev.tipo === 'cena' ? 'la cena' : ev.tipo === 'workshop' ? 'il workshop' : 'l\'evento';
+  return ev.tipo === 'cena' ? 'la cena' : ev.tipo === 'workshop' ? 'il workshop' : 'l\'attività';
 }
 
 // tipo: solo per le pagine vecchie (workshop_stato, cena_stato), che vogliono la risposta nel loro formato
 function azioneEventoStato_(d, tipo) {
-  var db = carica_(['Eventi']);
+  var db = carica_(['Serate', FOGLIO_ATTIVITA, 'Prenotazioni']);
   var ev = evento_(db, d.evento, tipo);
   if (!ev) return errore_('evento', 'Evento non trovato.');
-  db[ev.foglio] = carica_([ev.foglio])[ev.foglio];
   var liberi = postiEvento_(db, ev);
   var max = Math.max(0, Math.min(ev.maxPersone || 1, liberi));
   var out = { ok: true, modulo: tokenModulo_() };
@@ -866,32 +719,50 @@ function azioneEventoPrenota_(d, tipo) {
 
   return conLock_(function () {
     if (tettoRaggiunto_()) return errore_('occupato', 'In questo momento stanno arrivando troppe registrazioni. Riprova tra un minuto.');
-    var db = carica_(['Eventi']);
+    var db = carica_(['Serate', FOGLIO_ATTIVITA, 'Prenotazioni']);
     var ev = evento_(db, d.evento, tipo);
     if (!ev) return errore_('evento', 'Evento non trovato.');
     var persone = ev.maxPersone ? Number(d.persone) : 1;
     if (!(persone >= 1 && persone <= Math.max(1, ev.maxPersone) && Math.floor(persone) === persone)) return errore_('dati', 'Scegli per quante persone prenoti.');
     var cosa = nomeEvento_(ev);
+    if (!ev.prenotabile) return errore_('chiusa', 'Per ' + cosa + ' non serve prenotare.');
     if (!eventoAperto_(ev)) return errore_('chiusa', 'Le prenotazioni per ' + cosa + ' sono chiuse.');
-    db[ev.foglio] = carica_([ev.foglio])[ev.foglio];
-    var gia = db[ev.foglio].some(function (r) { return r[ev.colonna] === ev.id && r.telefono_norm === tel.norm; });
+    var sue = prenotazioniDi_(db, ev);
+    var gia = sue.some(function (r) { return r.telefono_norm === tel.norm; });
     if (gia) return errore_('duplicato', 'Questo numero ha già una prenotazione per ' + cosa + '.');
     var liberi = postiEvento_(db, ev);
     if (liberi <= 0) return errore_('esaurito', 'I posti per ' + cosa + ' sono esauriti.');
     if (persone > liberi) return errore_('posti', liberi === 1 ? 'Resta un solo posto: prenota per 1 persona.' : 'Restano solo ' + liberi + ' posti: prenota per meno persone.');
-    var riga = { creato: new Date(), nome: nome, cognome: cognome, telefono: tel.testo, telefono_norm: tel.norm, persone: ev.maxPersone ? persone : '', note: '' };
-    riga[ev.colonna] = ev.id;
-    appendi_(ev.foglio, riga);
+    var riga = { creato: new Date(), attivita: ev.id, nome: nome, cognome: cognome, telefono: tel.testo, telefono_norm: tel.norm,
+      persone: ev.maxPersone ? persone : '', note: '' };
+    appendi_('Prenotazioni', riga);
     contaRegistrazione_();
     segnaModuloUsato_(d.modulo);
     // avviso agli organizzatori (colonna "avvisa"), dopo il lock: con i totali aggiornati
     var totali = { prenotazioni: 1, persone: persone };
-    db[ev.foglio].forEach(function (r) { if (r[ev.colonna] === ev.id) { totali.prenotazioni++; totali.persone += Number(r.persone) || 1; } });
+    sue.forEach(function (r) { totali.prenotazioni++; totali.persone += Number(r.persone) || 1; });
     return { ok: true, _email: ev.avvisa.length ? function () { avvisoPrenotazione_(ev, riga, totali); } : null };
   });
 }
 
-// Email agli indirizzi della colonna "avvisa" dell'evento. Esito (senza dati personali) nella pagina di stato.
+// La sveglia scrive il link di prenotazione nelle attività con la casella "prenotazione" e la cella link vuota;
+// toglie quello scritto da lei se la prenotazione viene spenta. Un link scritto a mano non si tocca.
+function linkAttivita_() {
+  try {
+    var sh = SpreadsheetApp.getActive().getSheetByName(FOGLIO_ATTIVITA);
+    if (!sh || sh.getLastRow() < 2) return;
+    leggiFoglio_(sh, FOGLIO_ATTIVITA, true).forEach(function (r) {
+      if (!r.id) return;
+      var auto = linkPrenota_(r.id);
+      var giusto = vero_(r.prenotazione) ? (r.link || auto) : (r.link === auto ? '' : r.link);
+      if (giusto !== r.link) aggiorna_(null, r, { link: giusto });
+    });
+  } catch (err) {
+    console.error('Link attività non aggiornati: ' + err);
+  }
+}
+
+// Email agli indirizzi della colonna "avvisa" dell'attività. Esito (senza dati personali) nella pagina di stato.
 function avvisoPrenotazione_(ev, r, totali) {
   var titolo = ev.titolo || ev.id;
   var persone = ev.maxPersone ? Number(r.persone) : 1;
@@ -912,7 +783,7 @@ function avvisoPrenotazione_(ev, r, totali) {
       var v = x[0] === 'Telefono' ? '<a href="tel:' + esc_(r.telefono_norm) + '">' + esc_(String(x[1])) + '</a>' : esc_(String(x[1]));
       return '<tr><td style="padding:4px 16px 4px 0;color:#5f5b56">' + esc_(x[0]) + '</td><td style="padding:4px 0;font-weight:bold">' + v + '</td></tr>';
     }).join('') + '</table>' +
-    '<p style="font-size:12px;color:#777;margin-top:16px">Tutte le prenotazioni sono nel foglio ' + esc_(ev.foglio) + ' (colonna ' + esc_(ev.colonna) + ' = ' + esc_(ev.id) + ').</p></div>';
+    '<p style="font-size:12px;color:#777;margin-top:16px">Tutte le prenotazioni sono nel foglio Prenotazioni (colonna attivita = ' + esc_(ev.id) + ').</p></div>';
   var esiti = ev.avvisa.map(function (a) {
     try { return a.split('@')[0] + ' ' + invia_(a, oggetto, testo, html); }
     catch (err) { return a.split('@')[0] + ' errore: ' + String(err.message).slice(0, 80); }
@@ -1217,8 +1088,8 @@ function azioneDashboard_(d) {
 
 function datiDashboard_(idSerata) {
   var ss = SpreadsheetApp.getActive();
-  var db = carica_(['Serate', 'Eventi', 'Inviti', 'Contatti']);
-  ['Pass', 'Gruppi', 'Attesa', 'Prenotazioni', 'Workshop', 'Cena'].forEach(function (n) { db[n] = conArchivio_(ss, n); });
+  var db = carica_(['Serate', FOGLIO_ATTIVITA, 'Inviti', 'Contatti']);
+  ['Pass', 'Gruppi', 'Attesa', 'Prenotazioni'].forEach(function (n) { db[n] = conArchivio_(ss, n); });
   var serate = db.Serate.map(function (r) { return serata_(db, r.id); }).filter(Boolean)
     .sort(function (a, b) { return a.data < b.data ? 1 : a.data > b.data ? -1 : 0; });
   var s = serata_(db, idSerata) || prossimaSerata_(db);
@@ -1281,10 +1152,9 @@ function datiDashboard_(idSerata) {
   var inviti = Object.keys(perInvito).map(function (n) { return { nome: n, pass: perInvito[n] }; })
     .sort(function (a, b) { return b.pass - a.pass; });
 
-  // eventi con prenotazione della serata
-  var eventi = db.Eventi.filter(function (e) { return e.serata === s.id; }).map(function (e) {
-    var ev = evento_(db, e.id);
-    var righe = (db[ev.foglio] || []).filter(function (r) { return r[ev.colonna] === ev.id; });
+  // attività con prenotazione della serata
+  var eventi = attivitaConPrenotazione_(db, s.id).map(function (ev) {
+    var righe = prenotazioniDi_(db, ev);
     var persone = 0;
     righe.forEach(function (r) { persone += Number(r.persone) || 1; });
     var ultima = righe.reduce(function (m, r) { var x = data_(r.creato); return x && x > m ? x : m; }, null);
@@ -1301,9 +1171,8 @@ function datiDashboard_(idSerata) {
     var p = db.Pass.filter(function (r) { return r.serata === x.id && r.stato !== 'annullato'; });
     var v = p.filter(function (r) { return passAttivo_(db, r); });
     var pren = 0;
-    db.Eventi.filter(function (e) { return e.serata === x.id; }).forEach(function (e) {
-      var ev = evento_(db, e.id);
-      (db[ev.foglio] || []).forEach(function (r) { if (r[ev.colonna] === ev.id) pren += Number(r.persone) || 1; });
+    attivitaConPrenotazione_(db, x.id).forEach(function (ev) {
+      prenotazioniDi_(db, ev).forEach(function (r) { pren += Number(r.persone) || 1; });
     });
     return { id: x.id, data: x.data, titolo: x.titolo, validi: v.length, entrati: conta(p, function (r) { return !!r.checkin; }),
       gruppi: contaGruppi(x.id).completo, prenotati: pren, nuoviContatti: conta(db.Contatti, function (c) { return c.prima === x.id; }) };
@@ -2009,7 +1878,7 @@ function recapSerata_(serata, ora, destinatari, ultimo) {
   if (new Date() - previsto > 50 * 60000) {
     esito = ora + ' saltato (in ritardo)';
   } else {
-    var db = carica_(['Serate', 'Pass', 'Gruppi', 'Attesa', 'Eventi']);
+    var db = carica_(['Serate', 'Pass', 'Gruppi', 'Attesa', FOGLIO_ATTIVITA, 'Prenotazioni']);
     var s = serata_(db, serata);
     var pass = db.Pass.filter(function (r) { return r.serata === serata && r.stato !== 'annullato'; });
     var validi = pass.filter(function (r) { return passAttivo_(db, r); });
@@ -2032,11 +1901,9 @@ function recapSerata_(serata, ora, destinatari, ultimo) {
       ['Gruppi scaduti', gruppi.scaduto],
       ['Lista d\'attesa', conta(db.Attesa, function (r) { return r.serata === serata; })]
     ];
-    db.Eventi.filter(function (e) { return e.serata === serata; }).forEach(function (e) {
-      var ev = evento_(db, e.id);
-      if (!db[ev.foglio]) db[ev.foglio] = carica_([ev.foglio])[ev.foglio];
+    attivitaConPrenotazione_(db, serata).forEach(function (ev) {
       var presi = 0;
-      db[ev.foglio].forEach(function (r) { if (r[ev.colonna] === ev.id) presi += Number(r.persone) || 1; });
+      prenotazioniDi_(db, ev).forEach(function (r) { presi += Number(r.persone) || 1; });
       righe.push(['Prenotati: ' + (ev.titolo || ev.id), presi + (ev.posti ? ' su ' + ev.posti : '')]);
     });
     var titolo = 'Recap delle ' + ora + ' — ' + dataBreve_(s);
@@ -2842,7 +2709,7 @@ function orariSerata_(s, testo) {
    Archivio
    CONFIG.giorniPrimaArchivio giorni dopo la serata, di notte, la sveglia sposta le sue righe dai fogli Pass, Gruppi,
    Attesa e Live nei fogli "Archivio Pass", "Archivio Gruppi"… (stesse colonne, nello stesso file), e le prenotazioni
-   dei suoi eventi in "Archivio Workshop", "Archivio Prenotazioni"… Così i fogli che il sito legge a ogni richiesta
+   delle sue attività in "Archivio Prenotazioni". Le righe del foglio Attività restano. Così i fogli che il sito legge a ogni richiesta
    restano piccoli. Per cercare qualcuno di una serata passata: fogli Archivio. Il link personale di un pass
    archiviato risponde "Link non valido". Esito nella pagina di stato.
    Prima di spostare qualcosa fa una copia completa del file nel Drive (backupDrive_) e controlla che la copia
@@ -2912,13 +2779,10 @@ function archiviaSerata_(s) {
       });
       if (n) conti.push(nome + ' ' + n);
     });
-    var eventi = carica_(['Eventi']);
-    eventi.Eventi.forEach(function (e) {
-      if (e.serata !== s.id) return;
-      var ev = evento_(eventi, e.id);
-      var n = sposta_(ev.foglio, function (r) { return r[ev.colonna] === ev.id; });
-      if (n) conti.push(ev.foglio + ' ' + n);
-    });
+    var sue = {};
+    carica_([FOGLIO_ATTIVITA])[FOGLIO_ATTIVITA].forEach(function (e) { if (e.serata === s.id) sue[e.id] = true; });
+    var n = sposta_('Prenotazioni', function (r) { return sue[r.attivita] === true; });
+    if (n) conti.push('Prenotazioni ' + n);
     // le automazioni della serata non servono più
     Object.keys(props.getProperties()).forEach(function (k) { if (k.indexOf('auto:' + s.id + ':') === 0) props.deleteProperty(k); });
     props.setProperty('archiviata:' + s.id, new Date().toISOString());
@@ -2967,6 +2831,147 @@ function leggiArchivio_(nome) {
 }
 
 /* ============================================================
+   Riordino del 09.11 (richiesta dell'utente): serata → attività → prenotazioni
+   Prima: foglio Eventi (solo ciò che si prenotava) e prenotazioni in tre fogli (Prenotazioni, Workshop, Cena).
+   Dopo: foglio Attività (tutto ciò che succede nella serata) e un solo foglio Prenotazioni, colonna "attivita".
+   ============================================================ */
+
+var FOGLI_VECCHI = ['Eventi', 'Workshop', 'Cena', 'Archivio Workshop', 'Archivio Cena'];
+var PREFISSO_VECCHIO = 'vecchio – ';
+
+// Lo chiama setup(), quindi la prima richiesta con il codice nuovo, prima di leggere qualsiasi foglio: nessuna richiesta
+// trova un foglio Attività vuoto. Eventi diventa Attività (allora ogni riga si prenotava: casella "prenotazione" spuntata)
+// e nelle prenotazioni la colonna "evento" diventa "attivita". Le righe di Workshop e Cena le sposta modelloAttivita_.
+function rinominaModelloVecchio_(ss) {
+  var eventi = ss.getSheetByName('Eventi');
+  if (eventi && !ss.getSheetByName(FOGLIO_ATTIVITA)) {
+    eventi.setName(FOGLIO_ATTIVITA);
+    var nc = eventi.getLastColumn(), nr = eventi.getLastRow();
+    eventi.getRange(1, nc + 1).setValue('prenotazione');
+    var si = [];
+    for (var i = 1; i < nr; i++) si.push([true]);
+    if (si.length) eventi.getRange(2, nc + 1, si.length, 1).setValues(si);
+  }
+  ['Prenotazioni', 'Archivio Prenotazioni'].forEach(function (n) {
+    var sh = ss.getSheetByName(n);
+    if (!sh || !sh.getLastColumn()) return;
+    var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    if (head.indexOf('evento') >= 0 && head.indexOf('attivita') < 0) sh.getRange(1, head.indexOf('evento') + 1).setValue('attivita');
+  });
+}
+
+function righeDi_(ss, nome) {
+  var sh = ss.getSheetByName(nome);
+  return sh && sh.getLastRow() > 1 ? leggiFoglio_(sh, nome, false) : [];
+}
+
+// Riscrive il foglio con le colonne di COLONNE nell'ordine giusto; le colonne in più messe a mano restano, in fondo,
+// tranne quelle di "togli". Restituisce le righe scritte (rilette dal foglio).
+function riscriviFoglio_(ss, nome, colonne, righe, togli) {
+  var sh = ss.getSheetByName(nome) || ss.insertSheet(nome, ss.getSheets().length);
+  var extra = [];
+  righe.forEach(function (r) {
+    (r._head || []).forEach(function (h) {
+      h = String(h);
+      if (h && colonne.indexOf(h) < 0 && togli.indexOf(h) < 0 && extra.indexOf(h) < 0) extra.push(h);
+    });
+  });
+  var head = colonne.concat(extra);
+  var valori = [head].concat(righe.map(function (r) { return head.map(function (h) { return r[h] == null ? '' : r[h]; }); }));
+  if (valori.length > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), valori.length - sh.getMaxRows());
+  sh.clearContents();
+  sh.clearFormats();
+  head.forEach(function (h, i) { if (COLONNE_TESTO.indexOf(h) >= 0) sh.getRange(1, i + 1, sh.getMaxRows(), 1).setNumberFormat('@'); });
+  sh.getRange(1, 1, valori.length, head.length).setValues(valori);
+  sh.setFrozenRows(1);
+  delete TESTATE_[nome];
+  SpreadsheetApp.flush();
+  return Math.max(0, sh.getLastRow() - 1);
+}
+
+// Le prenotazioni di Workshop e Cena (e dei loro archivi) vanno in Prenotazioni e Archivio Prenotazioni.
+// Si può ripetere: una prenotazione già presente (stessa attività, telefono e ora) non si copia due volte.
+function unisciPrenotazioni_(ss, dest, fonti) {
+  var righe = righeDi_(ss, dest).map(function (r) { if (!r.attivita && r.evento) r.attivita = r.evento; return r; });
+  var chiave = function (r) { var c = data_(r.creato); return r.attivita + '|' + r.telefono_norm + '|' + (c && !isNaN(c) ? c.getTime() : r.creato); };
+  var ci = {};
+  righe.forEach(function (r) { ci[chiave(r)] = true; });
+  var conti = [dest + ' ' + righe.length];
+  fonti.forEach(function (f) {
+    var nuove = righeDi_(ss, f.nome).map(function (r) {
+      r.attivita = r[f.colonna];
+      if (f.colonna === 'workshop') r.persone = '';
+      return r;
+    }).filter(function (r) { return r.attivita && !ci[chiave(r)] && (ci[chiave(r)] = true); });
+    if (nuove.length) conti.push(f.nome + ' ' + nuove.length);
+    righe = righe.concat(nuove);
+  });
+  if (!righe.length && !ss.getSheetByName(dest)) return '';
+  var scritte = riscriviFoglio_(ss, dest, COLONNE.Prenotazioni, righe, ['evento', 'workshop', 'cena']);
+  if (scritte !== righe.length) throw new Error(dest + ': scritte ' + scritte + ' righe su ' + righe.length);
+  return conti.join(' + ') + ' = ' + scritte;
+}
+
+function modelloAttivita_() {
+  var props = PropertiesService.getScriptProperties();
+  var ss = SpreadsheetApp.getActive();
+  setup(); // Eventi → Attività, se nessuna richiesta l'ha già fatto
+  // backup verificato nell'ultima ora; se non riesce si riprova dopo un'ora, non a ogni giro della sveglia
+  if (Date.now() - Number(props.getProperty('BACKUP_VERIFICATO') || 0) > 36e5) {
+    if (Date.now() - Number(props.getProperty('MODELLO_BACKUP_TENTATO') || 0) < 36e5) throw new Error('backup non verificato, riprovo tra un\'ora');
+    props.setProperty('MODELLO_BACKUP_TENTATO', String(Date.now()));
+    if (!backupDrive_()) throw new Error('backup nel Drive non verificato: niente spostato');
+  }
+  var out = conLock_(function () {
+    var esito = [];
+    // Attività: colonne nell'ordine nuovo, senza "foglio"; link di prenotazione compilato
+    var att = righeDi_(ss, FOGLIO_ATTIVITA);
+    var ids = {};
+    att.forEach(function (r) { ids[r.id] = true; });
+    righeDi_(ss, 'Eventi').forEach(function (r) { if (r.id && !ids[r.id]) { r.prenotazione = true; att.push(r); ids[r.id] = true; } });
+    att.forEach(function (r) {
+      r.prenotazione = vero_(r.prenotazione);
+      if (r.id === EVENTI_PAGINE_VECCHIE.cena && !r.link) r.link = CONFIG.sito + '/6nov-tavolacunzata/';
+      if (r.prenotazione && !r.link) r.link = linkPrenota_(r.id);
+    });
+    var n = riscriviFoglio_(ss, FOGLIO_ATTIVITA, COLONNE[FOGLIO_ATTIVITA], att, ['foglio']);
+    if (n !== att.length) throw new Error('Attività: scritte ' + n + ' righe su ' + att.length);
+    try {
+      var sh = ss.getSheetByName(FOGLIO_ATTIVITA);
+      sh.getRange(2, COLONNE[FOGLIO_ATTIVITA].indexOf('prenotazione') + 1, sh.getMaxRows() - 1, 1)
+        .setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
+    } catch (err) { /* senza caselle funziona lo stesso: TRUE/FALSE scritti a mano */ }
+    esito.push('Attività ' + n);
+    esito.push(unisciPrenotazioni_(ss, 'Prenotazioni', [{ nome: 'Workshop', colonna: 'workshop' }, { nome: 'Cena', colonna: 'cena' }]));
+    var arch = unisciPrenotazioni_(ss, 'Archivio Prenotazioni', [{ nome: 'Archivio Workshop', colonna: 'workshop' }, { nome: 'Archivio Cena', colonna: 'cena' }]);
+    if (arch) esito.push(arch);
+    // solo dopo i controlli: i fogli vecchi restano una settimana con un nome che li mette da parte
+    var rinominati = [];
+    FOGLI_VECCHI.forEach(function (nome) {
+      var sh = ss.getSheetByName(nome);
+      if (sh && !ss.getSheetByName(PREFISSO_VECCHIO + nome)) { sh.setName(PREFISSO_VECCHIO + nome); rinominati.push(nome); }
+    });
+    if (rinominati.length) esito.push('messi da parte: ' + rinominati.join(', '));
+    return { ok: true, esito: esito.join(' · ') };
+  });
+  if (!out.ok) throw new Error(out.messaggio);
+  props.setProperty('MODELLO_ESITO', new Date().toISOString().slice(0, 16) + ' ' + out.esito);
+}
+
+// Una settimana dopo il riordino: via i fogli "vecchio – …" (solo quelli del modello vecchio, per nome).
+function eliminaFogliVecchi_() {
+  var ss = SpreadsheetApp.getActive();
+  var via = [];
+  FOGLI_VECCHI.forEach(function (nome) {
+    var sh = ss.getSheetByName(PREFISSO_VECCHIO + nome);
+    if (!sh) return;
+    via.push(nome + ' (' + Math.max(0, sh.getLastRow() - 1) + ' righe)');
+    ss.deleteSheet(sh);
+  });
+  PropertiesService.getScriptProperties().setProperty('VECCHI_ESITO', new Date().toISOString().slice(0, 16) + ' ' + (via.join(', ') || 'nessuno'));
+}
+
+/* ============================================================
    Accesso ai fogli
    ============================================================ */
 
@@ -3010,7 +3015,7 @@ function leggiFoglio_(sh, nome, aggiungi) {
       if (v === undefined) v = '';
       // Sheets può trasformare "2026-10-30" o "18:00" in una data anche nelle colonne testo: la riportiamo a stringa
       if (v instanceof Date && COLONNE_TESTO.indexOf(h) >= 0) {
-        r[h] = Utilities.formatDate(v, TZ, h === 'inizio' ? 'yyyy-MM-dd HH:mm' : v.getFullYear() < 1901 ? 'HH:mm' : 'yyyy-MM-dd');
+        r[h] = Utilities.formatDate(v, TZ, v.getFullYear() < 1901 ? 'HH:mm' : h === 'inizio' ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd');
       } else r[h] = v instanceof Date ? v : String(v);
     }
     righe.push(r);
