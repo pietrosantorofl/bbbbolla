@@ -296,6 +296,35 @@ window.BOLLA = {
       titolo: "Cucina Romantica & Valerio Brunetto",
       sottotitolo: "Cena al MONO",
       bottone: { it: "Prenota il tavolo", en: "Book a table" }
+    },
+    {
+      // bbbbolla.it/prenota.html?e=conduction-2026-11-13 — testi dal carosello del workshop (richiesta dell'utente, 09.11)
+      id: "conduction-2026-11-13",
+      tipo: "workshop",
+      etichetta: "Workshop",
+      serata: "2026-11-13",
+      ora: "19:00",
+      durata: 2,
+      titolo: { it: "Workshop di conduction e danza", en: "Conduction and dance workshop" },
+      sottotitolo: { it: "Il corpo suona, il suono muove", en: "The body plays, the sound moves" },
+      bottone: { it: "Prenota il workshop", en: "Book the workshop" },
+      conduttori: [
+        { nome: "Andrea Liotta", ruolo: { it: "direzione e conduction", en: "direction and conduction" } }
+      ],
+      testo: [
+        { it: "Un direttore, un gruppo di musicisti, un gruppo di danzatori. Due ore per comporre dal vivo.",
+          en: "A conductor, a group of musicians, a group of dancers. Two hours to compose live." },
+        { it: "Cos’è la conduction? Un direttore guida i musicisti con i gesti, senza spartito, e i danzatori si muovono sulla musica che nasce. Tre dei gesti che imparerai: pugno, stop e silenzio; mano aperta, via, suonate; cerchio, ripeti in loop.",
+          en: "What is conduction? A conductor leads the musicians with gestures, without a score, and the dancers move to the music as it is born. Three of the gestures you’ll learn: fist, stop and silence; open hand, go, play; circle, repeat in a loop." },
+        { it: "Due ore, sei momenti: il cerchio (un nome, un gesto sonoro), corpo e suono (camminata, pulsazione, body percussion), i codici (il direttore insegna i gesti ai musicisti), due gruppi (musicisti sui gesti, danzatori sulla musica), i dialoghi (a coppie: un suono, un movimento) e la composizione, un pezzo costruito tutti insieme. Più una pausa e il cerchio finale.",
+          en: "Two hours, six moments: the circle (a name, a sound gesture), body and sound (walking, pulse, body percussion), the codes (the conductor teaches the gestures to the musicians), two groups (musicians on the gestures, dancers on the music), the dialogues (in pairs: a sound, a movement) and the composition, a piece built all together. Plus a break and the closing circle." },
+        { it: "Due gruppi di persone diverse, un’unica composizione: la musica nasce dai gesti e il movimento nasce dalla musica. Nessun errore possibile.",
+          en: "Two groups of different people, one single composition: the music is born from the gestures and the movement is born from the music. No mistakes possible." },
+        { it: "Per tutti: adulti, ragazzi, gruppi misti. Si partecipa in piedi, da seduti o con le sole mani, ognuno con il proprio modo di esserci. Serve solo la voglia di ascoltare.",
+          en: "For everyone: adults, young people, mixed groups. You can take part standing, sitting or with just your hands, each in their own way. All you need is the will to listen." },
+        { it: "Posti limitati. Porta abiti comodi.",
+          en: "Limited places. Wear comfortable clothes." }
+      ]
     }
   ],
 

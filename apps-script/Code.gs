@@ -346,6 +346,17 @@ function aggiornamentiUnaTantum_() {
       var e = trova_(db[FOGLIO_ATTIVITA], 'id', 'cucinaromantica-2026-11-13');
       if (e) aggiorna_(db[FOGLIO_ATTIVITA], e, campi);
       else appendi_(FOGLIO_ATTIVITA, Object.assign({ id: 'cucinaromantica-2026-11-13' }, campi));
+    } },
+    // workshop di conduction e danza del 13.11 con Andrea Liotta (richiesta dell'utente, 09.11): pagina prenota.html?e=conduction-2026-11-13
+    // (link scritto dalla sveglia), 30 posti, una persona per prenotazione, prenotazioni fino alle 19:00 del 13, avviso solo a Pietro.
+    { id: 'workshop-conduction-2026-11-13', fai: function () {
+      if (!SpreadsheetApp.getActive().getSheetByName(FOGLIO_ATTIVITA)) throw new Error('foglio Attività non ancora pronto');
+      var db = carica_([FOGLIO_ATTIVITA]);
+      var campi = { serata: '2026-11-13', tipo: 'workshop', titolo: 'Workshop di conduction e danza', inizio: "'19:00",
+        prenotazione: true, posti: 30, max_persone: '', attivo: 'TRUE', avvisa: 'pietrosantoro90@gmail.com' };
+      var e = trova_(db[FOGLIO_ATTIVITA], 'id', 'conduction-2026-11-13');
+      if (e) aggiorna_(db[FOGLIO_ATTIVITA], e, campi);
+      else appendi_(FOGLIO_ATTIVITA, Object.assign({ id: 'conduction-2026-11-13' }, campi));
     } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
