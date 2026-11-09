@@ -288,6 +288,8 @@ a { color: inherit; }
   align-items: start;
 }
 
+/* serata senza pass: niente scheda a destra, i dettagli al centro */
+.layout--senza-pass { grid-template-columns: minmax(0, 760px); justify-content: center; }
 .layout__cta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: clamp(-8px, -2vw, -24px); }
 
 .eyebrow {

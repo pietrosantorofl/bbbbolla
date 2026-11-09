@@ -19,6 +19,8 @@
   var richiesta = new URLSearchParams(location.search).get("serata");
   var serata = C.serate.filter(function (s) { return s.id === richiesta; })[0] || future[0] || C.serate[C.serate.length - 1];
   var passata = parseData(serata.data) < oggi();
+  // pass: false = serata senza pass gratuiti (niente scheda, niente bottoni "Prenota pass"): restano workshop e cena
+  var conPass = serata.pass !== false;
 
   /* ---------- helpers ---------- */
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -53,7 +55,7 @@
   setText("dataBreve", dataBreve);
   setText("dataLunga", dataLunga);
   setText("anno", new Date().getFullYear());
-  document.title = C.rassegna.nome + " — " + dataBreve + T(" · Pass gratuiti");
+  document.title = C.rassegna.nome + " — " + dataBreve + (conPass ? T(" · Pass gratuiti") : "");
 
   bind("quando", function (n) {
     n.textContent = dataLunga.charAt(0).toUpperCase() + dataLunga.slice(1);
@@ -76,6 +78,8 @@
   bind("ingresso", function (n) {
     // ingresso: false = niente riga Ingresso (es. finché non si sa)
     if (serata.ingresso === false) { n.parentNode.hidden = true; return; }
+    // ingresso: testo = la riga così com'è (es. serata senza pass: gratis fino a mezzanotte, poi a pagamento)
+    if (serata.ingresso) { n.textContent = L(serata.ingresso); return; }
     if (!serata.senzaPass) return;
     n.textContent = L(serata.senzaPass);
     n.appendChild(document.createElement("br"));
@@ -248,13 +252,15 @@
     serata.lineup.forEach(function (a) {
       var p = prenotaDi(a);
       if (!p) return;
-      var b = el("a", "btn btn--ghost", L(p.testo));
+      // senza pass sono i bottoni principali della serata
+      var b = el("a", conPass ? "btn btn--ghost" : "btn", L(p.testo));
       b.href = p.href;
       n.appendChild(b);
     });
   });
 
-  bind("info", function (n) { n.textContent = L(C.infoUtili); });
+  // il testo unico parla dei pass: senza pass non serve
+  bind("info", function (n) { if (!conPass) { n.hidden = true; return; } n.textContent = L(C.infoUtili); });
 
   bind("altreSerate", function (n) {
     var altre = future.filter(function (s) { return s.id !== serata.id; });
@@ -670,7 +676,14 @@
     document.body.appendChild(a); a.click(); a.remove();
   }
 
-  avvia();
+  // serata senza pass: via la scheda e i bottoni "Prenota pass" (un link a un pass già esistente si apre lo stesso)
+  if (!conPass && modo === "crea") {
+    $("#prenota").hidden = true;
+    $$('a[href="#prenota"]').forEach(function (a) { a.hidden = true; });
+    $(".layout").classList.add("layout--senza-pass");
+  } else {
+    avvia();
+  }
 
   /* ---------- pulsazione: bottone cliccato e poi la scheda, quando ci arriva lo scorrimento ---------- */
   function pulsa(n) { n.classList.remove("pulsa"); void n.offsetWidth; n.classList.add("pulsa"); }

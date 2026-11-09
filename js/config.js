@@ -190,8 +190,13 @@ window.BOLLA = {
     {
       id: "2026-11-13",
       data: "2026-11-13",
-      // locandina non ancora pronta: grafica delle bolle con il logo (assets/sfera-13-11.webp) e la scritta "Locandina in arrivo".
-      // DA COMPLETARE con la locandina: locandine + locandinaHero (come il 6.11), orario, line-up e workshop (riga nel foglio Attività + voce in "attivita")
+      locandine: [
+        { src: "assets/locandine/2026-11-13-serata.jpg", alt: { it: "Locandina della serata del 13 novembre 2026", en: "Poster of the 13 November 2026 night" } }
+      ],
+      // locandinaHero: nella home la locandina al posto delle bolle animate (che restano qui sotto, non si vedono)
+      locandinaHero: { src: "assets/locandine/2026-11-13-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 13 novembre 2026: workshop di conduction e danza, live di My friend Dario e Andrea Liotta, Vini Tre.Mi.La con Valerio Brunetto, DJ set di Franzuá, Cucina Romantica", en: "Poster of the 13 November 2026 night: conduction and dance workshop, My friend Dario and Andrea Liotta live, Tre.Mi.La wines with Valerio Brunetto, Franzuá DJ set, Cucina Romantica" } },
+      // pass: false = niente pass gratuiti questa volta (scelta dell'utente, 09.11): niente scheda né bottoni "Prenota pass"
+      pass: false,
       // bolle: la grafica divisa in livelli (assets/sfera-13-11/), ognuna con il suo movimento;
       // box = [sinistra, alto, lato] in % del quadrato della sfera; moto: deriva · ondeggia · orbita · rimbalza;
       // logo: true = scritta bolla® al centro di quella bolla. src = immagine fissa (anteprima e "riduci movimento").
@@ -202,16 +207,58 @@ window.BOLLA = {
           { src: "assets/sfera-13-11/tl.webp",  box: [-0.822, 5.411, 45.753], moto: "orbita" },
           { src: "assets/sfera-13-11/gia.webp", box: [69.863, 57.74, 30.959], moto: "rimbalza" }
         ] },
-      locandinaInArrivo: true,
-      orario: null,
-      ingresso: false,                  // niente riga Ingresso finché non si sa (scelta dell'utente, 07.11)
+      orario: { inizio: "19:00", fine: null },
+      ingresso: { it: "Gratis prima di mezzanotte, 10€ dopo mezzanotte", en: "Free before midnight, €10 after midnight" },
       luogo: {
         nome: "MONO",
         indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
         mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
       },
-      // vuota finché non arriva il programma: niente line-up né sulla locandina né sotto (scelta dell'utente, 07.11)
-      lineup: []
+      lineup: [
+        {
+          nome: { it: "Workshop di conduction e danza", en: "Conduction and dance workshop" }, ora: "19:00", tag: "Workshop",
+          note: { it: "a cura di Andrea Liotta", en: "by Andrea Liotta" }, link: "https://www.instagram.com/andrea_liotta_music/",
+          attivita: "conduction-2026-11-13",
+          dettagli: {
+            testo: [
+              { it: "Il corpo suona, il suono muove. Un direttore, un gruppo di musicisti, un gruppo di danzatori: due ore per comporre dal vivo.",
+                en: "The body plays, the sound moves. A conductor, a group of musicians, a group of dancers: two hours to compose live." },
+              { it: "Il direttore guida i musicisti con i gesti, senza spartito, e i danzatori si muovono sulla musica che nasce. Per tutti: si partecipa in piedi, da seduti o con le sole mani. Porta abiti comodi.",
+                en: "The conductor leads the musicians with gestures, without a score, and the dancers move to the music as it is born. For everyone: take part standing, sitting or with just your hands. Wear comfortable clothes." }
+            ]
+          }
+        },
+        {
+          nome: { it: "Cena con Cucina Romantica", en: "Dinner with Cucina Romantica" }, ora: "19:00", tag: { it: "Cena", en: "Dinner" },
+          note: { it: "piattini di stagione", en: "seasonal small plates" }, link: "https://www.instagram.com/cucina.romantica/",
+          attivita: "cucinaromantica-2026-11-13",
+          dettagli: {
+            testo: [
+              { it: "Piattini di stagione con ingredienti del territorio, erbe spontanee e tanto cuore: sapori siciliani d’autunno, dall’antipasto al dolce. Cucina aperta dalle 19 alle 23, posti limitati: prenota il tavolo.",
+                en: "Seasonal small plates with local ingredients, wild herbs and lots of heart: Sicilian autumn flavours, from starters to dessert. Kitchen open 7–11 pm, limited seats: book a table." }
+            ]
+          }
+        },
+        {
+          nome: "My friend Dario + Andrea Liotta", ora: "22:00", tag: "Live", main: true,
+          artisti: [{ nome: "My friend Dario", link: "https://www.instagram.com/myfriend.dario/" }, { nome: "Andrea Liotta", link: "https://www.instagram.com/andrea_liotta_music/" }]
+        },
+        { nome: "Franzuá", ora: "23:30", tag: "DJ set", note: "downtempo · cumbia · afrobeat", link: "https://www.instagram.com/franzua_imagerie/" },
+        // minore: true = più piccolo delle proposte musicali (vino, cibo)
+        {
+          nome: "Vini Tre.Mi.La", tag: { it: "Cosa beviamo?", en: "What are we drinking?" }, minore: true, link: "https://tremilawine.com",
+          note: { it: "di Gloria Di Paola · host Valerio Brunetto", en: "by Gloria Di Paola · host Valerio Brunetto" },
+          dettagli: {
+            testo: [
+              { it: "Valerio Brunetto consiglia Tre.Mi.La: la piccola azienda vitivinicola artigianale fondata da Gloria Di Paola nel 2019, alle pendici dell’Etna. Il nome unisce i tre paesi delle sue radici: Trecastagni, Milo e Lavinaio.",
+                en: "Valerio Brunetto recommends Tre.Mi.La: the small artisan winery founded by Gloria Di Paola in 2019 on the slopes of Etna. The name joins the three villages of her roots: Trecastagni, Milo and Lavinaio." },
+              { it: "Vigne lavorate a mano, nel rispetto della biodiversità: Carricante, Catarratto e Nerello Mascalese, con un obiettivo, vinificare su tutti e quattro i versanti del vulcano.",
+                en: "Vineyards worked by hand, respecting biodiversity: Carricante, Catarratto and Nerello Mascalese, with one goal: making wine on all four slopes of the volcano." }
+            ]
+          }
+        },
+        { nome: "Cucina Romantica", tag: { it: "Cucina dalle 19 alle 23", en: "Kitchen 7–11 pm" }, minore: true, link: "https://www.instagram.com/cucina.romantica/" }
+      ]
     }
   ],
 

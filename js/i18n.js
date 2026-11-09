@@ -293,4 +293,17 @@
 
   window.I18N = { lang: lang, T: T, L: L, M: M, giorni: GIORNI[lang], mesi: MESI[lang] };
   applica();
+
+  // prossima serata senza pass (pass: false in config.js): nelle altre pagine via i bottoni "Prenota pass" verso la home
+  // (config.js si carica dopo questo file, quindi si guarda a pagina pronta; la home li toglie da sé in main.js)
+  document.addEventListener("DOMContentLoaded", function () {
+    var C = window.BOLLA;
+    if (!C || !C.serate) return;
+    var d = new Date();
+    var oggi = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+    var prossima = C.serate.filter(function (s) { return s.data >= oggi; })
+      .sort(function (a, b) { return a.data < b.data ? -1 : 1; })[0];
+    if (!prossima || prossima.pass !== false) return;
+    Array.prototype.forEach.call(document.querySelectorAll('a[href="./#prenota"], a[href="../#prenota"]'), function (a) { a.hidden = true; });
+  });
 })();

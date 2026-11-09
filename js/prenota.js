@@ -231,7 +231,7 @@
     cal.addEventListener("click", scaricaIcs);
     result.appendChild(cal);
     // l'evento fa parte di una serata bolla® ancora da venire: invito al pass gratuito
-    if (serata.id && W.passDopo !== false) {
+    if (serata.id && W.passDopo !== false && serata.pass !== false) {
       result.appendChild(el("p", "done__text", T("Dopo l'evento la serata continua: prenota anche il pass gratuito.")));
       var pass = el("a", "btn btn--small", T("Prenota il pass"));
       pass.href = "./?serata=" + encodeURIComponent(serata.id) + "#prenota";
