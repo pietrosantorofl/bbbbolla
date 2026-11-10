@@ -4,6 +4,16 @@
    Un valore null nasconde l'elemento (o mostra "in arrivo").
    ============================================================ */
 
+/* bio di Andrea Liotta (dal suo documento, 10.11): nella line-up del 13.11 (live) e nella pagina del workshop di conduction */
+var BIO_ANDREA_LIOTTA = [
+  { it: "Batterista, percussionista e compositore catanese, classe 1994, Andrea Liotta sperimenta musiche che rimettono in discussione lo spazio sonoro e il rapporto tra acustico ed elettronico. Il suo linguaggio intreccia percussioni elettroacustiche e vibrafono moderno: una performance densa e ipnotica, fatta di suoni metallici e suoni caldi, che alterna momenti quieti ad altri intensi e sostenuti.",
+    en: "Drummer, percussionist and composer from Catania, born in 1994, Andrea Liotta experiments with music that questions sound space and the relationship between acoustic and electronic. His language weaves electroacoustic percussion with the modern vibraphone: a dense, hypnotic performance of metallic and warm sounds, moving between quiet moments and intense, sustained ones." },
+  { it: "Laureato con il massimo dei voti in Strumenti a Percussione al Conservatorio “A. Corelli” di Messina, si è formato in masterclass con nomi come Jojo Mayer, Roy Hargrove, Fabrizio Bosso ed Evelyn Glennie. Ha vinto il premio “Paolo Randazzo” (2015), il primo premio per la miglior composizione al Festival Internazionale Johnny Răducanu di Brăila, in Romania, con l’ensemble VARKES (2021) e, da marimbista, il terzo premio de L’Albero della Musica (2022). È stato tra i primi classificati all’Ibla Grand Prize, con il patrocinio della Carnegie Hall di New York.",
+    en: "He graduated with top marks in Percussion Instruments at the “A. Corelli” Conservatory in Messina and trained in masterclasses with names such as Jojo Mayer, Roy Hargrove, Fabrizio Bosso and Evelyn Glennie. He won the “Paolo Randazzo” prize (2015), first prize for best composition at the Johnny Răducanu International Festival in Brăila, Romania, with the VARKES ensemble (2021) and, as a marimba player, third prize at L’Albero della Musica (2022). He was among the top finalists of the Ibla Grand Prize, under the patronage of Carnegie Hall in New York." },
+  { it: "Ospite di Catania Jazz Marathon e del Sicilian Jazz Festival, oggi suona dal vivo e in studio come sideman in diverse formazioni e insegna.",
+    en: "A guest of Catania Jazz Marathon and the Sicilian Jazz Festival, today he plays live and in the studio as a sideman in several bands, and teaches." }
+];
+
 window.BOLLA = {
   /* URL della Web App di Google Apps Script (vedi apps-script/README).
      Lascia stringa vuota per la modalità DEMO (prenotazioni finte, solo nel browser). */
@@ -242,7 +252,8 @@ window.BOLLA = {
         },
         {
           nome: "My friend Dario + Andrea Liotta", ora: "22:00", tag: "Live", main: true,
-          artisti: [{ nome: "My friend Dario", link: "https://www.instagram.com/myfriend.dario/" }, { nome: "Andrea Liotta", link: "https://www.instagram.com/andrea_liotta_music/" }]
+          artisti: [{ nome: "My friend Dario", link: "https://www.instagram.com/myfriend.dario/" }, { nome: "Andrea Liotta", link: "https://www.instagram.com/andrea_liotta_music/" }],
+          dettagli: { titolo: "Andrea Liotta", testo: BIO_ANDREA_LIOTTA }
         },
         { nome: "Franzuá", ora: "23:30", tag: "DJ set", note: "downtempo · cumbia · afrobeat", link: "https://www.instagram.com/franzua_imagerie/" },
         // minore: true = più piccolo delle proposte musicali (vino, cibo)
@@ -369,10 +380,11 @@ window.BOLLA = {
         { it: "Due gruppi di persone diverse, un’unica composizione: la musica nasce dai gesti e il movimento nasce dalla musica. Nessun errore possibile.",
           en: "Two groups of different people, one single composition: the music is born from the gestures and the movement is born from the music. No mistakes possible." },
         { it: "Per tutti: adulti, ragazzi, gruppi misti. Si partecipa in piedi, da seduti o con le sole mani, ognuno con il proprio modo di esserci. Serve solo la voglia di ascoltare.",
-          en: "For everyone: adults, young people, mixed groups. You can take part standing, sitting or with just your hands, each in their own way. All you need is the will to listen." },
+          en: "For everyone: adults, young people, mixed groups. You can take part standing, sitting or with just your hands, each in their own way. All you need is the will to listen." }
+      ].concat(BIO_ANDREA_LIOTTA, [
         { it: "Posti limitati. Porta abiti comodi.",
           en: "Limited places. Wear comfortable clothes." }
-      ]
+      ])
     }
   ],
 
