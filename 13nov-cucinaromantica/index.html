@@ -70,20 +70,11 @@
               <input name="persone" type="number" inputmode="numeric" min="1" max="70" step="1" value="1" required>
             </label>
           </div>
-          <!-- orario di prenotazione (richiesta dell'utente, 10.11): finisce nella colonna note del foglio Prenotazioni e nelle email di avviso -->
+          <!-- orario di prenotazione (richiesta dell'utente, 10.11): libero, a scelta di chi prenota (niente fasce fisse);
+               finisce nella colonna note del foglio Prenotazioni e nelle email di avviso -->
           <label class="field">
             <span>Orario di prenotazione</span>
-            <select name="orario" required>
-              <option value="" selected disabled>Scegli l'orario</option>
-              <option>19:00</option>
-              <option>19:30</option>
-              <option>20:00</option>
-              <option>20:30</option>
-              <option>21:00</option>
-              <option>21:30</option>
-              <option>22:00</option>
-              <option>22:30</option>
-            </select>
+            <input name="orario" type="time" required>
           </label>
 
           <label class="hp" aria-hidden="true">Sito web <input name="website" tabindex="-1" autocomplete="off"></label>
