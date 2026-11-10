@@ -129,6 +129,11 @@
     if (primoErrato) { errore(primoErrato.name === "telefono" ? "Controlla il numero di telefono." : "Inserisci nome e cognome."); primoErrato.focus(); return; }
     form.persone.setAttribute("aria-invalid", personeValide() ? "false" : "true");
     if (!personeValide()) { errore("Scrivi per quante persone prenoti: da 1 a " + maxPersone + "."); form.persone.focus(); return; }
+    // orario di prenotazione: solo nelle pagine che hanno il campo (es. 13nov-cucinaromantica)
+    if (form.orario) {
+      form.orario.setAttribute("aria-invalid", form.orario.value ? "false" : "true");
+      if (!form.orario.value) { errore("Scegli l'orario della prenotazione."); form.orario.focus(); return; }
+    }
     if (form.website.value) return; // bot
 
     var btn = $("[type=submit]", form);
@@ -143,6 +148,7 @@
       cognome: form.cognome.value,
       telefono: form.telefono.value,
       persone: +form.persone.value,
+      orario: form.orario ? form.orario.value : "",
       // niente caselle: cliccando il bottone si accetta l'informativa (testo sotto il bottone)
       privacy: true,
       website: form.website.value
@@ -185,11 +191,11 @@
     result.appendChild(el("p", "done__kicker", "Prenotazione ricevuta"));
     result.appendChild(el("p", "done__name", dati.nome + " " + dati.cognome));
     result.appendChild(el("p", "done__text", "Cena per " + (dati.persone === 1 ? "1 persona" : dati.persone + " persone") +
-      ". Ti aspettiamo " + dataLunga + (CENA.ora ? " alle " + CENA.ora : "") + " al " + CENA.luogo.nome + "." +
-      (CENA.ora ? "" : " L'orario lo pubblichiamo a breve.") + " Se serve ti chiamiamo al " + dati.telefono + "."));
+      ". Ti aspettiamo " + dataLunga + (dati.orario ? " alle " + dati.orario : CENA.ora ? " alle " + CENA.ora : "") + " al " + CENA.luogo.nome + "." +
+      (dati.orario || CENA.ora ? "" : " L'orario lo pubblichiamo a breve.") + " Se serve ti chiamiamo al " + dati.telefono + "."));
     var cal = el("button", "btn btn--ghost btn--small", "Aggiungi al calendario");
     cal.type = "button";
-    cal.addEventListener("click", scaricaIcs);
+    cal.addEventListener("click", function () { scaricaIcs(dati.orario); });
     result.appendChild(cal);
     result.hidden = false;
     result.focus({ preventScroll: true });
@@ -197,14 +203,16 @@
   }
 
   /* ---------- calendario (.ics) ---------- */
-  function scaricaIcs() {
+  // orario: quello scelto nella prenotazione, altrimenti l'ora della cena
+  function scaricaIcs(orario) {
+    var ora = orario || CENA.ora;
     var ics = [
       "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//bbbbolla.it//cena//IT", "BEGIN:VEVENT",
       "UID:" + CENA.id + "@bbbbolla.it",
       "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""),
       // senza orario: evento di tutto il giorno
-      CENA.ora ? "DTSTART;TZID=Europe/Rome:" + CENA.data.replace(/-/g, "") + "T" + CENA.ora.replace(":", "") + "00" : "DTSTART;VALUE=DATE:" + CENA.data.replace(/-/g, ""),
-      CENA.ora ? "DURATION:PT" + CENA.durata + "H" : "DURATION:P1D",
+      ora ? "DTSTART;TZID=Europe/Rome:" + CENA.data.replace(/-/g, "") + "T" + ora.replace(":", "") + "00" : "DTSTART;VALUE=DATE:" + CENA.data.replace(/-/g, ""),
+      ora ? "DURATION:PT" + (orario ? 2 : CENA.durata) + "H" : "DURATION:P1D",
       "SUMMARY:" + CENA.titolo + (CENA.serie ? " — " + CENA.serie : "") + " · " + C.rassegna.nome,
       "DESCRIPTION:" + CENA.sottotitolo + "\\n" + location.origin + location.pathname,
       "LOCATION:" + [CENA.luogo.nome, CENA.luogo.indirizzo].join(", ").replace(/,/g, "\\,"),

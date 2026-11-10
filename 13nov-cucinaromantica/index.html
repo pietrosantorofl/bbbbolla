@@ -20,7 +20,7 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/style.css?v=202611101030">
+  <link rel="stylesheet" href="css/style.css?v=202611110000">
 </head>
 <body data-attivita="cucinaromantica-2026-11-13">
   <header class="topbar">
@@ -47,7 +47,7 @@
         <p class="card__date" data-bind="data"></p>
 
         <p class="status" aria-live="polite"><span class="status__dot"></span><span class="status__label">Controllo disponibilità…</span></p>
-        <p class="card__lead">Posti limitati. Lascia nome, cognome, numero di telefono e per quante persone prenoti: ti contattiamo solo per comunicazioni sulla cena.</p>
+        <p class="card__lead">Posti limitati. Lascia nome, cognome, numero di telefono, per quante persone prenoti e a che ora: ti contattiamo solo per comunicazioni sulla cena.</p>
 
         <form class="form" id="form" novalidate>
           <div class="field-row">
@@ -70,12 +70,27 @@
               <input name="persone" type="number" inputmode="numeric" min="1" max="70" step="1" value="1" required>
             </label>
           </div>
+          <!-- orario di prenotazione (richiesta dell'utente, 10.11): finisce nella colonna note del foglio Prenotazioni e nelle email di avviso -->
+          <label class="field">
+            <span>Orario di prenotazione</span>
+            <select name="orario" required>
+              <option value="" selected disabled>Scegli l'orario</option>
+              <option>19:00</option>
+              <option>19:30</option>
+              <option>20:00</option>
+              <option>20:30</option>
+              <option>21:00</option>
+              <option>21:30</option>
+              <option>22:00</option>
+              <option>22:30</option>
+            </select>
+          </label>
 
           <label class="hp" aria-hidden="true">Sito web <input name="website" tabindex="-1" autocomplete="off"></label>
 
           <p class="form__error" role="alert" hidden></p>
           <button class="btn btn--block" type="submit">Prenota il tavolo</button>
-          <p class="form__legal">Cliccando sul bottone accetti che nome, cognome, telefono e numero di persone siano usati solo per gestire la prenotazione e contattarti sulla cena: non li cediamo a terzi e li cancelliamo entro 30 giorni dalla cena. Titolare: Pietro Santoro, <a href="mailto:bollacatania@gmail.com">bollacatania@gmail.com</a>. Altre informazioni nell'<a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a>.</p>
+          <p class="form__legal">Cliccando sul bottone accetti che nome, cognome, telefono, numero di persone e orario siano usati solo per gestire la prenotazione e contattarti sulla cena: non li cediamo a terzi e li cancelliamo entro 30 giorni dalla cena. Titolare: Pietro Santoro, <a href="mailto:bollacatania@gmail.com">bollacatania@gmail.com</a>. Altre informazioni nell'<a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a>.</p>
         </form>
 
         <div class="result" hidden tabindex="-1"></div>
@@ -126,8 +141,8 @@
 
   <a href="13nov-cucinaromantica/#prenota" class="mobile-cta btn">Prenota il tavolo</a>
 
-  <script src="js/config.js?v=202611101030"></script>
-  <script src="js/demo.js?v=202611101030"></script>
-  <script src="js/cena.js?v=202611101030"></script>
+  <script src="js/config.js?v=202611110000"></script>
+  <script src="js/demo.js?v=202611110000"></script>
+  <script src="js/cena.js?v=202611110000"></script>
 </body>
 </html>

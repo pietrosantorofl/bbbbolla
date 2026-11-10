@@ -757,8 +757,10 @@ function azioneEventoPrenota_(d, tipo) {
     var liberi = postiEvento_(db, ev);
     if (liberi <= 0) return errore_('esaurito', 'I posti per ' + cosa + ' sono esauriti.');
     if (persone > liberi) return errore_('posti', liberi === 1 ? 'Resta un solo posto: prenota per 1 persona.' : 'Restano solo ' + liberi + ' posti: prenota per meno persone.');
+    // orario di prenotazione (pagine con il campo, es. cena del 13.11): "HH:mm" nella colonna note come "ore HH:mm"
+    var orario = /^\d{1,2}[:.]\d\d$/.test(String(d.orario || '').trim()) ? ('0' + String(d.orario).trim().replace('.', ':')).slice(-5) : '';
     var riga = { creato: new Date(), attivita: ev.id, nome: nome, cognome: cognome, telefono: tel.testo, telefono_norm: tel.norm,
-      persone: ev.maxPersone ? persone : '', note: '' };
+      persone: ev.maxPersone ? persone : '', note: orario ? 'ore ' + orario : '' };
     appendi_('Prenotazioni', riga);
     contaRegistrazione_();
     segnaModuloUsato_(d.modulo);
@@ -812,38 +814,50 @@ function caselleAttivita_(sh, righe) {
 
 // Email agli indirizzi della colonna "avvisa" dell'attività: la prenotazione nuova e sotto l'elenco completo di tutte
 // le prenotazioni dell'attività (richiesta dell'utente, 09.11), in ordine di arrivo. Esito (senza dati personali) nella pagina di stato.
+// orario scelto nella prenotazione ("ore HH:mm" nella colonna note), '' se non c'è
+function orarioPrenotazione_(r) {
+  var m = /ore (\d\d:\d\d)/.exec(String(r.note || ''));
+  return m ? m[1] : '';
+}
+
 function avvisoPrenotazione_(ev, r, totali, elenco) {
   var titolo = ev.titolo || ev.id;
   var persone = ev.maxPersone ? Number(r.persone) : 1;
+  var conOrario = (elenco || [r]).some(function (x) { return orarioPrenotazione_(x); });
   var righe = [
     ['Nome', r.nome + ' ' + r.cognome],
     ['Telefono', r.telefono],
     ['Persone', persone],
+  ].concat(conOrario ? [['Orario', orarioPrenotazione_(r) || '—']] : []).concat([
     ['Quando', Utilities.formatDate(r.creato, TZ, 'dd.MM.yyyy HH:mm')],
     ['Totale prenotazioni', totali.prenotazioni],
     ['Totale persone', totali.persone + (ev.posti ? ' su ' + ev.posti : '')]
-  ];
-  var oggetto = 'Nuova prenotazione — ' + titolo + ': ' + r.nome + ' ' + r.cognome + ', ' + (persone === 1 ? '1 persona' : persone + ' persone');
+  ]);
+  var oggetto = 'Nuova prenotazione — ' + titolo + ': ' + r.nome + ' ' + r.cognome + ', ' + (persone === 1 ? '1 persona' : persone + ' persone') +
+    (orarioPrenotazione_(r) ? ', ore ' + orarioPrenotazione_(r) : '');
   var tutte = (elenco || [r]).slice().sort(function (a, b) { return data_(a.creato) - data_(b.creato); }).map(function (x, i) {
     var quando = data_(x.creato);
     return { n: i + 1, nome: x.nome + ' ' + x.cognome, telefono: x.telefono, tel: x.telefono_norm, persone: ev.maxPersone ? (Number(x.persone) || 1) : 1,
-      quando: quando && !isNaN(quando) ? Utilities.formatDate(quando, TZ, 'dd.MM HH:mm') : '', nuova: x === r };
+      quando: quando && !isNaN(quando) ? Utilities.formatDate(quando, TZ, 'dd.MM HH:mm') : '', orario: orarioPrenotazione_(x), nuova: x === r };
   });
   var testo = oggetto + '\n\n' + righe.map(function (x) { return x[0] + ': ' + x[1]; }).join('\n') +
     '\n\nTutte le prenotazioni (' + tutte.length + '):\n' + tutte.map(function (x) {
-      return x.n + '. ' + x.nome + ' — ' + x.telefono + ' — ' + (x.persone === 1 ? '1 persona' : x.persone + ' persone') + ' — ' + x.quando;
+      return x.n + '. ' + x.nome + ' — ' + x.telefono + ' — ' + (x.persone === 1 ? '1 persona' : x.persone + ' persone') +
+        (conOrario ? ' — ' + (x.orario ? 'ore ' + x.orario : 'senza orario') : '') + ' — ' + x.quando;
     }).join('\n');
   var cella = 'padding:6px 10px 6px 0;border-top:1px solid #e2dfda;vertical-align:top';
   var tabella = '<h3 style="margin:24px 0 8px;font-size:16px">Tutte le prenotazioni (' + tutte.length + ' · ' + totali.persone +
     (totali.persone === 1 ? ' persona' : ' persone') + (ev.posti ? ' su ' + ev.posti : '') + ')</h3>' +
     '<table style="border-collapse:collapse;font-size:14px;width:100%">' +
     '<tr style="color:#5f5b56;font-size:12px;text-align:left"><th style="padding:0 10px 4px 0">#</th><th style="padding:0 10px 4px 0">Nome</th>' +
-    '<th style="padding:0 10px 4px 0">Telefono</th><th style="padding:0 10px 4px 0;text-align:right">Persone</th><th style="padding:0 0 4px 0">Quando</th></tr>' +
+    '<th style="padding:0 10px 4px 0">Telefono</th><th style="padding:0 10px 4px 0;text-align:right">Persone</th>' + (conOrario ? '<th style="padding:0 10px 4px 0">Orario</th>' : '') +
+    '<th style="padding:0 0 4px 0">Quando</th></tr>' +
     tutte.map(function (x) {
       var st = cella + (x.nuova ? ';font-weight:bold' : '');
       return '<tr><td style="' + st + ';color:#5f5b56">' + x.n + '</td><td style="' + st + '">' + esc_(x.nome) + (x.nuova ? ' (nuova)' : '') + '</td>' +
         '<td style="' + st + ';white-space:nowrap"><a href="tel:' + esc_(x.tel) + '" style="color:#121212">' + esc_(x.telefono) + '</a></td>' +
-        '<td style="' + st + ';text-align:right">' + x.persone + '</td><td style="' + st + ';white-space:nowrap;color:#5f5b56">' + esc_(x.quando) + '</td></tr>';
+        '<td style="' + st + ';text-align:right">' + x.persone + '</td>' + (conOrario ? '<td style="' + st + ';white-space:nowrap">' + esc_(x.orario || '—') + '</td>' : '') +
+        '<td style="' + st + ';white-space:nowrap;color:#5f5b56">' + esc_(x.quando) + '</td></tr>';
     }).join('') + '</table>';
   var html = '<div style="font-family:Helvetica,Arial,sans-serif;max-width:620px">' +
     '<h2 style="margin:0 0 12px">bolla&reg; · ' + esc_(titolo) + '</h2>' +
