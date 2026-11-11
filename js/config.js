@@ -48,7 +48,8 @@ window.BOLLA = {
       locandine: [
         { src: "assets/locandine/2026-10-30-serata.jpg", alt: { it: "Locandina della serata del 30 ottobre 2026", en: "Poster of the 30 October 2026 night" } },
         { src: "assets/locandine/2026-10-30-workshop.jpg", alt: { it: "Locandina del workshop La Cumbia tradizionale colombiana", en: "Poster of the Traditional Colombian Cumbia workshop" } },
-        { src: "assets/locandine/2026-10-30-vino.jpg", alt: { it: "Locandina della cantina: Vini Controcorrente di Nino Calì, host Valerio Brunetto", en: "Poster of the winery: Controcorrente wines by Nino Calì, hosted by Valerio Brunetto" } }
+        // locandina originale della cantina (storia 9:16, dall'utente l'11.11)
+        { src: "assets/locandine/2026-10-30-cantina.jpg", formato: "9:16", alt: { it: "Locandina della cantina: Vini Controcorrente di Nino Calì, host Valerio Brunetto", en: "Poster of the winery: Controcorrente wines by Nino Calì, hosted by Valerio Brunetto" } }
       ],
       // foto e video per la pagina Vibes (vibes.html#2026-10-30), file in assets/vibes/2026-10-30/
       // tipo: "foto" o "video"; src: null = segnaposto "in arrivo" finché non arriva il file
