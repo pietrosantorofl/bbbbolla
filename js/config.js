@@ -14,6 +14,16 @@ var BIO_ANDREA_LIOTTA = [
     en: "A guest of Catania Jazz Marathon and the Sicilian Jazz Festival, today he plays live and in the studio as a sideman in several bands, and teaches." }
 ];
 
+// bio di Gaia Centamore (conduce il workshop del 13.11 con Andrea Liotta, richiesta dell'utente 12.11): sintesi dei punti dati dall'utente
+var BIO_GAIA_CENTAMORE = [
+  { it: "Gaia Centamore è danzatrice, coreografa e insegnante. Si è diplomata in danza contemporanea all’Accademia Nazionale di Danza di Roma e si è perfezionata con il corso Modem Codici Gestuali a Scenario Pubblico e con il corso professionale R.O.S. (Research Open Space) al Centro Opus Ballet.",
+    en: "Gaia Centamore is a dancer, choreographer and teacher. She graduated in contemporary dance at the Accademia Nazionale di Danza in Rome and trained further with the Modem Codici Gestuali course at Scenario Pubblico and the R.O.S. (Research Open Space) professional course at Centro Opus Ballet." },
+  { it: "Ha danzato come interprete per coreografi e compagnie come Virgilio Sieni, Daniele Ninarello, DNA Dance Company, Compagnia Opus Ballet e CanGo, e in produzioni come Echea (ZA DanceWorks / Andrea Zardi) e Primitive Accommodation. È stata assistente coreografa per la compagnia AppStage 2020 di Bologna.",
+    en: "She has danced for choreographers and companies such as Virgilio Sieni, Daniele Ninarello, DNA Dance Company, Compagnia Opus Ballet and CanGo, and in productions such as Echea (ZA DanceWorks / Andrea Zardi) and Primitive Accommodation. She was assistant choreographer for the AppStage 2020 company in Bologna." },
+  { it: "Oggi insegna e crea coreografie in Sicilia: collabora con la scuola Danzamica di Trecastagni e tiene corsi di danza contemporanea e movimento.",
+    en: "Today she teaches and choreographs in Sicily, working with the Danzamica school in Trecastagni and running contemporary dance and movement classes." }
+];
+
 window.BOLLA = {
   /* URL della Web App di Google Apps Script (vedi apps-script/README).
      Lascia stringa vuota per la modalità DEMO (prenotazioni finte, solo nel browser). */
@@ -229,15 +239,17 @@ window.BOLLA = {
       lineup: [
         {
           nome: { it: "Workshop di conduction e danza", en: "Conduction and dance workshop" }, ora: "19:00", tag: "Workshop",
-          note: { it: "a cura di Andrea Liotta", en: "by Andrea Liotta" }, link: "https://www.instagram.com/andrea_liotta_music/",
+          note: { it: "a cura di Andrea Liotta e Gaia Centamore", en: "by Andrea Liotta and Gaia Centamore" },
           attivita: "conduction-2026-11-13",
           dettagli: {
             testo: [
               { it: "Il corpo suona, il suono muove. Un direttore, un gruppo di musicisti, un gruppo di danzatori: due ore per comporre dal vivo.",
                 en: "The body plays, the sound moves. A conductor, a group of musicians, a group of dancers: two hours to compose live." },
               { it: "Il direttore guida i musicisti con i gesti, senza spartito, e i danzatori si muovono sulla musica che nasce. Per tutti: si partecipa in piedi, da seduti o con le sole mani. Porta abiti comodi.",
-                en: "The conductor leads the musicians with gestures, without a score, and the dancers move to the music as it is born. For everyone: take part standing, sitting or with just your hands. Wear comfortable clothes." }
-            ]
+                en: "The conductor leads the musicians with gestures, without a score, and the dancers move to the music as it is born. For everyone: take part standing, sitting or with just your hands. Wear comfortable clothes." },
+              { it: "A cura di Andrea Liotta (musica e conduction) e Gaia Centamore (danza).",
+                en: "Led by Andrea Liotta (music and conduction) and Gaia Centamore (dance)." }
+            ].concat(BIO_GAIA_CENTAMORE)
           }
         },
         {
@@ -369,7 +381,8 @@ window.BOLLA = {
       sottotitolo: { it: "Il corpo suona, il suono muove", en: "The body plays, the sound moves" },
       bottone: { it: "Prenota il workshop", en: "Book the workshop" },
       conduttori: [
-        { nome: "Andrea Liotta", ruolo: { it: "direzione e conduction", en: "direction and conduction" } }
+        { nome: "Andrea Liotta", ruolo: { it: "direzione e conduction", en: "direction and conduction" } },
+        { nome: "Gaia Centamore", ruolo: { it: "danza", en: "dance" } }
       ],
       testo: [
         { it: "Un direttore, un gruppo di musicisti, un gruppo di danzatori. Due ore per comporre dal vivo.",
@@ -382,7 +395,7 @@ window.BOLLA = {
           en: "Two groups of different people, one single composition: the music is born from the gestures and the movement is born from the music. No mistakes possible." },
         { it: "Per tutti: adulti, ragazzi, gruppi misti. Si partecipa in piedi, da seduti o con le sole mani, ognuno con il proprio modo di esserci. Serve solo la voglia di ascoltare.",
           en: "For everyone: adults, young people, mixed groups. You can take part standing, sitting or with just your hands, each in their own way. All you need is the will to listen." }
-      ].concat(BIO_ANDREA_LIOTTA, [
+      ].concat(BIO_ANDREA_LIOTTA, BIO_GAIA_CENTAMORE, [
         { it: "Posti limitati. Porta abiti comodi.",
           en: "Limited places. Wear comfortable clothes." }
       ])
