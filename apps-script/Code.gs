@@ -357,6 +357,18 @@ function aggiornamentiUnaTantum_() {
       var e = trova_(db[FOGLIO_ATTIVITA], 'id', 'conduction-2026-11-13');
       if (e) aggiorna_(db[FOGLIO_ATTIVITA], e, campi);
       else appendi_(FOGLIO_ATTIVITA, Object.assign({ id: 'conduction-2026-11-13' }, campi));
+    } },
+    // 11.11: la colonna "serata" del foglio Attività aveva 46339 al posto di 2026-11-13 (giorno riscritto in una cella con
+    // formato numero). Il codice ora lo legge lo stesso; qui la colonna torna testo, così nel foglio si legge di nuovo la data.
+    { id: 'attivita-serata-testo-2026-11-11', fai: function () {
+      var sh = SpreadsheetApp.getActive().getSheetByName(FOGLIO_ATTIVITA);
+      if (!sh || sh.getLastRow() < 2) return;
+      var righe = leggiFoglio_(sh, FOGLIO_ATTIVITA, false);
+      var col = righe.length ? righe[0]._head.indexOf('serata') + 1 : 0;
+      if (col < 1) return;
+      var rg = sh.getRange(2, col, righe.length, 1);
+      rg.setNumberFormat('@');
+      rg.setValues(righe.map(function (r) { return [String(r.serata)]; }));
     } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
@@ -3098,6 +3110,10 @@ function leggiFoglio_(sh, nome, aggiungi) {
       // Sheets può trasformare "2026-10-30" o "18:00" in una data anche nelle colonne testo: la riportiamo a stringa
       if (v instanceof Date && COLONNE_TESTO.indexOf(h) >= 0) {
         r[h] = Utilities.formatDate(v, TZ, v.getFullYear() < 1901 ? 'HH:mm' : h === 'inizio' ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd');
+      } else if ((h === 'serata' || h === 'data') && typeof v === 'number' && v > 40000 && v < 60000 && v === Math.floor(v)) {
+        // giorno riscritto a mano in una cella con formato numero: Sheets lo salva come seriale (46339 = 2026-11-13,
+        // successo l'11.11 nel foglio Attività: cena e workshop risultavano chiusi). Lo riportiamo a "AAAA-MM-GG".
+        r[h] = Utilities.formatDate(new Date(Date.UTC(1899, 11, 30) + v * 864e5), 'UTC', 'yyyy-MM-dd');
       } else r[h] = v instanceof Date ? v : String(v);
     }
     righe.push(r);
