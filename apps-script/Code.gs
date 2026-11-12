@@ -375,7 +375,9 @@ function aggiornamentiUnaTantum_() {
     { id: 'invito-2026-11-13-prova', fai: function () { mailInvito_('2026-11-13', INVITO_13_11.prova('pietrosantoro90@gmail.com')); } },
     { id: 'invito-2026-11-13-conteggio', fai: function () { contaInvito_('2026-11-13', INVITO_13_11.tutti()); } },
     // seconda prova (12.11): oggetto con 13/11 e Cucina Romantica prima del workshop
-    { id: 'invito-2026-11-13-prova-2', fai: function () { mailInvito_('2026-11-13', INVITO_13_11.prova('pietrosantoro90@gmail.com')); } }
+    { id: 'invito-2026-11-13-prova-2', fai: function () { mailInvito_('2026-11-13', INVITO_13_11.prova('pietrosantoro90@gmail.com')); } },
+    // invio a tutti gli iscritti (ok dell'utente sulla seconda prova, 12.11): se il giro si interrompe, la sveglia riprende dagli altri
+    { id: 'invito-2026-11-13', fai: function () { mailInvito_('2026-11-13', INVITO_13_11.tutti()); } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
     // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
