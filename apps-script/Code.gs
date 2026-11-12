@@ -369,7 +369,11 @@ function aggiornamentiUnaTantum_() {
       var rg = sh.getRange(2, col, righe.length, 1);
       rg.setNumberFormat('@');
       rg.setValues(righe.map(function (r) { return [String(r.serata)]; }));
-    } }
+    } },
+    // mail di recap del 13.11 (richiesta dell'utente, 12.11): prima solo la prova a Pietro e il conteggio dei destinatari;
+    // l'invio a tutti si aggiunge dopo l'ok dell'utente sulla prova
+    { id: 'invito-2026-11-13-prova', fai: function () { mailInvito_('2026-11-13', INVITO_13_11.prova('pietrosantoro90@gmail.com')); } },
+    { id: 'invito-2026-11-13-conteggio', fai: function () { contaInvito_('2026-11-13', INVITO_13_11.tutti()); } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
     // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
@@ -2182,7 +2186,8 @@ function nota_(t) {
 function dettagli_(s, data) {
   var righe = [['Quando', data + (s.orario ? ', ' + s.orario : '')]];
   if (s.luogo) righe.push(['Dove', s.luogo]);
-  righe.push(['Ingresso', (s.senzaPass ? s.senzaPass + ' · ' : '') + 'Gratuito con pass']);
+  // s.ingresso: testo libero per le serate senza pass (es. 13.11: gratis prima di mezzanotte, 10€ dopo)
+  righe.push(['Ingresso', s.ingresso || (s.senzaPass ? s.senzaPass + ' · ' : '') + 'Gratuito con pass']);
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;font-size:15px">' +
     righe.map(function (r) {
       return '<tr><td style="padding:8px 0;border-top:1px solid #d6d3ce;width:90px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#5f5b56">' + r[0] + '</td>' +
@@ -2598,14 +2603,15 @@ function contaInvito_(serata, o) {
 function testoInvito_(nome, s, o, pass) {
   return 'Ciao ' + nome + ', ' + o.invito + ' ' + giorno_(fineSerata_(s)) + ', ' + o.orario + ', ' + String(s.luogo).split(',')[0] + '. ' +
     o.programma.map(function (p) { return (p.ora ? p.ora + ' ' : '') + p.nome; }).join(' · ') + '. ' +
-    (pass ? 'Il tuo pass: ' + linkPass_(pass.chiave) : 'Il pass è gratuito: ' + CONFIG.sito + '/#prenota') + ' — ' +
+    (o.senzaPassSerata ? 'Ingresso: ' + o.ingresso.charAt(0).toLowerCase() + o.ingresso.slice(1) + '.' : pass ? 'Il tuo pass: ' + linkPass_(pass.chiave) : 'Il pass è gratuito: ' + CONFIG.sito + '/#prenota') + ' — ' +
     o.bottoni.map(function (b) { return b.testo + ': ' + b.href; }).join(' — ');
 }
 
 function emailInvito_(nome, s, o, pass) {
   var a = function (href, t) { return '<a href="' + href + '" style="color:#121212;text-decoration:underline">' + t + '</a>'; };
   var luogo = String(s.luogo).split(',')[0];
-  var dettagli = dettagli_({ orario: o.orario, luogo: s.luogo, senzaPass: s.senzaPass }, giorno_(fineSerata_(s)));
+  // o.senzaPassSerata (13.11): serata senza pass, niente bottone del pass; o.ingresso va nella riga "Ingresso"
+  var dettagli = dettagli_({ orario: o.orario, luogo: s.luogo, senzaPass: s.senzaPass, ingresso: o.ingresso }, giorno_(fineSerata_(s)));
   // programma: ora a sinistra, nome (con link) e una riga sotto
   var programma = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;font-size:15px">' +
     o.programma.map(function (p) {
@@ -2620,7 +2626,8 @@ function emailInvito_(nome, s, o, pass) {
     paragrafo_('Ciao ' + esc_(nome) + ',') +
     paragrafo_(o.racconto) +
     dettagli +
-    (pass
+    (o.senzaPassSerata ? ''
+      : pass
       ? bottone_(linkPass_(pass.chiave), 'Apri il tuo pass') + nota_('Hai già il pass per questa serata: all\'ingresso mostra il QR.')
       : bottone_(CONFIG.sito + '/#prenota', 'Prenota il pass gratuito')) +
     '<p style="margin:28px 0 0;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#5f5b56">Programma</p>' +
@@ -2630,7 +2637,7 @@ function emailInvito_(nome, s, o, pass) {
         '<p style="margin:0 0 14px;font-size:14px;line-height:1.5">' + esc_(b.descrizione) + '</p>' + bottone_(b.href, esc_(b.testo), true));
     }).join('') +
     nota_(a(o.mappa, 'Come arrivare al ' + esc_(luogo)) + ' · ' + a(o.instagram, 'bolla® su Instagram') + ' · ' +
-      a(CONFIG.sito + '/vibes.html', 'Le Vibes della prima serata'));
+      a(CONFIG.sito + '/vibes.html', o.vibesTesto || 'Le Vibes della prima serata'));
   return layout_({ banner: o.locandina, bannerAlt: o.locandinaAlt, anteprima: o.anteprima, corpo: corpo, s: { titolo: '' }, newsletter: true });
 }
 
@@ -2672,6 +2679,49 @@ var INVITO_06_11 = {
   },
   prova: function (a) { var o = INVITO_06_11.base(); o.prova = a; return o; },
   tutti: function () { return INVITO_06_11.base(); }
+};
+
+// testi della mail di recap del 13.11 a tutti gli iscritti alla newsletter (richiesta dell'utente, 12.11; come la pagina:
+// js/config.js, serata 2026-11-13). Serata senza pass: ingresso libero prima di mezzanotte, 10€ dopo.
+var INVITO_13_11 = {
+  base: function () {
+    return {
+      oggetto: 'Venerdì 13 novembre a bolla®: conduction e danza, Cucina Romantica e il live di My friend Dario',
+      anteprima: 'Workshop di conduction e danza, cena con Cucina Romantica, live e DJ set. Gratis prima di mezzanotte.',
+      locandina: 'locandine/2026-11-13-serata.jpg',
+      locandinaAlt: 'Locandina di bolla® del 13 novembre 2026',
+      titolo: 'Ti aspettiamo nella bolla®',
+      racconto: 'Venerdì 13 novembre si parte alle 19:00 con il workshop di conduction e danza di Andrea Liotta e Gaia Centamore ' +
+        'e la cena di Cucina Romantica. Alle 22:00 il live di My friend Dario con Andrea Liotta, poi il DJ set di Franzuá fino a tardi. ' +
+        'Nel bicchiere, i vini Tre.Mi.La consigliati da Valerio Brunetto.',
+      invito: 'ti aspettiamo a bolla®',
+      orario: 'dalle 19:00',
+      senzaPassSerata: true,
+      ingresso: 'Gratis prima di mezzanotte, 10€ dopo mezzanotte',
+      mappa: 'https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania',
+      instagram: 'https://www.instagram.com/bbbbolla/',
+      vibesTesto: 'Le Vibes delle serate passate',
+      programma: [
+        { ora: '19:00', nome: 'Workshop di conduction e danza', link: CONFIG.sito + '/prenota.html?e=conduction-2026-11-13',
+          nota: 'a cura di Andrea Liotta e Gaia Centamore · su prenotazione' },
+        { ora: '19:00', nome: 'Cena con Cucina Romantica', link: CONFIG.sito + '/13nov-cucinaromantica/', nota: 'piattini di stagione · su prenotazione' },
+        { ora: '22:00', nome: 'My friend Dario + Andrea Liotta', nota: 'live',
+          artisti: [{ nome: 'My friend Dario', link: 'https://www.instagram.com/myfriend.dario/' }, { nome: 'Andrea Liotta', link: 'https://www.instagram.com/andrea_liotta_music/' }] },
+        { ora: '23:30', nome: 'Franzuá', link: 'https://www.instagram.com/franzua_imagerie/', nota: 'DJ set: downtempo · cumbia · afrobeat' },
+        { nome: 'Vini Tre.Mi.La', link: 'https://tremilawine.com', nota: 'di Gloria Di Paola · consigliati da Valerio Brunetto, host' }
+      ],
+      bottoni: [
+        { titolo: 'Workshop di conduction e danza · 19:00', descrizione: 'Il corpo suona, il suono muove: un direttore, un gruppo di musicisti ' +
+          'e uno di danzatori compongono dal vivo. Per tutti: serve solo la voglia di ascoltare. Posti limitati.',
+          testo: 'Prenota il workshop', href: CONFIG.sito + '/prenota.html?e=conduction-2026-11-13' },
+        { titolo: 'Cena con Cucina Romantica · dalle 19:00', descrizione: 'Piattini di stagione con ingredienti del territorio ed erbe spontanee, ' +
+          'dall’antipasto al dolce. Posti limitati.',
+          testo: 'Prenota il tavolo', href: CONFIG.sito + '/13nov-cucinaromantica/' }
+      ]
+    };
+  },
+  prova: function (a) { var o = INVITO_13_11.base(); o.prova = a; return o; },
+  tutti: function () { return INVITO_13_11.base(); }
 };
 
 // testi della mail Vibes del 30.10
