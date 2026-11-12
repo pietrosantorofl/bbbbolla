@@ -373,7 +373,9 @@ function aggiornamentiUnaTantum_() {
     // mail di recap del 13.11 (richiesta dell'utente, 12.11): prima solo la prova a Pietro e il conteggio dei destinatari;
     // l'invio a tutti si aggiunge dopo l'ok dell'utente sulla prova
     { id: 'invito-2026-11-13-prova', fai: function () { mailInvito_('2026-11-13', INVITO_13_11.prova('pietrosantoro90@gmail.com')); } },
-    { id: 'invito-2026-11-13-conteggio', fai: function () { contaInvito_('2026-11-13', INVITO_13_11.tutti()); } }
+    { id: 'invito-2026-11-13-conteggio', fai: function () { contaInvito_('2026-11-13', INVITO_13_11.tutti()); } },
+    // seconda prova (12.11): oggetto con 13/11 e Cucina Romantica prima del workshop
+    { id: 'invito-2026-11-13-prova-2', fai: function () { mailInvito_('2026-11-13', INVITO_13_11.prova('pietrosantoro90@gmail.com')); } }
   ].forEach(function (a) {
     if (fatti['fatto:' + a.id]) return;
     // "dopo": non prima di quest'ora (yyyy-MM-dd HH:mm, ora italiana)
@@ -2686,8 +2688,8 @@ var INVITO_06_11 = {
 var INVITO_13_11 = {
   base: function () {
     return {
-      oggetto: 'Venerdì 13 novembre a bolla®: conduction e danza, Cucina Romantica e il live di My friend Dario',
-      anteprima: 'Workshop di conduction e danza, cena con Cucina Romantica, live e DJ set. Gratis prima di mezzanotte.',
+      oggetto: 'Venerdì 13/11 a bolla®: Cucina Romantica, conduction e danza e il live di My friend Dario',
+      anteprima: 'Cena con Cucina Romantica, workshop di conduction e danza, live e DJ set. Gratis prima di mezzanotte.',
       locandina: 'locandine/2026-11-13-serata.jpg',
       locandinaAlt: 'Locandina di bolla® del 13 novembre 2026',
       titolo: 'Ti aspettiamo nella bolla®',
