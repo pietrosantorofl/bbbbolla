@@ -213,10 +213,23 @@ window.BOLLA = {
       id: "2026-11-13",
       data: "2026-11-13",
       locandine: [
-        { src: "assets/locandine/2026-11-13-serata.jpg", alt: { it: "Locandina della serata del 13 novembre 2026", en: "Poster of the 13 November 2026 night" } }
+        { src: "assets/locandine/2026-11-13-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 13 novembre 2026", en: "Poster of the 13 November 2026 night" } },
+        { src: "assets/cucina-romantica-13-11.jpg", alt: { it: "Locandina della cena con Cucina Romantica", en: "Poster of the dinner with Cucina Romantica" } }
       ],
       // locandinaHero: nella home la locandina al posto delle bolle animate (che restano qui sotto, non si vedono)
       locandinaHero: { src: "assets/locandine/2026-11-13-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 13 novembre 2026: workshop di conduction e danza, live di My friend Dario e Andrea Liotta, Vini Tre.Mi.La con Valerio Brunetto, DJ set di Franzuá, Cucina Romantica", en: "Poster of the 13 November 2026 night: conduction and dance workshop, My friend Dario and Andrea Liotta live, Tre.Mi.La wines with Valerio Brunetto, Franzuá DJ set, Cucina Romantica" } },
+      // foto e video per la pagina Vibes (vibes.html#2026-11-13), file in assets/vibes/2026-11-13/
+      // video stabilizzati, schiariti e accorciati (16.11): via la panoramica buia e il mixer mosso, via l'inizio sfocato del live
+      vibes: [
+        { tipo: "video", src: "assets/vibes/2026-11-13/visuals-live.mp4", poster: "assets/vibes/2026-11-13/visuals-live.jpg", formato: "9:16",
+          alt: { it: "Le visuals sulle bolle e il palco pronto per il live", en: "The visuals on the bubbles and the stage set for the live show" } },
+        { tipo: "video", src: "assets/vibes/2026-11-13/cena-vini.mp4", poster: "assets/vibes/2026-11-13/cena-vini.jpg", formato: "9:16",
+          alt: { it: "La cena di Cucina Romantica nel cortile e i vini Tre.Mi.La", en: "Cucina Romantica's dinner in the courtyard and Tre.Mi.La wines" } },
+        { tipo: "video", src: "assets/vibes/2026-11-13/live.mp4", poster: "assets/vibes/2026-11-13/live.jpg", formato: "9:16",
+          alt: { it: "Il live: percussioni e synth sotto le visuals", en: "The live set: percussion and synths under the visuals" } },
+        { tipo: "video", src: "assets/vibes/2026-11-13/dj-set.mp4", poster: "assets/vibes/2026-11-13/dj-set.jpg", formato: "9:16",
+          alt: { it: "Si balla durante il DJ set", en: "Dancing during the DJ set" } }
+      ],
       // pass: false = niente pass gratuiti questa volta (scelta dell'utente, 09.11): niente scheda né bottoni "Prenota pass"
       pass: false,
       // bolle: la grafica divisa in livelli (assets/sfera-13-11/), ognuna con il suo movimento;
@@ -284,6 +297,20 @@ window.BOLLA = {
         },
         { nome: "Cucina Romantica", tag: { it: "Cucina dalle 19 alle 23", en: "Kitchen 7–11 pm" }, minore: true, link: "https://www.instagram.com/cucina.romantica/" }
       ]
+    },
+    {
+      // 27.11 (richiesta dell'utente, 16.11): in home solo la sfera con il logo bolla® e la data, nient'altro finché non c'è il programma
+      id: "2026-11-27",
+      data: "2026-11-27",
+      pass: false,                 // niente scheda pass finché non si decide
+      orario: null,                // "Orario in arrivo"
+      ingresso: false,             // niente riga Ingresso
+      luogo: {
+        nome: "MONO",
+        indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
+        mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
+      },
+      lineup: []
     }
   ],
 

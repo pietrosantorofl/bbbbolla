@@ -299,7 +299,29 @@ function sveglia() {
   aggiornaConfermati_(db);
   linkAttivita_();
   automazioni_(db);
+  backupMattinoDopo_(db);
   archivio_(db);
+}
+
+// Il mattino dopo ogni serata (dalle 8 alle 12) una copia verificata del file nel Drive, una volta sola per serata
+// (proprietà "backup-dopo:<serata>"). Esito e link in "Backup nel Drive" nella pagina di stato.
+// L'archivio di due giorni dopo fa comunque il suo backup prima di spostare le righe.
+function backupMattinoDopo_(db) {
+  try {
+    var ora = Number(Utilities.formatDate(new Date(), TZ, 'H'));
+    if (ora < 8 || ora >= 12) return;
+    var ieri = spostaGiorno_(oggi_(), -1);
+    var props = PropertiesService.getScriptProperties();
+    db.Serate.forEach(function (r) {
+      var s = serata_(db, r.id);
+      if (!s || s.data !== ieri || props.getProperty('backup-dopo:' + s.id)) return;
+      // segnato prima di partire: se la copia non si verifica non si ritenta ogni 5 minuti (l'esito lo dice)
+      props.setProperty('backup-dopo:' + s.id, new Date().toISOString());
+      backupDrive_();
+    });
+  } catch (err) {
+    console.error('Backup del mattino dopo non riuscito: ' + err);
+  }
 }
 
 // Colonna "confermati" del foglio Gruppi (es. 2/3), solo da leggere: la riscrive la sveglia ogni 5 minuti,
@@ -329,6 +351,8 @@ function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
+    // backup verificato nel Drive chiesto dall'utente il 16.11 (dopo la serata del 13.11)
+    { id: 'backup-2026-11-16', fai: function () { if (!backupDrive_()) throw new Error('backup nel Drive non verificato'); } },
     // riordino del database (richiesta dell'utente, 09.11): Eventi → Attività, prenotazioni di Workshop e Cena (e dei loro
     // archivi) nel foglio Prenotazioni. Prima un backup verificato nel Drive; i fogli vecchi restano come "vecchio – …"
     { id: 'attivita-e-prenotazioni-2026-11-09', fai: function () { modelloAttivita_(); } },
