@@ -33,7 +33,12 @@
     var locandine = s.locandine || [];
     if (locandine.length) {
       var griglia = el("div", "passata__locandine");
-      griglia.style.setProperty("--n", Math.min(locandine.length, 3));
+      // 4 locandine: tutte in fila (2×2 sul telefono); altrimenti al massimo 3 per riga
+      var nCol = locandine.length === 4 ? 4 : Math.min(locandine.length, 3);
+      griglia.style.setProperty("--n", nCol);
+      griglia.setAttribute("data-n", nCol);
+      // stesso formato per tutte le locandine della serata (quello della prima), così nessun riquadro resta con spazio vuoto
+      var formatoSerata = locandine[0].formato || "3:4";
       locandine.forEach(function (l) {
         // un clic apre la locandina intera
         var a = el("a");
@@ -41,7 +46,7 @@
         var img = el("img");
         img.src = l.src; img.alt = L(l.alt) || ""; img.loading = "lazy"; img.width = 900; img.height = 1200;
         // formato: "larghezza:altezza" se la locandina non è 3:4 (es. "4:5"), così non viene tagliata
-        if (l.formato) { var f = l.formato.split(":"); img.height = Math.round(900 * f[1] / f[0]); img.style.aspectRatio = f[0] + " / " + f[1]; }
+        var f = formatoSerata.split(":"); img.height = Math.round(900 * f[1] / f[0]); img.style.aspectRatio = f[0] + " / " + f[1];
         a.appendChild(img);
         griglia.appendChild(a);
       });

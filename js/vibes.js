@@ -43,20 +43,29 @@
      Se per pareggiare servirebbe un ritaglio forte (oltre il 22%), le colonne restano come sono. */
   function impagina(g) {
     var box = g.box;
-    box.textContent = "";
     var n = g.riquadri.length;
-    // se le colonne non si pareggiano (es. 3 riquadri su 2 colonne), l'ultimo va sotto, a tutta larghezza
-    if (!disponi(box, g.riquadri) && n > (stretto.matches ? 2 : 3)) {
+    // su schermo largo prova 3 colonne, poi 4 (es. 4 video verticali tutti in fila)
+    var prove = stretto.matches ? [2] : [3, 4];
+    for (var i = 0; i < prove.length; i++) {
+      if (prove[i] > n) break;
       box.textContent = "";
-      disponi(box, g.riquadri.slice(0, n - 1));
-      var ultimo = g.riquadri[n - 1];
+      if (disponi(box, g.riquadri, prove[i])) return;
+    }
+    box.textContent = "";
+    var nCol = stretto.matches ? 2 : 3;
+    var ultimo = g.riquadri[n - 1];
+    // se le colonne non si pareggiano (es. 3 riquadri su 2 colonne), l'ultimo va sotto, a tutta larghezza;
+    // un video sì solo sul telefono: a tutta larghezza su schermo grande si vedrebbe sgranato
+    if (n > nCol && (!ultimo.video || stretto.matches)) {
+      disponi(box, g.riquadri.slice(0, n - 1), nCol);
       ultimo.n.classList.add("vibe--largo");
       ultimo.n.style.aspectRatio = "1 / " + Math.min(ultimo.r, 1.25).toFixed(4);
       box.appendChild(ultimo.n);
+    } else {
+      disponi(box, g.riquadri, nCol);
     }
   }
-  function disponi(box, riquadri) {
-    var nCol = stretto.matches ? 2 : 3;
+  function disponi(box, riquadri, nCol) {
     riquadri.forEach(function (q) { q.n.classList.remove("vibe--largo"); });
     var cols = [], alt = [];
     for (var c = 0; c < nCol; c++) { cols.push(el("div", "serata-vibes__col")); alt.push(0); box.appendChild(cols[c]); }
@@ -134,7 +143,7 @@
         var i = pronti.indexOf(v);
         tile.addEventListener("click", function () { apri(pronti, i); });
       }
-      riquadri.push({ n: tile, r: altezzaSuLarghezza(v.formato) });
+      riquadri.push({ n: tile, r: altezzaSuLarghezza(v.formato), video: v.tipo === "video" });
     });
     sez.appendChild(griglia);
     griglie.push({ box: griglia, riquadri: riquadri });

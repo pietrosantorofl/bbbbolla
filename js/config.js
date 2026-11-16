@@ -214,7 +214,9 @@ window.BOLLA = {
       data: "2026-11-13",
       locandine: [
         { src: "assets/locandine/2026-11-13-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 13 novembre 2026", en: "Poster of the 13 November 2026 night" } },
-        { src: "assets/cucina-romantica-13-11.jpg", alt: { it: "Locandina della cena con Cucina Romantica", en: "Poster of the dinner with Cucina Romantica" } }
+        { src: "assets/locandine/2026-11-13-workshop.jpg", formato: "4:5", alt: { it: "Locandina del workshop di conduction e danza con Andrea Liotta e Gaia Centamore", en: "Poster of the conduction and dance workshop with Andrea Liotta and Gaia Centamore" } },
+        { src: "assets/locandine/2026-11-13-cena.jpg", formato: "4:5", alt: { it: "Locandina della cena con Cucina Romantica e Valerio Brunetto", en: "Poster of the dinner with Cucina Romantica and Valerio Brunetto" } },
+        { src: "assets/locandine/2026-11-13-vino.jpg", formato: "4:5", alt: { it: "Locandina della cantina: Vini Tre.Mi.La di Gloria Di Paola, host Valerio Brunetto", en: "Poster of the winery: Tre.Mi.La wines by Gloria Di Paola, hosted by Valerio Brunetto" } }
       ],
       // locandinaHero: nella home la locandina al posto delle bolle animate (che restano qui sotto, non si vedono)
       locandinaHero: { src: "assets/locandine/2026-11-13-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 13 novembre 2026: workshop di conduction e danza, live di My friend Dario e Andrea Liotta, Vini Tre.Mi.La con Valerio Brunetto, DJ set di Franzuá, Cucina Romantica", en: "Poster of the 13 November 2026 night: conduction and dance workshop, My friend Dario and Andrea Liotta live, Tre.Mi.La wines with Valerio Brunetto, Franzuá DJ set, Cucina Romantica" } },
