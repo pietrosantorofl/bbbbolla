@@ -173,6 +173,8 @@ a { color: inherit; }
    il riquadro si stringe sull'immagine: niente bordo di carta diversa attorno alla locandina */
 .locandina--immagine { width: fit-content; max-width: 100%; margin: 0 auto; padding: 0; background: none; }
 .locandina__img { display: block; width: auto; max-width: 100%; height: auto; max-height: 86svh; margin: 0 auto; border-radius: 26.5px; }
+/* locandina animata: il video è piccolo (480x608, da WhatsApp), quindi non oltre 760px di altezza per non sgranarlo su desktop */
+.locandina__img--video { width: min(calc(100vw - 40px), calc(min(86svh, 760px) * 480 / 608)); height: auto; aspect-ratio: 480 / 608; object-fit: cover; background: #efeee6; }
 .hero__stage[hidden], .programma[hidden] { display: none; }
 
 /* ---------- hero: sfera con logo ---------- */

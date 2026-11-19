@@ -351,6 +351,26 @@ function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
+    // serata del 27.11 con i pass gratuiti (richiesta dell'utente, 19.11): capienza 300, automazioni spente come CONFIG.nuovaSerata
+    // (senza pass 5€ dopo le 22:30 è il valore di sempre, scritto solo sul sito). Dopo, la riga si cambia a mano nel foglio Serate.
+    { id: 'serata-2026-11-27', fai: function () {
+      var db = carica_(['Serate']);
+      if (trova_(db.Serate, 'id', '2026-11-27')) return;
+      var n = CONFIG.nuovaSerata;
+      appendi_('Serate', { id: '2026-11-27', titolo: 'bolla®', data: '2026-11-27', capienza: 300, aperta: 'TRUE',
+        promemoria: n.promemoria, solleciti: n.solleciti, regalo: n.regalo, recap: n.recap, recap_a: n.recapA });
+    } },
+    // psicoaperitivo "STARE IN BOLLA — cos'è il flow?" a cura di Psi.mposio, 27.11 (richiesta dell'utente, 19.11):
+    // pagina prenota.html?e=psimposio-2026-11-27 (link scritto dalla sveglia), 100 posti, una persona per prenotazione,
+    // prenotazioni fino alle 19:00 del 27, avviso solo a Pietro.
+    { id: 'psimposio-2026-11-27', fai: function () {
+      var db = carica_([FOGLIO_ATTIVITA]);
+      var campi = { serata: '2026-11-27', tipo: 'talk', titolo: 'Psicoaperitivo Psi.mposio — Stare in bolla', inizio: "'19:00",
+        prenotazione: true, posti: 100, max_persone: '', attivo: 'TRUE', avvisa: 'pietrosantoro90@gmail.com' };
+      var e = trova_(db[FOGLIO_ATTIVITA], 'id', 'psimposio-2026-11-27');
+      if (e) aggiorna_(db[FOGLIO_ATTIVITA], e, campi);
+      else appendi_(FOGLIO_ATTIVITA, Object.assign({ id: 'psimposio-2026-11-27' }, campi));
+    } },
     // backup verificato nel Drive chiesto dall'utente il 16.11 (dopo la serata del 13.11)
     { id: 'backup-2026-11-16', fai: function () { if (!backupDrive_()) throw new Error('backup nel Drive non verificato'); } },
     // riordino del database (richiesta dell'utente, 09.11): Eventi → Attività, prenotazioni di Workshop e Cena (e dei loro

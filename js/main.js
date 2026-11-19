@@ -157,6 +157,22 @@
     if (l.formato) { var f = l.formato.split(":"); n.width = 1080; n.height = Math.round(1080 * f[1] / f[0]); }
     n.hidden = false;
     var box = n.closest(".locandina");
+    // locandina animata: video muto in loop al posto dell'immagine (che resta come anteprima e per "riduci movimento")
+    var fermo = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (l.video && !fermo) {
+      var v = document.createElement("video");
+      v.className = n.className + " locandina__img--video";
+      v.poster = l.src;
+      v.width = n.width; v.height = n.height;
+      v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+      v.setAttribute("muted", ""); v.setAttribute("playsinline", ""); v.setAttribute("preload", "auto");
+      v.setAttribute("role", "img");
+      v.setAttribute("aria-label", n.alt);
+      v.src = l.video;
+      n.replaceWith(v);
+      var p = v.play();
+      if (p && p.catch) p.catch(function () { /* autoplay bloccato (es. risparmio energetico): resta il primo fotogramma */ });
+    }
     box.classList.add("locandina--immagine");
     $(".hero__stage", box).hidden = true;
     $(".programma", box).hidden = true;

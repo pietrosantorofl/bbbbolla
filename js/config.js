@@ -300,18 +300,42 @@ window.BOLLA = {
       ]
     },
     {
-      // 27.11 (richiesta dell'utente, 16.11): in home solo la sfera con il logo bolla® e la data, nient'altro finché non c'è il programma
+      // 27.11 (richiesta dell'utente, 19.11): locandina animata senza line-up in loop nella home, pass gratuiti aperti,
+      // psicoaperitivo di Psi.mposio su prenotazione. Line-up ancora in definizione: orari di live e DJ set in arrivo.
       id: "2026-11-27",
       data: "2026-11-27",
-      pass: false,                 // niente scheda pass finché non si decide
-      orario: null,                // "Orario in arrivo"
-      ingresso: false,             // niente riga Ingresso
+      // locandinaHero con video: il video (senza audio) gira in loop; src = primo fotogramma (anteprima e "riduci movimento")
+      locandinaHero: { video: "assets/locandine/2026-11-27-serata.mp4", src: "assets/locandine/2026-11-27-serata.jpg", formato: "480:608",
+        alt: { it: "Locandina animata della serata del 27 novembre 2026 al MONO: la bolla® che respira", en: "Animated poster of the 27 November 2026 night at MONO: the breathing bolla®" } },
+      orario: { inizio: "19:00", fine: null },
+      senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },
       luogo: {
         nome: "MONO",
         indirizzo: "Via Gornalunga, 12, 95129 Catania CT",
         mappa: "https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania"
       },
-      lineup: []
+      lineup: [
+        {
+          nome: { it: "STARE IN BOLLA — cos’è il flow?", en: "STARE IN BOLLA — what is flow?" }, ora: "19:00", tag: { it: "Psicoaperitivo", en: "Psycho-aperitivo" },
+          note: { it: "a cura di Psi.mposio", en: "by Psi.mposio" },
+          attivita: "psimposio-2026-11-27",
+          dettagli: {
+            testo: [
+              { it: "Un “salotto psicologico” attorno ai tavoli, con qualcosa da bere e da mangiare: parliamo di cosa significa stare in bolla, come riconoscerla, come entrarci, come uscirne e cosa vuol dire seguire il proprio flow.",
+                en: "A “psychological living room” around the tables, with something to drink and eat: we talk about what it means to be in the bubble, how to recognise it, get in, get out, and what it means to follow your own flow." },
+              { it: "Con le psicoterapeute Marika Toscano e Giuliana Palmieri. Posti limitati, prenotazione richiesta.",
+                en: "With psychotherapists Marika Toscano and Giuliana Palmieri. Limited places, booking required." }
+            ]
+          }
+        },
+        { nome: "OFFICINA TROPICALE", tag: "Live & impro", main: true },
+        {
+          nome: "Franzuà & Andrea Guglielmino", tag: "DJ set", note: "Micelium Collective",
+          artisti: [{ nome: "Franzuà", link: "https://www.instagram.com/franzua_imagerie/" }, { nome: "Andrea Guglielmino" }]
+        },
+        // minore: true = più piccolo delle proposte musicali (vino, cibo)
+        { nome: "MONAMOUR", tag: { it: "Cucina dalle 19 alle 23", en: "Kitchen 7–11 pm" }, minore: true }
+      ]
     }
   ],
 
@@ -427,6 +451,40 @@ window.BOLLA = {
         { it: "Posti limitati. Porta abiti comodi.",
           en: "Limited places. Wear comfortable clothes." }
       ])
+    },
+    {
+      // bbbbolla.it/prenota.html?e=psimposio-2026-11-27 — testi dalla presentazione di Psi.mposio (richiesta dell'utente, 19.11)
+      id: "psimposio-2026-11-27",
+      tipo: "talk",
+      etichetta: { it: "Psicoaperitivo", en: "Psycho-aperitivo" },
+      serata: "2026-11-27",
+      ora: "19:00",
+      durata: 1.5,
+      titolo: { it: "STARE IN BOLLA — cos’è il flow?", en: "STARE IN BOLLA — what is flow?" },
+      sottotitolo: { it: "Psicoaperitivo a cura di Psi.mposio", en: "A psycho-aperitivo by Psi.mposio" },
+      bottone: { it: "Prenota il tuo posto", en: "Book your place" },
+      conduttori: [
+        { nome: "dott.ssa Marika Toscano", ruolo: { it: "psicoterapeuta", en: "psychotherapist" } },
+        { nome: "dott.ssa Giuliana Palmieri", ruolo: { it: "psicoterapeuta", en: "psychotherapist" } }
+      ],
+      testo: [
+        { it: "Per questo Psi.mposio parliamo di cosa significa stare in bolla: come riconoscerla, come entrarci, come uscirne e cosa vuol dire seguire il proprio flow. Un’occasione per fermarsi un po’, stare insieme e vedere cosa succede quando ci concediamo di… stare in bolla.",
+          en: "At this Psi.mposio we talk about what it means to be in the bubble: how to recognise it, how to get in, how to get out and what it means to follow your own flow. A chance to slow down, be together and see what happens when we allow ourselves to… stay in the bubble." },
+        { it: "Cos’è Psi.mposio? Un “salotto psicologico” nato nel 2023 dall’incontro di tre psicoterapeuti: uno spazio libero e informale per parlare di psicologia e confrontarsi su temi che riguardano tutti noi. Non una conferenza e nemmeno un gruppo terapeutico, ma un’occasione per stare insieme, riflettere, ascoltare e lasciarsi incuriosire da punti di vista diversi dal proprio.",
+          en: "What is Psi.mposio? A “psychological living room” born in 2023 from three psychotherapists: a free, informal space to talk about psychology and share thoughts on topics that concern us all. Not a lecture and not a therapy group, but a chance to be together, reflect, listen and get curious about points of view different from your own." },
+        { it: "Come funziona? Ci si siede attorno ai tavoli, si prende qualcosa da bere e da mangiare e, per circa un’ora e mezza, si parte da un tema psicologico. Dopo una breve introduzione arriva l’attività: scrivere pensieri anonimi, disegnare, rispondere a domande, fare un gioco o semplicemente osservare e ascoltare. Non ci sono risposte giuste o sbagliate: ognuno partecipa nel modo che sente più adatto a sé.",
+          en: "How does it work? We sit around the tables with something to drink and eat and, for about an hour and a half, start from a psychological theme. After a short introduction comes the activity: writing anonymous thoughts, drawing, answering questions, playing a game or simply watching and listening. There are no right or wrong answers: everyone takes part in the way that feels right." },
+        { it: "Da ciò che emerge, Marika e Giuliana propongono una restituzione e si apre il confronto: puoi intervenire, fare domande, raccontare il tuo punto di vista oppure, semplicemente, ascoltare. Anche stare in silenzio e ascoltare è un modo di partecipare.",
+          en: "From what emerges, Marika and Giuliana offer their reflections and the conversation opens up: you can speak, ask questions, share your point of view or simply listen. Staying silent and listening is a way of taking part too." },
+        { it: "Negli incontri passati si è parlato, tra le altre cose, di dipendenze relazionali, autostima, comunicazione e incomprensioni, senso di colpa, sessualità, paura del giudizio ed ecoansia.",
+          en: "Past meetings covered, among other things, relationship dependency, self-esteem, communication and misunderstandings, guilt, sexuality, fear of judgement and eco-anxiety." },
+        { it: "Chi conduce? Marika Toscano e Giuliana Palmieri si sono conosciute alla scuola di specializzazione a orientamento cognitivo-costruttivista-complesso: da colleghe sono diventate amiche e oggi lavorano nello stesso studio, con giovani adulti e adulti che attraversano momenti di difficoltà legati ad ansia, depressione, pensieri ossessivi e difficoltà relazionali.",
+          en: "Who leads it? Marika Toscano and Giuliana Palmieri met at their cognitive-constructivist-complex specialisation school: from colleagues they became friends, and today they work in the same practice with young adults and adults going through difficult times linked to anxiety, depression, obsessive thoughts and relationship issues." },
+        { it: "Marika approfondisce neurodivergenze, disturbi della personalità e disregolazione emotiva, e porta creatività, cura per i materiali e struttura alle idee. Giuliana lavora soprattutto con adolescenti, coppie e dinamiche relazionali: più estroversa e istintiva, si lascia guidare da ciò che accade nel momento. Due modi diversi di stare nella relazione, che insieme si completano.",
+          en: "Marika focuses on neurodivergence, personality disorders and emotional dysregulation, and brings creativity, care for materials and structure to ideas. Giuliana works mainly with teenagers, couples and relationship dynamics: more outgoing and instinctive, she follows what happens in the moment. Two different ways of being in a relationship, which complete each other." },
+        { it: "Posti limitati: è richiesta la prenotazione.",
+          en: "Limited places: booking required." }
+      ]
     }
   ],
 
