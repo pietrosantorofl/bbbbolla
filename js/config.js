@@ -304,9 +304,14 @@ window.BOLLA = {
       // psicoaperitivo di Psi.mposio su prenotazione. Line-up ancora in definizione: orari di live e DJ set in arrivo.
       id: "2026-11-27",
       data: "2026-11-27",
-      // locandinaHero con video: il video (senza audio) gira in loop; src = primo fotogramma (anteprima e "riduci movimento")
-      locandinaHero: { video: "assets/locandine/2026-11-27-serata.mp4", src: "assets/locandine/2026-11-27-serata.jpg", formato: "480:608",
-        alt: { it: "Locandina animata della serata del 27 novembre 2026 al MONO: la bolla® che respira", en: "Animated poster of the 27 November 2026 night at MONO: the breathing bolla®" } },
+      // locandinaHero: locandina statica con la line-up (richiesta dell'utente, 20.11: al posto del video in loop, più grande)
+      locandinaHero: { src: "assets/locandine/2026-11-27-serata.jpg", formato: "4:5", grande: true,
+        alt: { it: "Locandina della serata del 27 novembre 2026 al MONO: Stare in Bolla, cos’è il flow? Psicoaperitivo a cura di PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); monAmour, cucina aperta dalle 19 alle 23",
+               en: "Poster of the 27 November 2026 night at MONO: Stare in Bolla, what is flow? Psycho-aperitivo by PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); monAmour, kitchen open 7–11 pm" } },
+      locandine: [
+        { src: "assets/locandine/2026-11-27-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 27 novembre 2026", en: "Poster of the 27 November 2026 night" } },
+        { src: "assets/locandine/2026-11-27-psimposio.jpg", formato: "4:5", alt: { it: "Locandina dello psicoaperitivo Stare in Bolla a cura di PSI.MPOSIO", en: "Poster of the Stare in Bolla psycho-aperitivo by PSI.MPOSIO" } }
+      ],
       orario: { inizio: "19:00", fine: null },
       senzaPass: { it: "5€ al botteghino dopo le 22:30", en: "€5 at the box office after 10:30 pm" },
       luogo: {
@@ -323,8 +328,8 @@ window.BOLLA = {
             testo: [
               { it: "Un “salotto psicologico” attorno ai tavoli, con qualcosa da bere e da mangiare: parliamo di cosa significa stare in bolla, come riconoscerla, come entrarci, come uscirne e cosa vuol dire seguire il proprio flow.",
                 en: "A “psychological living room” around the tables, with something to drink and eat: we talk about what it means to be in the bubble, how to recognise it, get in, get out, and what it means to follow your own flow." },
-              { it: "Con le psicoterapeute Marika Toscano e Giuliana Palmieri. Posti limitati, prenotazione richiesta.",
-                en: "With psychotherapists Marika Toscano and Giuliana Palmieri. Limited places, booking required." }
+              { it: "Con le psicoterapeute Marika Toscano e Giuliana Palmieri. Contributo 5€, posti limitati, prenotazione richiesta.",
+                en: "With psychotherapists Marika Toscano and Giuliana Palmieri. €5 contribution, limited places, booking required." }
             ]
           }
         },
@@ -462,8 +467,11 @@ window.BOLLA = {
       durata: 1.5,
       titolo: { it: "STARE IN BOLLA — cos’è il flow?", en: "STARE IN BOLLA — what is flow?" },
       sottotitolo: { it: "Psicoaperitivo a cura di Psi.mposio", en: "A psycho-aperitivo by Psi.mposio" },
-      bottone: { it: "Prenota il tuo posto", en: "Book your place" },
+      bottone: { it: "Prenota PSI.MPOSIO", en: "Book PSI.MPOSIO" },
+      contributo: { it: "contributo 5€", en: "€5 contribution" },   // quota per partecipare, accanto a data e ora
       locandina: "assets/locandine/2026-11-27-psimposio.jpg",   // locandina del 20.11 (Drive, Social/2026-11-27 …/Locandine)
+      locandinaPrima: true,         // sopra il testo (richiesta dell'utente, 20.11)
+      locandinaFormato: "4:5",
       conduttori: [
         { nome: "dott.ssa Marika Toscano", ruolo: { it: "psicoterapeuta", en: "psychotherapist" } },
         { nome: "dott.ssa Giuliana Palmieri", ruolo: { it: "psicoterapeuta", en: "psychotherapist" } }
@@ -483,8 +491,8 @@ window.BOLLA = {
           en: "Who leads it? Marika Toscano and Giuliana Palmieri met at their cognitive-constructivist-complex specialisation school: from colleagues they became friends, and today they work in the same practice with young adults and adults going through difficult times linked to anxiety, depression, obsessive thoughts and relationship issues." },
         { it: "Marika approfondisce neurodivergenze, disturbi della personalità e disregolazione emotiva, e porta creatività, cura per i materiali e struttura alle idee. Giuliana lavora soprattutto con adolescenti, coppie e dinamiche relazionali: più estroversa e istintiva, si lascia guidare da ciò che accade nel momento. Due modi diversi di stare nella relazione, che insieme si completano.",
           en: "Marika focuses on neurodivergence, personality disorders and emotional dysregulation, and brings creativity, care for materials and structure to ideas. Giuliana works mainly with teenagers, couples and relationship dynamics: more outgoing and instinctive, she follows what happens in the moment. Two different ways of being in a relationship, which complete each other." },
-        { it: "Posti limitati: è richiesta la prenotazione.",
-          en: "Limited places: booking required." }
+        { it: "Contributo per partecipare: 5€. Posti limitati: è richiesta la prenotazione.",
+          en: "Contribution to take part: €5. Limited places: booking required." }
       ]
     }
   ],

@@ -38,11 +38,17 @@
   bind("tipo", function (n) { n.textContent = L(W.etichetta || "Evento") + " · bolla®"; });
   bind("titolo", function (n) { n.textContent = L(W.titolo); });
   bind("sottotitolo", function (n) { n.textContent = L(W.sottotitolo || ""); });
-  bind("data", function (n) { n.textContent = dataLunga + " · " + T("Dalle {ora}", { ora: W.ora }).toLowerCase(); });
+  // contributo: quota per partecipare (es. "contributo 5€"), accanto a data e ora
+  var contributo = W.contributo ? L(W.contributo) : "";
+  bind("data", function (n) { n.textContent = dataLunga + " · " + T("Dalle {ora}", { ora: W.ora }).toLowerCase() + (contributo ? " · " + contributo : ""); });
   bind("quando", function (n) {
     n.textContent = dataLunga;
     n.appendChild(document.createElement("br"));
     n.appendChild(document.createTextNode(T("Dalle {ora}", { ora: W.ora })));
+    if (contributo) {
+      n.appendChild(document.createElement("br"));
+      n.appendChild(document.createTextNode(contributo.charAt(0).toUpperCase() + contributo.slice(1)));
+    }
   });
   bind("dove", function (n) {
     var nome = el("a", null, luogo.nome);
@@ -68,6 +74,14 @@
   bind("locandina", function (n) {
     if (!W.locandina) { n.hidden = true; return; }
     n.src = L(W.locandina); n.alt = L(W.titolo) + (W.sottotitolo ? " — " + L(W.sottotitolo) : "");
+    // locandinaPrima: la locandina sopra il testo invece che sotto
+    if (W.locandinaPrima) {
+      var testo = $('[data-bind="testo"]');
+      n.classList.add("ws__locandina--testa");
+      n.loading = "eager";
+      testo.parentNode.insertBefore(n, testo);
+    }
+    if (W.locandinaFormato) { var f = W.locandinaFormato.split(":"); n.width = 1080; n.height = Math.round(1080 * f[1] / f[0]); }
   });
   bind("bottone", function (n) { n.textContent = L(W.bottone) || T("Prenota il tuo posto"); });
   bind("demo", function (n) { n.hidden = !DEMO; });

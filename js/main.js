@@ -174,6 +174,8 @@
       if (p && p.catch) p.catch(function () { /* autoplay bloccato (es. risparmio energetico): resta il primo fotogramma */ });
     }
     box.classList.add("locandina--immagine");
+    // grande: true = la locandina più grande (larghezza fissa, si scorre), invece di stare tutta nello schermo
+    if (l.grande) box.classList.add("locandina--grande");
     $(".hero__stage", box).hidden = true;
     $(".programma", box).hidden = true;
   });
