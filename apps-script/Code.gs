@@ -352,6 +352,14 @@ function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
+    // Psi.mposio 27.11 (richiesta dell'utente, 20.11 sera): campo "persone" nella prenotazione, senza limite per prenotazione
+    // (max_persone = posti, come la cena del 13.11); i posti si contano sommando le persone.
+    { id: 'psimposio-persone-2026-11-20', fai: function () {
+      var db = carica_([FOGLIO_ATTIVITA]);
+      var e = trova_(db[FOGLIO_ATTIVITA], 'id', 'psimposio-2026-11-27');
+      if (!e) throw new Error('attività psimposio-2026-11-27 non trovata');
+      aggiorna_(db[FOGLIO_ATTIVITA], e, { max_persone: Number(e.posti) || 100 });
+    } },
     // Psi.mposio 27.11 (richiesta dell'utente, 20.11): la prenotazione chiede anche l'email e manda la conferma, con il contributo di 5€.
     // Prima si aggiungono le colonne nuove (email, contributo) al foglio Attività, poi una conferma di prova solo a Pietro.
     { id: 'psimposio-email-2026-11-20', fai: function () {
