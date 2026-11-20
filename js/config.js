@@ -468,7 +468,8 @@ window.BOLLA = {
       titolo: { it: "STARE IN BOLLA — cos’è il flow?", en: "STARE IN BOLLA — what is flow?" },
       sottotitolo: { it: "Psicoaperitivo a cura di Psi.mposio", en: "A psycho-aperitivo by Psi.mposio" },
       bottone: { it: "Prenota PSI.MPOSIO", en: "Book PSI.MPOSIO" },
-      contributo: { it: "contributo 5€", en: "€5 contribution" },   // quota per partecipare, accanto a data e ora
+      contributo: { it: "contributo 5€", en: "€5 contribution" },
+      email: true,                  // email obbligatoria + conferma via email (richiesta dell'utente, 20.11); colonna "email" del foglio Attività   // quota per partecipare, accanto a data e ora
       locandina: "assets/locandine/2026-11-27-psimposio.jpg",   // locandina del 20.11 (Drive, Social/2026-11-27 …/Locandine)
       locandinaPrima: true,         // sopra il testo (richiesta dell'utente, 20.11)
       locandinaFormato: "4:5",

@@ -140,6 +140,9 @@
     "Prenota il workshop": "Book the workshop",
     "Prenota il tuo posto": "Book your spot",
     "{contributo} per partecipare.": "{contributo} to take part.",
+    "Lascia nome, cognome, telefono ed email: ti mandiamo la conferma e ti contattiamo solo per comunicazioni su questo evento.":
+      "Leave your name, phone and email: we'll send you a confirmation and only contact you about this event.",
+    "Ti abbiamo mandato la conferma a {email}: se non la trovi, controlla nello spam.": "We sent the confirmation to {email}: if you can't find it, check your spam.",
     "Con": "With",
     "Telefono": "Phone",
     "Lascia nome, cognome e numero di telefono: ti contattiamo solo per comunicazioni sul workshop.":
@@ -235,7 +238,8 @@
   var EN_HTML = {
     legale: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a> and subscribe to the bolla® newsletter, required for the free pass. Your email will not be shared with third parties and you can unsubscribe at any time.",
     legaleWorkshop: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a>. We only use your number for messages about the workshop and never share it with third parties.",
-    legaleEvento: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a>. We only use your number for messages about this event and never share it with third parties."
+    legaleEvento: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a>. We only use your number for messages about this event and never share it with third parties.",
+    legaleEventoEmail: "By clicking the button you accept the <a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">privacy notice</a>. We only use your number and email for messages about this event: we don't sign you up to the newsletter and never share them with third parties."
   };
 
   var GIORNI = { it: ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] };

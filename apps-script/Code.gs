@@ -84,8 +84,9 @@ var COLONNE = {
   Attesa: ['creato', 'serata', 'nome', 'cognome', 'email', 'email_norm', 'arrivato_da', 'newsletter', 'note'],
   Contatti: ['creato', 'email_norm', 'email', 'nome', 'cognome', 'newsletter', 'prima', 'ultima', 'serate', 'aggiornato'],
   Live: ['creato', 'serata', 'nickname', 'colore', 'emozione', 'dispositivo'],
-  'Attività': ['id', 'serata', 'tipo', 'titolo', 'inizio', 'prenotazione', 'posti', 'max_persone', 'attivo', 'avvisa', 'link'],
-  Prenotazioni: ['creato', 'attivita', 'nome', 'cognome', 'telefono', 'telefono_norm', 'persone', 'note']
+  // email: TRUE = la prenotazione chiede anche l'email e manda la conferma; contributo: testo libero (es. "5€") nella conferma
+  'Attività': ['id', 'serata', 'tipo', 'titolo', 'inizio', 'prenotazione', 'posti', 'max_persone', 'attivo', 'avvisa', 'link', 'email', 'contributo'],
+  Prenotazioni: ['creato', 'attivita', 'nome', 'cognome', 'telefono', 'telefono_norm', 'persone', 'note', 'email']
 };
 var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome',
   'telefono', 'telefono_norm', 'confermati', 'attivita', 'prima', 'ultima', 'inizio', 'link',
@@ -351,6 +352,24 @@ function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
+    // Psi.mposio 27.11 (richiesta dell'utente, 20.11): la prenotazione chiede anche l'email e manda la conferma, con il contributo di 5€.
+    // Prima si aggiungono le colonne nuove (email, contributo) al foglio Attività, poi una conferma di prova solo a Pietro.
+    { id: 'psimposio-email-2026-11-20', fai: function () {
+      assicuraColonne_(FOGLIO_ATTIVITA);
+      assicuraColonne_('Prenotazioni');
+      var db = carica_([FOGLIO_ATTIVITA]);
+      var e = trova_(db[FOGLIO_ATTIVITA], 'id', 'psimposio-2026-11-27');
+      if (!e) throw new Error('attività psimposio-2026-11-27 non trovata');
+      aggiorna_(db[FOGLIO_ATTIVITA], e, { email: true, contributo: '5€' });
+    } },
+    { id: 'psimposio-email-prova-2026-11-20', fai: function () {
+      var db = carica_(['Serate', FOGLIO_ATTIVITA]);
+      var ev = evento_(db, 'psimposio-2026-11-27');
+      if (!ev || !ev.chiediEmail) throw new Error('colonna email non ancora attiva');
+      var canale = emailConfermaAttivita_(ev, { nome: 'Pietro', cognome: 'Santoro', telefono: '+39 333 123 4567', email: 'pietrosantoro90@gmail.com', persone: '' },
+        serata_(db, ev.serata), { prefisso: '[Prova] ' });
+      PropertiesService.getScriptProperties().setProperty('PSIMPOSIO_PROVA_ESITO', new Date().toISOString().slice(0, 16) + ' inviata con ' + canale);
+    } },
     // serata del 27.11 con i pass gratuiti (richiesta dell'utente, 19.11): capienza 300, automazioni spente come CONFIG.nuovaSerata
     // (senza pass 5€ dopo le 22:30 è il valore di sempre, scritto solo sul sito). Dopo, la riga si cambia a mano nel foglio Serate.
     { id: 'serata-2026-11-27', fai: function () {
@@ -749,6 +768,7 @@ function evento_(db, id, tipo) {
   if (!e) return null;
   return { id: e.id, tipo: e.tipo, titolo: e.titolo, serata: e.serata, inizio: inizioAttivita_(db, e), posti: Number(e.posti) || 0,
     maxPersone: Number(e.max_persone) || 0, prenotabile: vero_(e.prenotazione), attivo: e.attivo === '' || vero_(e.attivo),
+    chiediEmail: vero_(e.email), contributo: String(e.contributo == null ? '' : e.contributo).trim(),
     avvisa: String(e.avvisa || '').split(/[\s,;]+/).filter(function (x) { return x.indexOf('@') > 0; }) };
 }
 
@@ -804,12 +824,21 @@ function azioneEventoPrenota_(d, tipo) {
   var tel = telefono_(d.telefono);
   if (!tel) return errore_('dati', 'Controlla il numero di telefono.');
   if (d.privacy !== true) return errore_('dati', 'Serve il consenso privacy.');
+  // email (attività con la colonna "email" spuntata): stessi controlli del pass, fuori dal lock perché il DNS può essere lento
+  var email = String(d.email || '').trim().toLowerCase().slice(0, 120);
+  if (email) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return errore_('dati', "Controlla l'indirizzo email.");
+    var erroreEmail = controllaDominio_(email.split('@')[1]);
+    if (erroreEmail) return erroreEmail;
+  }
 
   return conLock_(function () {
     if (tettoRaggiunto_()) return errore_('occupato', 'In questo momento stanno arrivando troppe registrazioni. Riprova tra un minuto.');
     var db = carica_(['Serate', FOGLIO_ATTIVITA, 'Prenotazioni']);
     var ev = evento_(db, d.evento, tipo);
     if (!ev) return errore_('evento', 'Evento non trovato.');
+    if (ev.chiediEmail && !email) return errore_('dati', "Controlla l'indirizzo email.");
+    if (!ev.chiediEmail) email = '';
     var persone = ev.maxPersone ? Number(d.persone) : 1;
     if (!(persone >= 1 && persone <= Math.max(1, ev.maxPersone) && Math.floor(persone) === persone)) return errore_('dati', 'Scegli per quante persone prenoti.');
     var cosa = nomeEvento_(ev);
@@ -824,7 +853,7 @@ function azioneEventoPrenota_(d, tipo) {
     // orario di prenotazione (pagine con il campo, es. cena del 13.11): "HH:mm" nella colonna note come "ore HH:mm"
     var orario = /^\d{1,2}[:.]\d\d$/.test(String(d.orario || '').trim()) ? ('0' + String(d.orario).trim().replace('.', ':')).slice(-5) : '';
     var riga = { creato: new Date(), attivita: ev.id, nome: nome, cognome: cognome, telefono: tel.testo, telefono_norm: tel.norm,
-      persone: ev.maxPersone ? persone : '', note: orario ? 'ore ' + orario : '' };
+      persone: ev.maxPersone ? persone : '', note: orario ? 'ore ' + orario : '', email: email };
     appendi_('Prenotazioni', riga);
     contaRegistrazione_();
     segnaModuloUsato_(d.modulo);
@@ -832,7 +861,15 @@ function azioneEventoPrenota_(d, tipo) {
     var totali = { prenotazioni: 1, persone: persone };
     sue.forEach(function (r) { totali.prenotazioni++; totali.persone += Number(r.persone) || 1; });
     var elenco = sue.concat([riga]);
-    return { ok: true, _email: ev.avvisa.length ? function () { avvisoPrenotazione_(ev, riga, totali, elenco); } : null };
+    var s = serata_(db, ev.serata);
+    return { ok: true, _email: function () {
+      // conferma a chi prenota (se ha lasciato l'email) e avviso agli organizzatori: un errore nell'una non blocca l'altra
+      if (riga.email) {
+        try { emailConfermaAttivita_(ev, riga, s); }
+        catch (err) { console.error('Conferma prenotazione non inviata: ' + err); }
+      }
+      if (ev.avvisa.length) avvisoPrenotazione_(ev, riga, totali, elenco);
+    } };
   });
 }
 
@@ -884,15 +921,50 @@ function orarioPrenotazione_(r) {
   return m ? m[1] : '';
 }
 
+// Conferma a chi prenota un'attività con l'email (es. Psi.mposio 27.11): cosa, quando, dove, contributo, e come disdire.
+// o.prefisso: '[Prova] ' per le prove
+function emailConfermaAttivita_(ev, r, s, o) {
+  o = o || {};
+  var titolo = ev.titolo || ev.id;
+  var quando = ev.inizio ? giorno_(ev.inizio) + ' ' + Utilities.formatDate(ev.inizio, TZ, 'yyyy') + ', ore ' + Utilities.formatDate(ev.inizio, TZ, 'HH:mm') : '';
+  var righe = [['Cosa', titolo]];
+  if (quando) righe.push(['Quando', quando]);
+  if (s && s.luogo) righe.push(['Dove', s.luogo]);
+  if (ev.contributo) righe.push(['Contributo', ev.contributo + ' per partecipare']);
+  righe.push(['Telefono', r.telefono]);
+  var persone = ev.maxPersone ? Number(r.persone) || 1 : 1;
+  if (ev.maxPersone) righe.push(['Persone', persone]);
+  var tabella = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;font-size:15px">' +
+    righe.map(function (x) {
+      return '<tr><td style="padding:8px 0;border-top:1px solid #d6d3ce;width:100px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#5f5b56">' + x[0] + '</td>' +
+        '<td style="padding:8px 0;border-top:1px solid #d6d3ce">' + esc_(String(x[1])) + '</td></tr>';
+    }).join('') + '</table>';
+  var corpo =
+    kicker_('Prenotazione confermata') +
+    titolo_('Ciao ' + esc_(r.nome) + ', ti aspettiamo') +
+    paragrafo_('Il tuo posto per <strong>' + esc_(titolo) + '</strong> è prenotato.') +
+    tabella +
+    (s && s.capienza ? paragrafo_('Dopo, la serata bolla® continua: se non l\'hai ancora fatto, prenota anche il pass gratuito.') +
+      bottone_(CONFIG.sito + '/?serata=' + encodeURIComponent(s.id) + '#prenota', 'Prenota il pass', true) : '') +
+    nota_('Non puoi più venire? Rispondi a questa email: liberiamo il posto per qualcun altro.');
+  var testo = 'Ciao ' + r.nome + ', il tuo posto per ' + titolo + ' è prenotato.\n\n' +
+    righe.map(function (x) { return x[0] + ': ' + x[1]; }).join('\n') +
+    '\n\nNon puoi più venire? Rispondi a questa email: liberiamo il posto per qualcun altro.';
+  return invia_(r.email, (o.prefisso || '') + 'Prenotazione confermata — ' + titolo + (quando ? ' · ' + Utilities.formatDate(ev.inizio, TZ, 'dd.MM') : ''),
+    testo, layout_({ banner: 'banner-logo.jpg', anteprima: 'Il tuo posto è prenotato' + (quando ? ': ' + quando : ''), corpo: corpo,
+      s: { titolo: s ? s.titolo : 'bolla®' }, newsletter: false }));
+}
+
 function avvisoPrenotazione_(ev, r, totali, elenco) {
   var titolo = ev.titolo || ev.id;
   var persone = ev.maxPersone ? Number(r.persone) : 1;
   var conOrario = (elenco || [r]).some(function (x) { return orarioPrenotazione_(x); });
   var righe = [
     ['Nome', r.nome + ' ' + r.cognome],
-    ['Telefono', r.telefono],
-    ['Persone', persone],
-  ].concat(conOrario ? [['Orario', orarioPrenotazione_(r) || '—']] : []).concat([
+    ['Telefono', r.telefono]
+  ].concat(r.email ? [['Email', r.email]] : []).concat([
+    ['Persone', persone]
+  ]).concat(conOrario ? [['Orario', orarioPrenotazione_(r) || '—']] : []).concat([
     ['Quando', Utilities.formatDate(r.creato, TZ, 'dd.MM.yyyy HH:mm')],
     ['Totale prenotazioni', totali.prenotazioni],
     ['Totale persone', totali.persone + (ev.posti ? ' su ' + ev.posti : '')]
@@ -3217,6 +3289,17 @@ function leggiFoglio_(sh, nome, aggiungi) {
     righe.push(r);
   }
   return righe;
+}
+
+// Aggiunge in fondo all'intestazione del foglio le colonne di COLONNE che mancano (per aggiorna_ su colonne nuove)
+function assicuraColonne_(nome) {
+  var sh = SpreadsheetApp.getActive().getSheetByName(nome);
+  var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String);
+  COLONNE[nome].forEach(function (c) {
+    if (head.indexOf(c) < 0) { head.push(c); sh.getRange(1, head.length).setValue(c); }
+  });
+  TESTATE_[nome] = head;
+  invalidaCache_(nome, {});
 }
 
 // Ogni valore va sotto la sua intestazione: il foglio resta giusto anche se qualcuno sposta o inserisce colonne.

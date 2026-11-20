@@ -40,6 +40,8 @@
   bind("sottotitolo", function (n) { n.textContent = L(W.sottotitolo || ""); });
   // contributo: quota per partecipare (es. "contributo 5€"), accanto a data e ora
   var contributo = W.contributo ? L(W.contributo) : "";
+  // email: true = l'attività chiede anche l'email (obbligatoria) e manda la conferma a quell'indirizzo
+  var conEmail = W.email === true;
   bind("data", function (n) { n.textContent = dataLunga + " · " + T("Dalle {ora}", { ora: W.ora }).toLowerCase() + (contributo ? " · " + contributo : ""); });
   bind("quando", function (n) {
     n.textContent = dataLunga;
@@ -84,6 +86,19 @@
     if (W.locandinaFormato) { var f = W.locandinaFormato.split(":"); n.width = 1080; n.height = Math.round(1080 * f[1] / f[0]); }
   });
   bind("bottone", function (n) { n.textContent = L(W.bottone) || T("Prenota il tuo posto"); });
+  // campo email e testi che parlano dei dati raccolti (prima che i18n.js traduca la pagina)
+  bind("email", function (n) {
+    if (!conEmail) return;
+    n.hidden = false;
+    $("input", n).required = true;
+    var lead = $(".card__lead");
+    lead.removeAttribute("data-i18n");
+    lead.textContent = T("Lascia nome, cognome, telefono ed email: ti mandiamo la conferma e ti contattiamo solo per comunicazioni su questo evento.");
+    var legale = $(".form__legal");
+    legale.setAttribute("data-i18n-html", "legaleEventoEmail");
+    legale.innerHTML = "Cliccando sul bottone accetti l'<a href=\"privacy.html\" target=\"_blank\" rel=\"noopener\">informativa privacy</a>. " +
+      "Usiamo numero ed email solo per comunicazioni su questo evento: non ti iscriviamo alla newsletter e non li cediamo a terzi.";
+  });
   bind("demo", function (n) { n.hidden = !DEMO; });
 
   /* ---------- API (Apps Script, o demo nel browser) ---------- */
@@ -172,14 +187,17 @@
     e.preventDefault();
     errore("");
     var primoErrato = null;
-    ["nome", "cognome", "telefono"].forEach(function (c) {
+    (conEmail ? ["nome", "cognome", "telefono", "email"] : ["nome", "cognome", "telefono"]).forEach(function (c) {
       var i = form[c];
       i.value = i.value.trim();
       var ok = i.checkValidity() && i.value.length > 0;
       i.setAttribute("aria-invalid", ok ? "false" : "true");
       if (!ok && !primoErrato) primoErrato = i;
     });
-    if (primoErrato) { errore(T(primoErrato.name === "telefono" ? "Controlla il numero di telefono." : "Inserisci nome e cognome.")); primoErrato.focus(); return; }
+    if (primoErrato) {
+      errore(T(primoErrato.name === "telefono" ? "Controlla il numero di telefono." : primoErrato.name === "email" ? "Controlla l'indirizzo email." : "Inserisci nome e cognome."));
+      primoErrato.focus(); return;
+    }
     form.persone.setAttribute("aria-invalid", personeValide() ? "false" : "true");
     if (!personeValide()) { errore(T("Scrivi per quante persone prenoti: da 1 a {n}.", { n: maxPersone })); form.persone.focus(); return; }
     if (form.website.value) return; // bot
@@ -195,6 +213,7 @@
       nome: form.nome.value,
       cognome: form.cognome.value,
       telefono: form.telefono.value,
+      email: conEmail ? form.email.value.trim() : undefined,
       persone: campoPersone.hidden ? 1 : +form.persone.value,
       // niente caselle: cliccando il bottone si accetta l'informativa (testo sotto il bottone)
       privacy: true,
@@ -240,6 +259,7 @@
     result.appendChild(el("p", "done__text", (campoPersone.hidden ? "" : T(dati.persone === 1 ? "Per 1 persona." : "Per {n} persone.", { n: dati.persone }) + " ") +
       T("Ti aspettiamo {data} alle {ora} al {luogo}. Se serve ti chiamiamo al {telefono}.",
         { data: dataLunga, ora: W.ora, luogo: luogo.nome, telefono: dati.telefono })));
+    if (dati.email) result.appendChild(el("p", "done__text", T("Ti abbiamo mandato la conferma a {email}: se non la trovi, controlla nello spam.", { email: dati.email })));
     // contributo per partecipare (es. Psi.mposio 27.11): ricordato nella conferma, in grassetto
     if (contributo) result.appendChild(el("p", "done__text done__contributo",
       T("{contributo} per partecipare.", { contributo: contributo.charAt(0).toUpperCase() + contributo.slice(1) })));
