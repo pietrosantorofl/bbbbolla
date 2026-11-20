@@ -463,6 +463,7 @@ window.BOLLA = {
       titolo: { it: "STARE IN BOLLA — cos’è il flow?", en: "STARE IN BOLLA — what is flow?" },
       sottotitolo: { it: "Psicoaperitivo a cura di Psi.mposio", en: "A psycho-aperitivo by Psi.mposio" },
       bottone: { it: "Prenota il tuo posto", en: "Book your place" },
+      locandina: "assets/locandine/2026-11-27-psimposio.jpg",   // locandina del 20.11 (Drive, Social/2026-11-27 …/Locandine)
       conduttori: [
         { nome: "dott.ssa Marika Toscano", ruolo: { it: "psicoterapeuta", en: "psychotherapist" } },
         { nome: "dott.ssa Giuliana Palmieri", ruolo: { it: "psicoterapeuta", en: "psychotherapist" } }
