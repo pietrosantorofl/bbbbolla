@@ -139,6 +139,7 @@
     /* pagina workshop */
     "Prenota il workshop": "Book the workshop",
     "Prenota il tuo posto": "Book your spot",
+    "{contributo} per partecipare.": "{contributo} to take part.",
     "Con": "With",
     "Telefono": "Phone",
     "Lascia nome, cognome e numero di telefono: ti contattiamo solo per comunicazioni sul workshop.":

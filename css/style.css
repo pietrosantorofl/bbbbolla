@@ -676,3 +676,5 @@ a { color: inherit; }
   html { scroll-behavior: auto; }
   .hero__sfera > img, .result, .spinner, .btn.pulsa, .card.pulsa, .card.pulsa::before, .lineup__more { animation: none; }
 }
+/* conferma di prenotazione: il contributo per partecipare in evidenza */
+.done__contributo { font-weight: 700; }

@@ -240,6 +240,9 @@
     result.appendChild(el("p", "done__text", (campoPersone.hidden ? "" : T(dati.persone === 1 ? "Per 1 persona." : "Per {n} persone.", { n: dati.persone }) + " ") +
       T("Ti aspettiamo {data} alle {ora} al {luogo}. Se serve ti chiamiamo al {telefono}.",
         { data: dataLunga, ora: W.ora, luogo: luogo.nome, telefono: dati.telefono })));
+    // contributo per partecipare (es. Psi.mposio 27.11): ricordato nella conferma, in grassetto
+    if (contributo) result.appendChild(el("p", "done__text done__contributo",
+      T("{contributo} per partecipare.", { contributo: contributo.charAt(0).toUpperCase() + contributo.slice(1) })));
     var cal = el("button", "btn btn--ghost btn--small", T("Aggiungi al calendario"));
     cal.type = "button";
     cal.addEventListener("click", scaricaIcs);
