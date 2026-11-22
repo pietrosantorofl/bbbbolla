@@ -328,8 +328,8 @@ window.BOLLA = {
             testo: [
               { it: "Un “salotto psicologico” attorno ai tavoli, con qualcosa da bere e da mangiare: parliamo di cosa significa stare in bolla, come riconoscerla, come entrarci, come uscirne e cosa vuol dire seguire il proprio flow.",
                 en: "A “psychological living room” around the tables, with something to drink and eat: we talk about what it means to be in the bubble, how to recognise it, get in, get out, and what it means to follow your own flow." },
-              { it: "Con le psicoterapeute Marika Toscano e Giuliana Palmieri. Contributo 5€, posti limitati, prenotazione richiesta.",
-                en: "With psychotherapists Marika Toscano and Giuliana Palmieri. €5 contribution, limited places, booking required." }
+              { it: "Con le psicoterapeute Marika Toscano e Giuliana Palmieri. Contributo 6€, posti limitati, prenotazione richiesta.",
+                en: "With psychotherapists Marika Toscano and Giuliana Palmieri. €6 contribution, limited places, booking required." }
             ]
           }
         },
@@ -468,7 +468,7 @@ window.BOLLA = {
       titolo: { it: "STARE IN BOLLA — cos’è il flow?", en: "STARE IN BOLLA — what is flow?" },
       sottotitolo: { it: "Psicoaperitivo a cura di Psi.mposio", en: "A psycho-aperitivo by Psi.mposio" },
       bottone: { it: "Prenota PSI.MPOSIO", en: "Book PSI.MPOSIO" },
-      contributo: { it: "contributo 5€", en: "€5 contribution" },
+      contributo: { it: "contributo 6€", en: "€6 contribution" },
       email: true,                  // email obbligatoria + conferma via email (richiesta dell'utente, 20.11); colonna "email" del foglio Attività   // quota per partecipare, accanto a data e ora
       locandina: "assets/locandine/2026-11-27-psimposio.jpg",   // locandina del 20.11 (Drive, Social/2026-11-27 …/Locandine)
       locandinaPrima: true,         // sopra il testo (richiesta dell'utente, 20.11)
@@ -492,8 +492,8 @@ window.BOLLA = {
           en: "Who leads it? Marika Toscano and Giuliana Palmieri met at their cognitive-constructivist-complex specialisation school: from colleagues they became friends, and today they work in the same practice with young adults and adults going through difficult times linked to anxiety, depression, obsessive thoughts and relationship issues." },
         { it: "Marika approfondisce neurodivergenze, disturbi della personalità e disregolazione emotiva, e porta creatività, cura per i materiali e struttura alle idee. Giuliana lavora soprattutto con adolescenti, coppie e dinamiche relazionali: più estroversa e istintiva, si lascia guidare da ciò che accade nel momento. Due modi diversi di stare nella relazione, che insieme si completano.",
           en: "Marika focuses on neurodivergence, personality disorders and emotional dysregulation, and brings creativity, care for materials and structure to ideas. Giuliana works mainly with teenagers, couples and relationship dynamics: more outgoing and instinctive, she follows what happens in the moment. Two different ways of being in a relationship, which complete each other." },
-        { it: "Contributo per partecipare: 5€. Posti limitati: è richiesta la prenotazione.",
-          en: "Contribution to take part: €5. Limited places: booking required." }
+        { it: "Contributo per partecipare: 6€. Posti limitati: è richiesta la prenotazione.",
+          en: "Contribution to take part: €6. Limited places: booking required." }
       ]
     }
   ],

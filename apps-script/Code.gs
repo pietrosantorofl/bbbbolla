@@ -352,6 +352,13 @@ function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
+    // Psi.mposio 27.11: contributo da 5€ a 6€ (richiesta dell'utente, 22.11); compare nella mail di conferma
+    { id: 'psimposio-contributo-6-2026-11-22', fai: function () {
+      var db = carica_([FOGLIO_ATTIVITA]);
+      var e = trova_(db[FOGLIO_ATTIVITA], 'id', 'psimposio-2026-11-27');
+      if (!e) throw new Error('attività psimposio-2026-11-27 non trovata');
+      aggiorna_(db[FOGLIO_ATTIVITA], e, { contributo: '6€' });
+    } },
     // Psi.mposio 27.11 (richiesta dell'utente, 20.11 sera): campo "persone" nella prenotazione, senza limite per prenotazione
     // (max_persone = posti, come la cena del 13.11); i posti si contano sommando le persone.
     { id: 'psimposio-persone-2026-11-20', fai: function () {
