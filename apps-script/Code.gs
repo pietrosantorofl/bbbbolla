@@ -352,6 +352,14 @@ function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
+    // prova della conferma Psi.mposio con l'avviso sul pagamento (22.11), solo a Pietro
+    { id: 'psimposio-email-prova-pagamento-2026-11-22', fai: function () {
+      var db = carica_(['Serate', FOGLIO_ATTIVITA]);
+      var ev = evento_(db, 'psimposio-2026-11-27');
+      if (!ev) throw new Error('attività psimposio-2026-11-27 non trovata');
+      emailConfermaAttivita_(ev, { nome: 'Pietro', cognome: 'Santoro', telefono: '+39 333 123 4567', email: 'pietrosantoro90@gmail.com', persone: 2 },
+        serata_(db, ev.serata), { prefisso: '[Prova] ' });
+    } },
     // Psi.mposio 27.11: contributo da 5€ a 6€ (richiesta dell'utente, 22.11); compare nella mail di conferma
     { id: 'psimposio-contributo-6-2026-11-22', fai: function () {
       var db = carica_([FOGLIO_ATTIVITA]);
@@ -936,7 +944,8 @@ function orarioPrenotazione_(r) {
   return m ? m[1] : '';
 }
 
-// Conferma a chi prenota un'attività con l'email (es. Psi.mposio 27.11): cosa, quando, dove, contributo, e come disdire.
+// Conferma a chi prenota un'attività con l'email (es. Psi.mposio 27.11): cosa, quando, dove, contributo (con l'avviso che
+// li contatteremo per il pagamento, richiesta dell'utente 22.11), e come disdire.
 // o.prefisso: '[Prova] ' per le prove
 function emailConfermaAttivita_(ev, r, s, o) {
   o = o || {};
@@ -959,11 +968,13 @@ function emailConfermaAttivita_(ev, r, s, o) {
     titolo_('Ciao ' + esc_(r.nome) + ', ti aspettiamo') +
     paragrafo_('Il tuo posto per <strong>' + esc_(titolo) + '</strong> è prenotato.') +
     tabella +
+    (ev.contributo ? paragrafo_('<strong>Ti contatteremo a brevissimo con le indicazioni per il pagamento del contributo.</strong>') : '') +
     (s && s.capienza ? paragrafo_('Dopo, la serata bolla® continua: se non l\'hai ancora fatto, prenota anche il pass gratuito.') +
       bottone_(CONFIG.sito + '/?serata=' + encodeURIComponent(s.id) + '#prenota', 'Prenota il pass', true) : '') +
     nota_('Non puoi più venire? Rispondi a questa email: liberiamo il posto per qualcun altro.');
   var testo = 'Ciao ' + r.nome + ', il tuo posto per ' + titolo + ' è prenotato.\n\n' +
     righe.map(function (x) { return x[0] + ': ' + x[1]; }).join('\n') +
+    (ev.contributo ? '\n\nTi contatteremo a brevissimo con le indicazioni per il pagamento del contributo.' : '') +
     '\n\nNon puoi più venire? Rispondi a questa email: liberiamo il posto per qualcun altro.';
   return invia_(r.email, (o.prefisso || '') + 'Prenotazione confermata — ' + titolo + (quando ? ' · ' + Utilities.formatDate(ev.inizio, TZ, 'dd.MM') : ''),
     testo, layout_({ banner: 'banner-logo.jpg', anteprima: 'Il tuo posto è prenotato' + (quando ? ': ' + quando : ''), corpo: corpo,
