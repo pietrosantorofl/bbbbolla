@@ -306,8 +306,8 @@ window.BOLLA = {
       data: "2026-11-27",
       // locandinaHero: locandina statica con la line-up (richiesta dell'utente, 20.11: al posto del video in loop, più grande)
       locandinaHero: { src: "assets/locandine/2026-11-27-serata.jpg", formato: "4:5", grande: true,
-        alt: { it: "Locandina della serata del 27 novembre 2026 al MONO: Stare in Bolla, cos’è il flow? Psicoaperitivo a cura di PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); monAmour, cucina aperta dalle 19 alle 23",
-               en: "Poster of the 27 November 2026 night at MONO: Stare in Bolla, what is flow? Psycho-aperitivo by PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); monAmour, kitchen open 7–11 pm" } },
+        alt: { it: "Locandina della serata del 27 novembre 2026 al MONO: Stare in Bolla, cos’è il flow? Psicoaperitivo a cura di PSI.MPOSIO; Officina Tropicale live & impro; Cantina Tre.Mi.La di Gloria Di Paola; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); monAmour, cucina aperta dalle 19 alle 23",
+               en: "Poster of the 27 November 2026 night at MONO: Stare in Bolla, what is flow? Psycho-aperitivo by PSI.MPOSIO; Officina Tropicale live & impro; Tre.Mi.La winery by Gloria Di Paola; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); monAmour, kitchen open 7–11 pm" } },
       locandine: [
         { src: "assets/locandine/2026-11-27-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 27 novembre 2026", en: "Poster of the 27 November 2026 night" } },
         { src: "assets/locandine/2026-11-27-psimposio.jpg", formato: "4:5", alt: { it: "Locandina dello psicoaperitivo Stare in Bolla a cura di PSI.MPOSIO", en: "Poster of the Stare in Bolla psycho-aperitivo by PSI.MPOSIO" } }
@@ -338,7 +338,19 @@ window.BOLLA = {
           nome: "Franzuà & Andrea Guglielmino", tag: "DJ set", note: "Micelium Collective",
           artisti: [{ nome: "Franzuà", link: "https://www.instagram.com/franzua_imagerie/" }, { nome: "Andrea Guglielmino" }]
         },
-        // minore: true = più piccolo delle proposte musicali (vino, cibo)
+        // minore: true = più piccolo delle proposte musicali (vino, cibo); Tre.Mi.La aggiunta il 23.11 (richiesta dell'utente)
+        {
+          nome: "Cantina Tre.Mi.La", tag: { it: "Cosa beviamo?", en: "What are we drinking?" }, minore: true, link: "https://tremilawine.com",
+          note: { it: "di Gloria Di Paola", en: "by Gloria Di Paola" },
+          dettagli: {
+            testo: [
+              { it: "Tre.Mi.La è la piccola azienda vitivinicola artigianale fondata da Gloria Di Paola nel 2019, alle pendici dell’Etna. Il nome unisce i tre paesi delle sue radici: Trecastagni, Milo e Lavinaio.",
+                en: "Tre.Mi.La is the small artisan winery founded by Gloria Di Paola in 2019 on the slopes of Etna. The name joins the three villages of her roots: Trecastagni, Milo and Lavinaio." },
+              { it: "Vigne lavorate a mano, nel rispetto della biodiversità: Carricante, Catarratto e Nerello Mascalese, con un obiettivo, vinificare su tutti e quattro i versanti del vulcano.",
+                en: "Vineyards worked by hand, respecting biodiversity: Carricante, Catarratto and Nerello Mascalese, with one goal: making wine on all four slopes of the volcano." }
+            ]
+          }
+        },
         { nome: "MONAMOUR", tag: { it: "Cucina dalle 19 alle 23", en: "Kitchen 7–11 pm" }, minore: true }
       ]
     }
