@@ -224,6 +224,8 @@ function doGet(e) {
       (gmailPrima_() ? ' (Gmail finché restano più di ' + CONFIG.riservaGmail + ' email oggi, poi Brevo)' : '') + '</p>' +
     '<p>Prossima serata: ' + (s ? esc_(s.id + ' — ' + s.titolo) : 'nessuna') + '</p>' + (s ? automazioniInfo_(s) : '') +
     riga('Ultima prova Brevo', 'BREVO_ESITO') +
+    riga('Automazioni 27.11 copiate dal 6.11', 'AUTOMAZIONI_27_11') +
+    riga('Prove email automatiche 27.11', 'PROVE_27_11') +
     riga('Promemoria di conferma', 'PROMEMORIA_ESITO') +
     riga('Solleciti', 'SOLLECITI_ESITO') +
     riga('Pass dati lo stesso (gruppi incompleti)', 'REGALO_ESITO') +
@@ -352,6 +354,47 @@ function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
+    // serata 27.11 (richiesta dell'utente, 24.11): automazioni "come il 6.11". Si copiano promemoria, solleciti, regalo,
+    // recap e recap_a dalla riga del 6.11; le date assolute (AAAA-MM-GG) si spostano di 21 giorni. Valori copiati in AUTOMAZIONI_27_11.
+    { id: 'automazioni-2026-11-27-come-06-11', fai: function () {
+      var db = carica_(['Serate']);
+      var da = trova_(db.Serate, 'id', '2026-11-06'), a = trova_(db.Serate, 'id', '2026-11-27');
+      if (!da || !a) throw new Error('riga 6.11 o 27.11 mancante');
+      var testo = function (v) { return v instanceof Date ? Utilities.formatDate(v, TZ, 'HH:mm') : String(v == null ? '' : v).trim(); };
+      var sposta = function (v) { return v.replace(/\d{4}-\d{2}-\d{2}/g, function (d) { return spostaGiorno_(d, 21); }); };
+      var cambi = {}, nota = [];
+      ['promemoria', 'solleciti', 'regalo', 'recap'].forEach(function (c) {
+        var v = sposta(testo(da[c]));
+        cambi[c] = v ? "'" + v : '';
+        nota.push(c + '=' + (v || '—'));
+      });
+      cambi.recap_a = testo(da.recap_a) || CONFIG.nuovaSerata.recapA;
+      nota.push('recap_a=' + cambi.recap_a.split(',').map(function (x) { return x.trim().split('@')[0]; }).join('+'));
+      aggiorna_(db.Serate, a, cambi);
+      PropertiesService.getScriptProperties().setProperty('AUTOMAZIONI_27_11', new Date().toISOString().slice(0, 16) + ' ' + nota.join(' · '));
+    } },
+    // prove delle email automatiche del 27.11, solo a Pietro, con [Prova …] nell'oggetto e un pass finto (BOL-PROVA):
+    // parte solo la prova delle automazioni accese nella riga. Esito in PROVE_27_11.
+    { id: 'automazioni-2026-11-27-prove', fai: function () {
+      var db = carica_(['Serate']);
+      var s = serata_(db, '2026-11-27');
+      var r = trova_(db.Serate, 'id', '2026-11-27');
+      var a = 'pietrosantoro90@gmail.com';
+      var finto = { nome: 'Pietro', cognome: 'Santoro', email: a, email_norm: a, codice: 'BOL-PROVA', chiave: token_(24), tipo: 'gruppo' };
+      var info = function (tipo) { return { s: s, gruppo: null, stato: 'aperto', capogruppo: true, confermati: 1, membri: 2, tipo: tipo,
+        scadenza: Utilities.parseDate('2026-11-27 ' + (s.chiusuraGruppi || '22:00'), TZ, 'yyyy-MM-dd HH:mm') }; };
+      var esiti = [];
+      var prova = function (nome, f) { try { esiti.push(nome + ' ' + f()); } catch (err) { esiti.push(nome + ' errore: ' + String(err.message).slice(0, 80)); } };
+      var acceso = function (c) { return String(r[c] || '').trim() !== ''; };
+      if (acceso('promemoria')) prova('promemoria', function () { return emailPromemoriaConferma_(finto, s, info('promemoria'), '[Prova promemoria] '); });
+      if (acceso('solleciti')) {
+        prova('sollecito', function () { return emailPromemoriaConferma_(finto, s, info('sollecito'), '[Prova sollecito] '); });
+        prova('manca qualcuno', function () { return emailGruppoIncompleto_(finto, s, info(), '[Prova manca qualcuno] '); });
+      }
+      if (acceso('regalo')) prova('regalo', function () { return emailPass_(finto, s, { regalo: true, prefisso: '[Prova regalo] ' }) || 'inviata'; });
+      if (acceso('recap')) prova('recap', function () { recapSerata_('2026-11-27', '16:00', [a], '19:00'); return 'inviato'; });
+      PropertiesService.getScriptProperties().setProperty('PROVE_27_11', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuna automazione accesa'));
+    } },
     // prova della conferma Psi.mposio con l'avviso sul pagamento (22.11), solo a Pietro
     { id: 'psimposio-email-prova-pagamento-2026-11-22', fai: function () {
       var db = carica_(['Serate', FOGLIO_ATTIVITA]);
