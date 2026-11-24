@@ -307,8 +307,8 @@ window.BOLLA = {
       // locandinaHero: locandina statica con la line-up (richiesta dell'utente, 20.11: al posto del video in loop, più grande);
       // dal 24.11 la versione definitiva dell'utente (Drive, Locandine/bolla-27-11-serata-definitiva.jpg)
       locandinaHero: { src: "assets/locandine/2026-11-27-serata.jpg", formato: "4:5", grande: true,
-        alt: { it: "Locandina della serata del 27 novembre 2026 al MONO: Stare in Bolla, cos’è il flow? Psicoaperitivo a cura di PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); Cantina Tre.Mi.La, vino del giorno; monAmour, cucina aperta dalle 19 alle 23",
-               en: "Poster of the 27 November 2026 night at MONO: Stare in Bolla, what is flow? Psycho-aperitivo by PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); Tre.Mi.La winery, wine of the day; monAmour, kitchen open 7–11 pm" } },
+        alt: { it: "Locandina della serata del 27 novembre 2026 al MONO: Stare in Bolla, cos’è il flow? Psicoaperitivo a cura di PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Mycelium Collective); Cantina Tre.Mi.La, vino del giorno; monAmour, cucina aperta dalle 19 alle 23",
+               en: "Poster of the 27 November 2026 night at MONO: Stare in Bolla, what is flow? Psycho-aperitivo by PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Mycelium Collective); Tre.Mi.La winery, wine of the day; monAmour, kitchen open 7–11 pm" } },
       locandine: [
         { src: "assets/locandine/2026-11-27-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 27 novembre 2026", en: "Poster of the 27 November 2026 night" } },
         { src: "assets/locandine/2026-11-27-psimposio.jpg", formato: "4:5", alt: { it: "Locandina dello psicoaperitivo Stare in Bolla a cura di PSI.MPOSIO", en: "Poster of the Stare in Bolla psycho-aperitivo by PSI.MPOSIO" } }
@@ -350,12 +350,16 @@ window.BOLLA = {
               { nome: "Maria Conticello", foto: "assets/artisti/2026-11-27/maria-conticello.webp",
                 ruolo: { it: "voce e chitarra", en: "vocals and guitar" },
                 testo: { it: "Scopre la musica a 16 anni, con la chitarra nell’angolo della camera: improvvisa e comincia a scrivere. L’amore per la sua terra la porta ad agraria, quello per la musica al conservatorio, dove studia canto jazz. Nei live si lascia attraversare da folk, bossa e cumbia; nelle sue canzoni resta il sapore di casa.",
-                  en: "She found music at 16, with the guitar in the corner of her room: she improvised and started writing. Love for her land took her to study agriculture, love for music to the conservatory, where she studies jazz singing. Live, she lets folk, bossa and cumbia run through her; her songs keep the taste of home." } }
+                  en: "She found music at 16, with the guitar in the corner of her room: she improvised and started writing. Love for her land took her to study agriculture, love for music to the conservatory, where she studies jazz singing. Live, she lets folk, bossa and cumbia run through her; her songs keep the taste of home." } },
+              { nome: "Dario Aiello", foto: "assets/artisti/2026-11-27/dario-aiello.webp",
+                ruolo: { it: "DJ e produttore", en: "DJ and producer" },
+                testo: { it: "DJ e produttore, ha dato vita a Selva Cosmica, collettivo aperto e in continua evoluzione che fa da ponte sonoro tra Sicilia e Colombia: ritmi ancestrali del Sud del mondo che si rivestono di elettronica e dub techno. Nei suoi set si muove tra elettronica, dub e downtempo.",
+                  en: "DJ and producer, he started Selva Cosmica, an open, ever-evolving collective that builds a sonic bridge between Sicily and Colombia: ancestral rhythms of the Global South dressed in electronics and dub techno. His sets move between electronic music, dub and downtempo." } }
             ]
           }
         },
         {
-          nome: "Franzuà & Andrea Guglielmino", tag: "DJ set", note: "Micelium Collective",
+          nome: "Franzuà & Andrea Guglielmino", tag: "DJ set", note: "Mycelium Collective",
           artisti: [{ nome: "Franzuà", link: "https://www.instagram.com/franzua_imagerie/" }, { nome: "Andrea Guglielmino" }]
         },
         // minore: true = più piccolo delle proposte musicali (vino, cibo); Tre.Mi.La aggiunta il 23.11 (richiesta dell'utente)
