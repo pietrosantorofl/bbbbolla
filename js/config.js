@@ -304,10 +304,11 @@ window.BOLLA = {
       // psicoaperitivo di Psi.mposio su prenotazione. Line-up ancora in definizione: orari di live e DJ set in arrivo.
       id: "2026-11-27",
       data: "2026-11-27",
-      // locandinaHero: locandina statica con la line-up (richiesta dell'utente, 20.11: al posto del video in loop, più grande)
+      // locandinaHero: locandina statica con la line-up (richiesta dell'utente, 20.11: al posto del video in loop, più grande);
+      // dal 24.11 la versione definitiva dell'utente (Drive, Locandine/bolla-27-11-serata-definitiva.jpg)
       locandinaHero: { src: "assets/locandine/2026-11-27-serata.jpg", formato: "4:5", grande: true,
-        alt: { it: "Locandina della serata del 27 novembre 2026 al MONO: Stare in Bolla, cos’è il flow? Psicoaperitivo a cura di PSI.MPOSIO; Officina Tropicale live & impro; Cantina Tre.Mi.La di Gloria Di Paola; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); monAmour, cucina aperta dalle 19 alle 23",
-               en: "Poster of the 27 November 2026 night at MONO: Stare in Bolla, what is flow? Psycho-aperitivo by PSI.MPOSIO; Officina Tropicale live & impro; Tre.Mi.La winery by Gloria Di Paola; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); monAmour, kitchen open 7–11 pm" } },
+        alt: { it: "Locandina della serata del 27 novembre 2026 al MONO: Stare in Bolla, cos’è il flow? Psicoaperitivo a cura di PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); Cantina Tre.Mi.La, vino del giorno; monAmour, cucina aperta dalle 19 alle 23",
+               en: "Poster of the 27 November 2026 night at MONO: Stare in Bolla, what is flow? Psycho-aperitivo by PSI.MPOSIO; Officina Tropicale live & impro; Franzuá & Andrea Guglielmino DJ set (Micelium Collective); Tre.Mi.La winery, wine of the day; monAmour, kitchen open 7–11 pm" } },
       locandine: [
         { src: "assets/locandine/2026-11-27-serata.jpg", formato: "4:5", alt: { it: "Locandina della serata del 27 novembre 2026", en: "Poster of the 27 November 2026 night" } },
         { src: "assets/locandine/2026-11-27-psimposio.jpg", formato: "4:5", alt: { it: "Locandina dello psicoaperitivo Stare in Bolla a cura di PSI.MPOSIO", en: "Poster of the Stare in Bolla psycho-aperitivo by PSI.MPOSIO" } }
@@ -333,14 +334,33 @@ window.BOLLA = {
             ]
           }
         },
-        { nome: "OFFICINA TROPICALE", tag: "Live & impro", main: true },
+        // foto e bio dei musicisti (richiesta dell'utente, 24.11): ritratti 4:5 in assets/artisti/2026-11-27, originali nel Drive
+        {
+          nome: "OFFICINA TROPICALE", tag: "Live & impro", main: true,
+          dettagli: {
+            persone: [
+              { nome: "Karen Ramirez", foto: "assets/artisti/2026-11-27/karen-ramirez.webp",
+                ruolo: { it: "batteria e percussioni", en: "drums and percussion" },
+                testo: { it: "Batterista, percussionista e polistrumentista, con studi alla Facultad de Artes (ASAB) dell’Università Francisco José de Caldas. Da più di dieci anni è musicista di sessione tra latin, salsa, rock, jazz e blues, in festival, concerti ed eventi in Colombia, Spagna, Italia, Albania, Grecia, Turchia, Egitto e Germania.",
+                  en: "Drummer, percussionist and multi-instrumentalist, trained at the Facultad de Artes (ASAB) of the Francisco José de Caldas University. For more than ten years a session musician across latin, salsa, rock, jazz and blues, at festivals, concerts and events in Colombia, Spain, Italy, Albania, Greece, Turkey, Egypt and Germany." } },
+              { nome: "Roberto Oliveri", foto: "assets/artisti/2026-11-27/roberto-oliveri.webp",
+                ruolo: { it: "piano e tastiere", en: "piano and keys" },
+                testo: { it: "Pianista, tastierista e polistrumentista siciliano di Valguarnera Caropepe. Autodidatta, sale sul palco a 11 anni. I viaggi, e soprattutto il Sud America, hanno contaminato la sua musica: piano, organo e tastiere tra rock, blues, funk, jazz, ritmi latini e sfumature elettroniche.",
+                  en: "Sicilian pianist, keyboard player and multi-instrumentalist from Valguarnera Caropepe. Self-taught, he was on stage at 11. His travels, above all to South America, shaped his music: piano, organ and keys across rock, blues, funk, jazz, Latin rhythms and electronic shades." } },
+              { nome: "Maria Conticello", foto: "assets/artisti/2026-11-27/maria-conticello.webp",
+                ruolo: { it: "voce e chitarra", en: "vocals and guitar" },
+                testo: { it: "Scopre la musica a 16 anni, con la chitarra nell’angolo della camera: improvvisa e comincia a scrivere. L’amore per la sua terra la porta ad agraria, quello per la musica al conservatorio, dove studia canto jazz. Nei live si lascia attraversare da folk, bossa e cumbia; nelle sue canzoni resta il sapore di casa.",
+                  en: "She found music at 16, with the guitar in the corner of her room: she improvised and started writing. Love for her land took her to study agriculture, love for music to the conservatory, where she studies jazz singing. Live, she lets folk, bossa and cumbia run through her; her songs keep the taste of home." } }
+            ]
+          }
+        },
         {
           nome: "Franzuà & Andrea Guglielmino", tag: "DJ set", note: "Micelium Collective",
           artisti: [{ nome: "Franzuà", link: "https://www.instagram.com/franzua_imagerie/" }, { nome: "Andrea Guglielmino" }]
         },
         // minore: true = più piccolo delle proposte musicali (vino, cibo); Tre.Mi.La aggiunta il 23.11 (richiesta dell'utente)
         {
-          nome: "Cantina Tre.Mi.La", tag: { it: "Cosa beviamo?", en: "What are we drinking?" }, minore: true, link: "https://tremilawine.com",
+          nome: "Cantina Tre.Mi.La", tag: { it: "Vino del giorno", en: "Wine of the day" }, minore: true, link: "https://tremilawine.com",
           note: { it: "di Gloria Di Paola", en: "by Gloria Di Paola" },
           dettagli: {
             testo: [

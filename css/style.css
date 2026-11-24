@@ -388,6 +388,9 @@ a { color: inherit; }
 .lineup__persona { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line); }
 .lineup__persona-nome { font-weight: 600; margin-bottom: .3em !important; }
 .lineup__persona-nome span { font-weight: 400; color: var(--muted); }
+.lineup__persona--foto { display: grid; grid-template-columns: 128px 1fr; gap: 18px; align-items: start; }
+.lineup__persona-foto { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border: 2px solid var(--ink); }
+@media (max-width: 480px) { .lineup__persona--foto { grid-template-columns: 96px 1fr; gap: 14px; } }
 .lineup__prenota { margin-top: 4px; }
 @keyframes apri { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 .lineup__note { display: block; font-size: 14px; color: var(--muted); letter-spacing: 0; margin-top: 4px; }

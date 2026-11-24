@@ -242,11 +242,24 @@
     if (d.titolo) box.appendChild(el("p", "lineup__more-titolo", L(d.titolo)));
     (d.testo || []).forEach(function (t) { box.appendChild(el("p", null, L(t))); });
     (d.persone || []).forEach(function (p) {
-      var w = el("div", "lineup__persona");
+      var w = el("div", "lineup__persona" + (p.foto ? " lineup__persona--foto" : ""));
+      // foto: ritratto 4:5 accanto alla bio (es. Officina Tropicale 27.11)
+      if (p.foto) {
+        var img = el("img", "lineup__persona-foto");
+        img.src = p.foto;
+        img.alt = p.nome;
+        img.width = 640;
+        img.height = 800;
+        img.loading = "lazy";
+        img.decoding = "async";
+        w.appendChild(img);
+      }
+      var corpo = p.foto ? el("div") : w;
       var h = el("p", "lineup__persona-nome", p.nome);
       if (p.ruolo) h.appendChild(el("span", null, " · " + L(p.ruolo)));
-      w.appendChild(h);
-      if (p.testo) w.appendChild(el("p", null, L(p.testo)));
+      corpo.appendChild(h);
+      if (p.testo) corpo.appendChild(el("p", null, L(p.testo)));
+      if (corpo !== w) w.appendChild(corpo);
       box.appendChild(w);
     });
     if (prenota) {
