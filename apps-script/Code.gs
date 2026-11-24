@@ -11,7 +11,7 @@
  *
  * Fogli (creati da setup()):
  *   Serate  id | titolo | data | capienza | aperta | orario | luogo | senza_pass | chiusura_pass | chiusura_gruppi |
- *           promemoria | solleciti | regalo | recap | recap_a        (vedi "Serate e automazioni")
+ *           promemoria | solleciti | regalo        (vedi "Serate e automazioni")
  *   Inviti  token | etichetta | serata | max | scadenza | attivo | creato   (ogni invito vale per tutte le serate:
  *           la colonna serata non conta più; max = pass per serata)
  *   Gruppi  id | serata | creato | scadenza | capogruppo | stato | completato | confermati
@@ -51,13 +51,11 @@ var CONFIG = {
 
   /* serata nuova dal menu del foglio (bolla® → Nuova serata…). Dal 07.11 nessun invio automatico (scelta dell'utente):
      automazioni vuote = spente. Per riaccenderne una scrivi l'ora nella riga della serata (es. promemoria "-2 14:00",
-     solleciti "09:30", regalo "18:00, 22:00", recap "16:00, 17:00, 18:00, 19:00"). */
+     solleciti "09:30", regalo "18:00, 22:00"). Recap via email tolto il 24.11: i numeri stanno nella dashboard. */
   nuovaSerata: {
     promemoria: '',
     solleciti: '',
-    regalo: '',                             // vuoto = chi è in un gruppo incompleto non riceve il pass
-    recap: '',
-    recapA: 'pietrosantoro90@gmail.com, tommiferrara@gmail.com'
+    regalo: ''                              // vuoto = chi è in un gruppo incompleto non riceve il pass
   },
 
   /* archivio: le righe di una serata passano nei fogli "Archivio …" dopo questi giorni, di notte */
@@ -77,7 +75,7 @@ var CONFIG = {
 var TZ = 'Europe/Rome';
 var COLONNE = {
   Serate: ['id', 'titolo', 'data', 'capienza', 'aperta', 'orario', 'luogo', 'senza_pass', 'chiusura_pass', 'chiusura_gruppi',
-    'promemoria', 'solleciti', 'regalo', 'recap', 'recap_a'],
+    'promemoria', 'solleciti', 'regalo'],
   Inviti: ['token', 'etichetta', 'serata', 'max', 'scadenza', 'attivo', 'creato'],
   Gruppi: ['id', 'serata', 'creato', 'scadenza', 'capogruppo', 'stato', 'completato', 'confermati'],
   Pass: ['creato', 'serata', 'tipo', 'rif', 'nome', 'cognome', 'email', 'email_norm', 'chiave', 'codice', 'stato', 'confermato', 'checkin', 'newsletter', 'checkin_da'],
@@ -90,7 +88,7 @@ var COLONNE = {
 };
 var COLONNE_TESTO = ['id', 'data', 'serata', 'rif', 'chiave', 'codice', 'capogruppo', 'token', 'email', 'email_norm', 'nome', 'cognome',
   'telefono', 'telefono_norm', 'confermati', 'attivita', 'prima', 'ultima', 'inizio', 'link',
-  'orario', 'chiusura_pass', 'chiusura_gruppi', 'promemoria', 'solleciti', 'regalo', 'recap'];
+  'orario', 'chiusura_pass', 'chiusura_gruppi', 'promemoria', 'solleciti', 'regalo'];
 // fogli spostati in archivio, con la colonna che dice a quale serata appartiene la riga
 var DA_ARCHIVIARE = { Pass: 'serata', Gruppi: 'serata', Attesa: 'serata', Live: 'serata' };
 // riserva se la lista online non è raggiungibile
@@ -179,10 +177,10 @@ function nuovaSerataDaMenu() {
   if (!(capienza > 0)) { ui.alert('Numero non valido.'); return; }
   var n = CONFIG.nuovaSerata;
   appendi_('Serate', { id: data, titolo: r2.getResponseText().trim() || 'bolla®', data: data, capienza: capienza, aperta: 'TRUE',
-    promemoria: n.promemoria, solleciti: n.solleciti, regalo: n.regalo, recap: n.recap, recap_a: n.recapA });
+    promemoria: n.promemoria, solleciti: n.solleciti, regalo: n.regalo });
   ui.alert('Serata ' + data + ' creata', 'Automazioni nella riga (cancella una cella per spegnerla):\n' +
     '• promemoria di conferma: ' + (n.promemoria || 'no') + '\n• solleciti: ' + (n.solleciti || 'no') +
-    '\n• pass dati lo stesso ai gruppi incompleti: ' + (n.regalo || 'no') + '\n• recap: ' + (n.recap || 'no') +
+    '\n• pass dati lo stesso ai gruppi incompleti: ' + (n.regalo || 'no') +
     '\n\nLuogo, orario e prezzo senza pass: se diversi dal solito, scrivili nelle colonne luogo, orario, senza_pass.' +
     '\nRicorda di aggiungere la serata anche in js/config.js (line-up), con id ' + data + '.', ui.ButtonSet.OK);
 }
@@ -226,10 +224,10 @@ function doGet(e) {
     riga('Ultima prova Brevo', 'BREVO_ESITO') +
     riga('Automazioni 27.11 copiate dal 6.11', 'AUTOMAZIONI_27_11') +
     riga('Prove email automatiche 27.11', 'PROVE_27_11') +
+    riga('Recap eliminato', 'RECAP_TOLTO') +
     riga('Promemoria di conferma', 'PROMEMORIA_ESITO') +
     riga('Solleciti', 'SOLLECITI_ESITO') +
     riga('Pass dati lo stesso (gruppi incompleti)', 'REGALO_ESITO') +
-    riga('Recap orari', 'RECAP_ESITO') +
     riga('Backup nel Drive', 'BACKUP_ESITO') +
     riga('Archivio', 'ARCHIVIO_ESITO') +
     riga('Contatti', 'CONTATTI_ESITO') +
@@ -349,51 +347,23 @@ function aggiornaConfermati_(db) {
 // Modifiche ai dati da fare una volta sola: partono con la sveglia (ogni 5 minuti), ognuna segnata
 // nelle proprietà dello script così non si ripete. Poi la riga puoi cambiarla a mano nel foglio.
 // Le voci già fatte si tolgono da qui (restano nella storia di git): ogni giro rilegge solo quelle nuove.
-// Promemoria, solleciti, pass regalo e recap non stanno qui: si impostano per serata nel foglio Serate.
+// Promemoria, solleciti e pass regalo non stanno qui: si impostano per serata nel foglio Serate.
 function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
-    // serata 27.11 (richiesta dell'utente, 24.11): automazioni "come il 6.11". Si copiano promemoria, solleciti, regalo,
-    // recap e recap_a dalla riga del 6.11; le date assolute (AAAA-MM-GG) si spostano di 21 giorni. Valori copiati in AUTOMAZIONI_27_11.
-    { id: 'automazioni-2026-11-27-come-06-11', fai: function () {
-      var db = carica_(['Serate']);
-      var da = trova_(db.Serate, 'id', '2026-11-06'), a = trova_(db.Serate, 'id', '2026-11-27');
-      if (!da || !a) throw new Error('riga 6.11 o 27.11 mancante');
-      var testo = function (v) { return v instanceof Date ? Utilities.formatDate(v, TZ, 'HH:mm') : String(v == null ? '' : v).trim(); };
-      var sposta = function (v) { return v.replace(/\d{4}-\d{2}-\d{2}/g, function (d) { return spostaGiorno_(d, 21); }); };
-      var cambi = {}, nota = [];
-      ['promemoria', 'solleciti', 'regalo', 'recap'].forEach(function (c) {
-        var v = sposta(testo(da[c]));
-        cambi[c] = v ? "'" + v : '';
-        nota.push(c + '=' + (v || '—'));
-      });
-      cambi.recap_a = testo(da.recap_a) || CONFIG.nuovaSerata.recapA;
-      nota.push('recap_a=' + cambi.recap_a.split(',').map(function (x) { return x.trim().split('@')[0]; }).join('+'));
-      aggiorna_(db.Serate, a, cambi);
-      PropertiesService.getScriptProperties().setProperty('AUTOMAZIONI_27_11', new Date().toISOString().slice(0, 16) + ' ' + nota.join(' · '));
-    } },
-    // prove delle email automatiche del 27.11, solo a Pietro, con [Prova …] nell'oggetto e un pass finto (BOL-PROVA):
-    // parte solo la prova delle automazioni accese nella riga. Esito in PROVE_27_11.
-    { id: 'automazioni-2026-11-27-prove', fai: function () {
-      var db = carica_(['Serate']);
-      var s = serata_(db, '2026-11-27');
-      var r = trova_(db.Serate, 'id', '2026-11-27');
-      var a = 'pietrosantoro90@gmail.com';
-      var finto = { nome: 'Pietro', cognome: 'Santoro', email: a, email_norm: a, codice: 'BOL-PROVA', chiave: token_(24), tipo: 'gruppo' };
-      var info = function (tipo) { return { s: s, gruppo: null, stato: 'aperto', capogruppo: true, confermati: 1, membri: 2, tipo: tipo,
-        scadenza: Utilities.parseDate('2026-11-27 ' + (s.chiusuraGruppi || '22:00'), TZ, 'yyyy-MM-dd HH:mm') }; };
-      var esiti = [];
-      var prova = function (nome, f) { try { esiti.push(nome + ' ' + f()); } catch (err) { esiti.push(nome + ' errore: ' + String(err.message).slice(0, 80)); } };
-      var acceso = function (c) { return String(r[c] || '').trim() !== ''; };
-      if (acceso('promemoria')) prova('promemoria', function () { return emailPromemoriaConferma_(finto, s, info('promemoria'), '[Prova promemoria] '); });
-      if (acceso('solleciti')) {
-        prova('sollecito', function () { return emailPromemoriaConferma_(finto, s, info('sollecito'), '[Prova sollecito] '); });
-        prova('manca qualcuno', function () { return emailGruppoIncompleto_(finto, s, info(), '[Prova manca qualcuno] '); });
+    // recap via email eliminato per tutte le serate (richiesta dell'utente, 24.11: ormai c'è la dashboard):
+    // via le colonne recap e recap_a dal foglio Serate e l'esito RECAP_ESITO. Esito in RECAP_TOLTO.
+    { id: 'recap-eliminato-2026-11-24', fai: function () {
+      var sh = SpreadsheetApp.getActive().getSheetByName('Serate');
+      var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+      var tolte = [];
+      for (var c = head.length - 1; c >= 0; c--) {
+        if (head[c] === 'recap' || head[c] === 'recap_a') { sh.deleteColumn(c + 1); tolte.push(head[c]); }
       }
-      if (acceso('regalo')) prova('regalo', function () { return emailPass_(finto, s, { regalo: true, prefisso: '[Prova regalo] ' }) || 'inviata'; });
-      if (acceso('recap')) prova('recap', function () { recapSerata_('2026-11-27', '16:00', [a], '19:00'); return 'inviato'; });
-      PropertiesService.getScriptProperties().setProperty('PROVE_27_11', new Date().toISOString().slice(0, 16) + ' ' + (esiti.join(' · ') || 'nessuna automazione accesa'));
+      var props = PropertiesService.getScriptProperties();
+      props.deleteProperty('RECAP_ESITO');
+      props.setProperty('RECAP_TOLTO', new Date().toISOString().slice(0, 16) + ' colonne tolte: ' + (tolte.join(', ') || 'nessuna (già tolte)'));
     } },
     // prova della conferma Psi.mposio con l'avviso sul pagamento (22.11), solo a Pietro
     { id: 'psimposio-email-prova-pagamento-2026-11-22', fai: function () {
@@ -443,7 +413,7 @@ function aggiornamentiUnaTantum_() {
       if (trova_(db.Serate, 'id', '2026-11-27')) return;
       var n = CONFIG.nuovaSerata;
       appendi_('Serate', { id: '2026-11-27', titolo: 'bolla®', data: '2026-11-27', capienza: 300, aperta: 'TRUE',
-        promemoria: n.promemoria, solleciti: n.solleciti, regalo: n.regalo, recap: n.recap, recap_a: n.recapA });
+        promemoria: n.promemoria, solleciti: n.solleciti, regalo: n.regalo });
     } },
     // psicoaperitivo "STARE IN BOLLA — cos'è il flow?" a cura di Psi.mposio, 27.11 (richiesta dell'utente, 19.11):
     // pagina prenota.html?e=psimposio-2026-11-27 (link scritto dalla sveglia), 100 posti, una persona per prenotazione,
@@ -796,7 +766,7 @@ function azionePass_(d) {
  *   id           unico, es. samba-2026-11-06; lo stesso della voce "attivita" della line-up in js/config.js
  *   serata       id della serata (foglio Serate) di cui fa parte
  *   tipo         workshop, cena, live, dj, talk, altro (solo per leggere il foglio e per le pagine vecchie)
- *   titolo       come compare nelle email di avviso, nel recap e nella dashboard
+ *   titolo       come compare nelle email di avviso e nella dashboard
  *   inizio       HH:mm (giorno della serata) oppure AAAA-MM-GG HH:mm: da quest'ora le prenotazioni si chiudono
  *   prenotazione casella spuntata (TRUE) = si prenota; vuota = attività senza prenotazione (dj set, live…)
  *   posti        posti in tutto (sommando le persone); vuoto o 0 = nessun limite
@@ -847,7 +817,7 @@ function prenotazioniDi_(db, ev) {
   return db.Prenotazioni.filter(function (r) { return r.attivita === ev.id; });
 }
 
-// attività di una serata che si prenotano (o che hanno già prenotazioni), per recap e dashboard
+// attività di una serata che si prenotano (o che hanno già prenotazioni), per la dashboard
 function attivitaConPrenotazione_(db, idSerata) {
   return db[FOGLIO_ATTIVITA].filter(function (e) { return e.serata === idSerata; })
     .map(function (e) { return evento_(db, e.id); })
@@ -2157,60 +2127,6 @@ function completaGruppoAMano_(id, emailDoppione, cognomeDoppione) {
   accoda_('CERCA_ESITO', new Date().toISOString().slice(0, 16) + ' gruppo completato a mano: ' + esiti.join(', '));
 }
 
-/* Recap per gli organizzatori, solo numeri: pass, gruppi, lista d'attesa e prenotazioni agli eventi della serata.
- * ora = 'HH:mm' dell'invio previsto; oltre 50 minuti di ritardo il recap è vecchio e non parte. ultimo = 'HH:mm' dell'ultimo recap.
- * Esito nella pagina di stato. */
-function recapSerata_(serata, ora, destinatari, ultimo) {
-  var previsto = Utilities.parseDate(serata + ' ' + ora, TZ, 'yyyy-MM-dd HH:mm');
-  var esito;
-  if (new Date() - previsto > 50 * 60000) {
-    esito = ora + ' saltato (in ritardo)';
-  } else {
-    var db = carica_(['Serate', 'Pass', 'Gruppi', 'Attesa', FOGLIO_ATTIVITA, 'Prenotazioni']);
-    var s = serata_(db, serata);
-    var pass = db.Pass.filter(function (r) { return r.serata === serata && r.stato !== 'annullato'; });
-    var validi = pass.filter(function (r) { return passAttivo_(db, r); });
-    var gruppi = { completo: 0, aperto: 0, scaduto: 0 };
-    db.Gruppi.forEach(function (g) {
-      if (g.serata !== serata || g.stato === 'annullato') return;
-      var st = statoGruppo_(db, g).stato;
-      gruppi[st] = (gruppi[st] || 0) + 1;
-    });
-    var conta = function (righe, f) { return righe.filter(f).length; };
-    var righe = [
-      ['Pass validi per entrare', validi.length],
-      ['— su invito', conta(validi, function (r) { return r.tipo === 'invito'; })],
-      ['— di gruppo', conta(validi, function (r) { return r.tipo === 'gruppo'; })],
-      ['Confermati in gruppi non completi', conta(pass, function (r) { return r.stato === 'confermato' && !passAttivo_(db, r); })],
-      ['Da confermare', conta(pass, function (r) { return r.stato === 'da_confermare'; })],
-      ['Già entrati', conta(pass, function (r) { return !!r.checkin; })],
-      ['Gruppi completi', gruppi.completo],
-      ['Gruppi aperti', gruppi.aperto],
-      ['Gruppi scaduti', gruppi.scaduto],
-      ['Lista d\'attesa', conta(db.Attesa, function (r) { return r.serata === serata; })]
-    ];
-    attivitaConPrenotazione_(db, serata).forEach(function (ev) {
-      var presi = 0;
-      prenotazioniDi_(db, ev).forEach(function (r) { presi += Number(r.persone) || 1; });
-      righe.push(['Prenotati: ' + (ev.titolo || ev.id), presi + (ev.posti ? ' su ' + ev.posti : '')]);
-    });
-    var titolo = 'Recap delle ' + ora + ' — ' + dataBreve_(s);
-    var testo = titolo + '\n\n' + righe.map(function (r) { return r[0] + ': ' + r[1]; }).join('\n');
-    var html = '<div style="font-family:Helvetica,Arial,sans-serif;max-width:480px">' +
-      '<h2 style="margin:0 0 12px">bolla&reg; · ' + esc_(titolo) + '</h2>' +
-      '<table style="border-collapse:collapse;font-size:15px">' + righe.map(function (r) {
-        return '<tr><td style="padding:4px 16px 4px 0">' + esc_(r[0]) + '</td><td style="padding:4px 0;font-weight:bold;text-align:right">' + esc_(String(r[1])) + '</td></tr>';
-      }).join('') + '</table>' +
-      (ultimo && ultimo !== ora ? '<p style="font-size:12px;color:#777;margin-top:16px">Ultimo recap alle ' + esc_(ultimo) + '.</p>' : '') + '</div>';
-    var esiti = destinatari.map(function (a) {
-      try { return a.split('@')[0] + ' ' + invia_(a, 'bolla® ' + dataBreve_(s) + ' — recap delle ' + ora, testo, html); }
-      catch (err) { return a.split('@')[0] + ' errore: ' + String(err.message).slice(0, 80); }
-    });
-    esito = ora + ' ' + esiti.join(', ');
-  }
-  accoda_('RECAP_ESITO', serata + ' ' + esito);
-}
-
 // prefisso: '' per le email vere, '[Prova …] ' per quelle di prova
 function emailPromemoriaConferma_(pass, s, info, prefisso) {
   var data = dataBreve_(s);
@@ -2967,7 +2883,6 @@ function emailVibes_(nome, s, o) {
      promemoria  email a chi non ha ancora confermato il pass di gruppo                     es. "-2 14:00"
      solleciti   ultime ore / gruppo riaperto / manca qualcuno (prima della chiusura gruppi) es. "09:30"
      regalo      pass dato lo stesso a chi ha confermato in un gruppo incompleto           es. "18:00, 22:00"
-     recap       numeri della serata agli indirizzi di recap_a (separati da virgola)       es. "16:00, 17:00"
    Un'ora è "HH:mm" (il giorno della serata), "-N HH:mm" (N giorni prima) o "AAAA-MM-GG HH:mm".
    La sveglia (ogni 5 minuti) le fa partire. Con troppo ritardo (sveglia ferma, riga scritta tardi) l'automazione
    si salta invece di partire fuori tempo. Esito nella pagina di stato del backend.
@@ -2977,8 +2892,7 @@ function emailVibes_(nome, s, o) {
 var AUTOMAZIONI = [
   { campo: 'promemoria', ritardoMax: 180, fai: function (s) { promemoriaConferme_(s.id); } },
   { campo: 'solleciti', ritardoMax: 180, fai: function (s) { solleciti_(s.id); } },
-  { campo: 'regalo', ritardoMax: 360, fai: function (s) { passRegalo_(s.id); } },
-  { campo: 'recap', ritardoMax: 50, fai: function (s, o) { recapSerata_(s.id, o.ora, s.recapA, o.ultimo); } }
+  { campo: 'regalo', ritardoMax: 360, fai: function (s) { passRegalo_(s.id); } }
 ];
 
 function automazioni_(db) {
@@ -3424,8 +3338,7 @@ function serata_(db, id) {
     luogo: testo(s.luogo, CONFIG.luogo),
     senzaPass: testo(s.senza_pass, CONFIG.senzaPass),
     chiusuraPass: ora_(s.chiusura_pass) || CONFIG.chiusuraPass,
-    chiusuraGruppi: ora_(s.chiusura_gruppi) || CONFIG.chiusuraGruppi,
-    recapA: String(s.recap_a || '').split(/[\s,;]+/).filter(function (e) { return e.indexOf('@') > 0; })
+    chiusuraGruppi: ora_(s.chiusura_gruppi) || CONFIG.chiusuraGruppi
   };
 }
 
@@ -3514,7 +3427,7 @@ function ora_(v) {
   return m && Number(m[1]) < 24 ? ('0' + m[1]).slice(-2) + ':' + m[2] : '';
 }
 
-// Esiti che si accumulano (pass regalo, recap, ricerche): restano gli ultimi, una proprietà tiene al massimo 9 KB
+// Esiti che si accumulano (pass regalo, ricerche): restano gli ultimi, una proprietà tiene al massimo 9 KB
 function accoda_(k, testo) {
   var props = PropertiesService.getScriptProperties();
   var prima = props.getProperty(k);
