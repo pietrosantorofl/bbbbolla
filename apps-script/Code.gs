@@ -358,6 +358,9 @@ function aggiornamentiUnaTantum_() {
     { id: 'invito-2026-11-27-conteggio', fai: function () { contaInvito_('2026-11-27', INVITO_27_11.tutti()); } },
     // seconda prova (25.11): sotto la locandina i bottoni del pass e di Psi.mposio, poi la spiegazione, senza programma
     { id: 'invito-2026-11-27-prova-2', fai: function () { mailInvito_('2026-11-27', INVITO_27_11.prova('pietrosantoro90@gmail.com')); } },
+    // invio a chi non ha il pass per il 27.11 (ok dell'utente sulla seconda prova, 25.11: 163 contatti in quel momento),
+    // programmato per il 26.11 alle 17:00. Chi ha il pass si conta all'invio. Se il giro si interrompe, la sveglia riprende dagli altri.
+    { id: 'invito-2026-11-27', dopo: '2026-11-26 17:00', fai: function () { mailInvito_('2026-11-27', INVITO_27_11.senzaPass()); } },
     // recap via email eliminato per tutte le serate (richiesta dell'utente, 24.11: ormai c'è la dashboard):
     // via le colonne recap e recap_a dal foglio Serate e l'esito RECAP_ESITO. Esito in RECAP_TOLTO.
     { id: 'recap-eliminato-2026-11-24', fai: function () {
@@ -2895,7 +2898,8 @@ var INVITO_27_11 = {
     };
   },
   prova: function (a) { var o = INVITO_27_11.base(); o.prova = a; return o; },
-  tutti: function () { return INVITO_27_11.base(); }
+  tutti: function () { return INVITO_27_11.base(); },
+  senzaPass: function () { var o = INVITO_27_11.base(); o.senzaPass = true; return o; }
 };
 
 // testi della mail Vibes del 30.10
