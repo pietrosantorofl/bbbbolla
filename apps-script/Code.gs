@@ -356,6 +356,8 @@ function aggiornamentiUnaTantum_() {
     // (tutti gli iscritti alla newsletter, anche chi ha già il pass). L'invio a tutti solo dopo l'ok sulla prova.
     { id: 'invito-2026-11-27-prova', fai: function () { mailInvito_('2026-11-27', INVITO_27_11.prova('pietrosantoro90@gmail.com')); } },
     { id: 'invito-2026-11-27-conteggio', fai: function () { contaInvito_('2026-11-27', INVITO_27_11.tutti()); } },
+    // seconda prova (25.11): sotto la locandina i bottoni del pass e di Psi.mposio, poi la spiegazione, senza programma
+    { id: 'invito-2026-11-27-prova-2', fai: function () { mailInvito_('2026-11-27', INVITO_27_11.prova('pietrosantoro90@gmail.com')); } },
     // recap via email eliminato per tutte le serate (richiesta dell'utente, 24.11: ormai c'è la dashboard):
     // via le colonne recap e recap_a dal foglio Serate e l'esito RECAP_ESITO. Esito in RECAP_TOLTO.
     { id: 'recap-eliminato-2026-11-24', fai: function () {
@@ -2710,6 +2712,12 @@ function contaInvito_(serata, o) {
 }
 
 function testoInvito_(nome, s, o, pass) {
+  if (o.compatta) {
+    return (pass ? 'Il tuo pass: ' + linkPass_(pass.chiave) : 'Prenota il pass gratuito: ' + CONFIG.sito + '/#prenota') + ' — ' +
+      o.bottoni.map(function (b) { return b.testo + ': ' + b.href; }).join(' — ') + '\n\n' +
+      'Ciao ' + nome + ',\n' + o.racconto + '\n\n' + giorno_(fineSerata_(s)) + ', ' + o.orario + ', ' + s.luogo + '. Ingresso: ' +
+      o.ingresso.charAt(0).toLowerCase() + o.ingresso.slice(1) + '.';
+  }
   return 'Ciao ' + nome + ', ' + o.invito + ' ' + giorno_(fineSerata_(s)) + ', ' + o.orario + ', ' + String(s.luogo).split(',')[0] + '. ' +
     o.programma.map(function (p) { return (p.ora ? p.ora + ' ' : '') + p.nome; }).join(' · ') + '. ' +
     (o.senzaPassSerata ? 'Ingresso: ' + o.ingresso.charAt(0).toLowerCase() + o.ingresso.slice(1) + '.' : pass ? 'Il tuo pass: ' + linkPass_(pass.chiave) : 'Il pass è gratuito: ' + CONFIG.sito + '/#prenota') + ' — ' +
@@ -2729,6 +2737,21 @@ function emailInvito_(nome, s, o, pass) {
         '<td style="padding:10px 0;border-top:1px solid #d6d3ce;vertical-align:top"><span style="font-weight:700">' + nomi + '</span>' +
         (p.nota ? '<br><span style="font-size:13px;color:#5f5b56">' + esc_(p.nota) + '</span>' : '') + '</td></tr>';
     }).join('') + '</table>';
+  // o.compatta (27.11, richiesta dell'utente 25.11): sotto la locandina subito il bottone del pass e quello della prenotazione,
+  // poi la spiegazione con i dettagli, e basta: niente programma, riquadri e link in fondo
+  if (o.compatta) {
+    var corpoCompatto =
+      (pass ? bottone_(linkPass_(pass.chiave), 'Apri il tuo pass') : bottone_(CONFIG.sito + '/#prenota', 'Prenota il pass gratuito')) +
+      o.bottoni.map(function (b) { return bottone_(b.href, esc_(b.testo), true); }).join('') +
+      (pass ? nota_('Hai già il pass per questa serata: all\'ingresso mostra il QR.') : '') +
+      '<div style="height:20px;line-height:20px">&nbsp;</div>' +
+      kicker_(Utilities.formatDate(fineSerata_(s), TZ, 'dd.MM') + ' · ' + esc_(luogo)) +
+      titolo_(o.titolo) +
+      paragrafo_('Ciao ' + esc_(nome) + ',') +
+      paragrafo_(o.racconto) +
+      dettagli;
+    return layout_({ banner: o.locandina, bannerAlt: o.locandinaAlt, anteprima: o.anteprima, corpo: corpoCompatto, s: { titolo: '' }, newsletter: true });
+  }
   var corpo =
     kicker_(Utilities.formatDate(fineSerata_(s), TZ, 'dd.MM') + ' · ' + esc_(luogo)) +
     titolo_(o.titolo) +
@@ -2850,6 +2873,7 @@ var INVITO_27_11 = {
         'e il DJ set di Franzuá e Andrea Guglielmino (Mycelium Collective) fino a tardi. ' +
         'Nel bicchiere il vino del giorno di Cantina Tre.Mi.La, in cucina monAmour dalle 19 alle 23.',
       invito: 'ti aspettiamo a bolla®',
+      compatta: true,
       orario: 'dalle 19:00',
       ingresso: 'Gratuito con pass · 5€ al botteghino dopo le 22:30',
       mappa: 'https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania',
@@ -2866,7 +2890,7 @@ var INVITO_27_11 = {
       bottoni: [
         { titolo: 'Psicoaperitivo “Stare in bolla” · 19:00', descrizione: 'Con le psicoterapeute Marika Toscano e Giuliana Palmieri: ' +
           'come riconoscere la bolla, come entrarci, come uscirne. Contributo 6€, posti limitati.',
-          testo: 'Prenota il posto', href: psimposio }
+          testo: 'Prenota lo psicoaperitivo di Psi.mposio', href: psimposio }
       ]
     };
   },
