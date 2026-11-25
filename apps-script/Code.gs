@@ -352,6 +352,10 @@ function aggiornamentiUnaTantum_() {
   var props = PropertiesService.getScriptProperties();
   var fatti = props.getProperties();
   [
+    // mail d'invito al 27.11 (richiesta dell'utente, 25.11): prima solo la prova a Pietro e il conteggio dei destinatari
+    // (tutti gli iscritti alla newsletter, anche chi ha già il pass). L'invio a tutti solo dopo l'ok sulla prova.
+    { id: 'invito-2026-11-27-prova', fai: function () { mailInvito_('2026-11-27', INVITO_27_11.prova('pietrosantoro90@gmail.com')); } },
+    { id: 'invito-2026-11-27-conteggio', fai: function () { contaInvito_('2026-11-27', INVITO_27_11.tutti()); } },
     // recap via email eliminato per tutte le serate (richiesta dell'utente, 24.11: ormai c'è la dashboard):
     // via le colonne recap e recap_a dal foglio Serate e l'esito RECAP_ESITO. Esito in RECAP_TOLTO.
     { id: 'recap-eliminato-2026-11-24', fai: function () {
@@ -2827,6 +2831,47 @@ var INVITO_13_11 = {
   },
   prova: function (a) { var o = INVITO_13_11.base(); o.prova = a; return o; },
   tutti: function () { return INVITO_13_11.base(); }
+};
+
+// testi della mail d'invito al 27.11 a tutti gli iscritti alla newsletter (richiesta dell'utente, 25.11; come la pagina:
+// js/config.js, serata 2026-11-27). Serata con pass gratuito: chi ce l'ha già vede "Apri il tuo pass".
+// Orari del live e del DJ set non ancora decisi: nel programma restano senza ora.
+var INVITO_27_11 = {
+  base: function () {
+    var psimposio = CONFIG.sito + '/prenota.html?e=psimposio-2026-11-27';
+    return {
+      oggetto: 'Venerdì 27/11 a bolla®: Stare in bolla, Officina Tropicale e il DJ set di Mycelium Collective',
+      anteprima: 'Psicoaperitivo sul flow con Psi.mposio, il live di Officina Tropicale e il DJ set fino a tardi. Pass gratuito.',
+      locandina: 'locandine/2026-11-27-serata.jpg',
+      locandinaAlt: 'Locandina di bolla® del 27 novembre 2026',
+      titolo: 'Ti aspettiamo nella bolla®',
+      racconto: 'Venerdì 27 novembre si parte alle 19:00 con lo psicoaperitivo di Psi.mposio: un salotto psicologico attorno ai tavoli ' +
+        'per parlare di cosa vuol dire stare in bolla e seguire il proprio flow. Poi il live & impro di Officina Tropicale ' +
+        'e il DJ set di Franzuá e Andrea Guglielmino (Mycelium Collective) fino a tardi. ' +
+        'Nel bicchiere il vino del giorno di Cantina Tre.Mi.La, in cucina monAmour dalle 19 alle 23.',
+      invito: 'ti aspettiamo a bolla®',
+      orario: 'dalle 19:00',
+      ingresso: 'Gratuito con pass · 5€ al botteghino dopo le 22:30',
+      mappa: 'https://www.google.com/maps/search/?api=1&query=MONO+Via+Gornalunga+12+95129+Catania',
+      instagram: 'https://www.instagram.com/bbbbolla/',
+      vibesTesto: 'Le Vibes delle serate passate',
+      programma: [
+        { ora: '19:00', nome: 'Stare in bolla — cos’è il flow?', link: psimposio, nota: 'psicoaperitivo a cura di Psi.mposio · 6€, su prenotazione' },
+        { nome: 'Officina Tropicale', link: CONFIG.sito, nota: 'live & impro · Karen Ramirez, Roberto Oliveri, Maria Conticello, Dario Aiello' },
+        { nome: 'Franzuá · Andrea Guglielmino', nota: 'DJ set · Mycelium Collective',
+          artisti: [{ nome: 'Franzuá', link: 'https://www.instagram.com/franzua_imagerie/' }, { nome: 'Andrea Guglielmino' }] },
+        { nome: 'Cantina Tre.Mi.La', link: 'https://tremilawine.com', nota: 'vino del giorno · di Gloria Di Paola' },
+        { nome: 'monAmour', nota: 'cucina dalle 19 alle 23' }
+      ],
+      bottoni: [
+        { titolo: 'Psicoaperitivo “Stare in bolla” · 19:00', descrizione: 'Con le psicoterapeute Marika Toscano e Giuliana Palmieri: ' +
+          'come riconoscere la bolla, come entrarci, come uscirne. Contributo 6€, posti limitati.',
+          testo: 'Prenota il posto', href: psimposio }
+      ]
+    };
+  },
+  prova: function (a) { var o = INVITO_27_11.base(); o.prova = a; return o; },
+  tutti: function () { return INVITO_27_11.base(); }
 };
 
 // testi della mail Vibes del 30.10
